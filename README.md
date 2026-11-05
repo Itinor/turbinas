@@ -3,13 +3,18 @@
 Página web del trabajo de metalurgia.
 
 ## Cómo cambiar el texto
-Abre `index.html` con cualquier editor (VS Code, Bloc de notas).
-Cada subsección tiene un comentario como este:
+El texto que trae la página es solo una guía. Para escribirlo con tus palabras:
 
-    <!-- TEXTO 3.3: cambia estos párrafos por tu texto -->
-    <p>…</p>
+1. Abre `index.html` con un editor (VS Code o Bloc de notas).
+2. Busca (Ctrl+F) `EMPIEZA TU TEXTO`. Hay uno por cada sección y subsección.
+3. Entre `EMPIEZA TU TEXTO` y `TERMINA TU TEXTO` están los párrafos de guía (`<p class="base">…</p>`).
+4. Bórralos y escribe los tuyos así: `<p>Tu párrafo aquí.</p>` (un `<p>…</p>` por párrafo, sin `class="base"`).
+5. No toques lo que está fuera de esos dos marcadores (videos, imágenes, calculadoras).
 
-Reemplaza lo que está entre `<p>` y `</p>` por tu texto. Un `<p>…</p>` es un párrafo.
+Para ver cuánto te falta, abre la página agregando `?revisar=1` al final del link
+(por ejemplo `index.html?revisar=1`). Los párrafos de guía se ven en amarillo y el índice te dice cuántos faltan.
+Sin `?revisar=1` la página se ve normal.
+
 Para poner tu nombre, busca "Tu nombre".
 
 ## Cómo publicarla en GitHub Pages

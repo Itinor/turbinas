@@ -125,6 +125,9 @@ input[type=range]{width:100%;accent-color:var(--ink);height:24px}
 .fuentes li{padding:7px 0;border-bottom:1px solid #f0f0f0}
 .fuentes a{color:var(--ink)}
 .fsin{font:14px/1.6 var(--sans);color:var(--muted);margin-top:12px}
+body.revisar p.base{background:#fff3b0;box-shadow:0 0 0 6px #fff3b0;border-radius:2px}
+.rev{display:none;margin:12px 8px 0;padding:10px;border-radius:6px;background:#fff3b0;font-size:12px;line-height:1.45;color:#3a342e}
+body.revisar .rev{display:block}
 footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font:13px/1.6 var(--sans);color:var(--soft)}
 
 /* móvil */
@@ -204,6 +207,7 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font
     <a class="u" href="#s9-2" data-p="conclusion">9.2 Qué decide la elección del material</a>
     <a class="s" href="#modelos" data-s="modelos"><span>·</span>Modelos 3D</a>
     <a class="s" href="#fuentes" data-s="fuentes"><span>·</span>Fuentes</a>
+  <div class="rev" id="rev"></div>
   <div class="prog">Llevas leído <b id="pct">0%</b><div><i id="bar"></i></div></div>
 </aside>
 <div class="scrim" id="scrim"></div>
@@ -222,27 +226,42 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font
   <section id="intro" class="sec">
     <p class="kick">Sección 1</p>
     <h2>Introducción: por qué el material decide el futuro del motor</h2>
-    <!-- TEXTO 1: introducción de la sección -->
-    <p>Un motor de turbina convierte combustible en empuje, y mientras más caliente trabaja su núcleo, más eficiente es. Por eso la historia de estos motores es, en gran parte, la historia de los materiales capaces de aguantar más temperatura. Hoy el límite ya no es el diseño aerodinámico, sino el material.</p>
+    <!-- ============ 1 INTRODUCCIÓN DE LA SECCIÓN · EMPIEZA TU TEXTO ============
+         Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+         (sin class="base"; los que dicen class="base" son el texto de guía) -->
+    <p class="base">Un motor de turbina convierte combustible en empuje, y mientras más caliente trabaja su núcleo, más eficiente es. Por eso la historia de estos motores es, en gran parte, la historia de los materiales capaces de aguantar más temperatura. Hoy el límite ya no es el diseño aerodinámico, sino el material.</p>
+    <!-- ============ 1 INTRODUCCIÓN DE LA SECCIÓN · TERMINA TU TEXTO ============ -->
     <div class="sub" id="s1-1">
       <h3><span>1.1</span>La presión económica</h3>
-      <!-- TEXTO 1.1: cambia estos párrafos por tu texto -->
-      <p>Para una aerolínea, el combustible es el gasto más grande. Según IATA, en 2026 representará el 31.4% de los costos de operación, frente al 25.4% de 2025, y la factura mundial subirá de 252 mil a 350 mil millones de dólares. Con un margen de ganancia de apenas 2%, un motor que gaste 1% menos combustible vale millones de dólares al año para una sola flota.</p>
+      <!-- ============ 1.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Para una aerolínea, el combustible es el gasto más grande. Según IATA, en 2026 representará el 31.4% de los costos de operación, frente al 25.4% de 2025, y la factura mundial subirá de 252 mil a 350 mil millones de dólares. Con un margen de ganancia de apenas 2%, un motor que gaste 1% menos combustible vale millones de dólares al año para una sola flota.</p>
+      <!-- ============ 1.1 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s1-2">
       <h3><span>1.2</span>La presión regulatoria</h3>
-      <!-- TEXTO 1.2: cambia estos párrafos por tu texto -->
-      <p>La aviación internacional se comprometió a llegar a cero emisiones netas de CO₂ en 2050. Mientras tanto, las aerolíneas ya pagan por contaminar: cumplir con el esquema CORSIA costará unos 1,700 millones de dólares en 2026, y el combustible sostenible (SAF) apenas cubre el 0.8% del consumo. Gastar menos combustible sigue siendo la forma más directa de emitir menos.</p>
+      <!-- ============ 1.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">La aviación internacional se comprometió a llegar a cero emisiones netas de CO₂ en 2050. Mientras tanto, las aerolíneas ya pagan por contaminar: cumplir con el esquema CORSIA costará unos 1,700 millones de dólares en 2026, y el combustible sostenible (SAF) apenas cubre el 0.8% del consumo. Gastar menos combustible sigue siendo la forma más directa de emitir menos.</p>
+      <!-- ============ 1.2 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s1-3">
       <h3><span>1.3</span>¿Por qué no cambiar de tecnología?</h3>
-      <!-- TEXTO 1.3: cambia estos párrafos por tu texto -->
-      <p>Las baterías actuales guardan unas 20 veces menos energía por kilo que el queroseno, y el hidrógeno líquido ocupa demasiado volumen. Por eso la turbina seguirá dominando durante décadas, y la mejora vendrá de motores más eficientes y de materiales que soporten más calor.</p>
+      <!-- ============ 1.3 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Las baterías actuales guardan unas 20 veces menos energía por kilo que el queroseno, y el hidrógeno líquido ocupa demasiado volumen. Por eso la turbina seguirá dominando durante décadas, y la mejora vendrá de motores más eficientes y de materiales que soporten más calor.</p>
+      <!-- ============ 1.3 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s1-4">
       <h3><span>1.4</span>Más calor, más eficiencia</h3>
-      <!-- TEXTO 1.4: cambia estos párrafos por tu texto -->
-      <p>La eficiencia máxima de cualquier máquina térmica la marca el ciclo de Carnot: η = 1 − T fría / T caliente, con temperaturas en kelvin. Con aire a 15 °C, un núcleo a 1,300 °C tiene un límite de 81.7%, y a 1,500 °C sube a 83.8%. Cada grado extra que aguante el material se traduce en eficiencia.</p>
+      <!-- ============ 1.4 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">La eficiencia máxima de cualquier máquina térmica la marca el ciclo de Carnot: η = 1 − T fría / T caliente, con temperaturas en kelvin. Con aire a 15 °C, un núcleo a 1,300 °C tiene un límite de 81.7%, y a 1,500 °C sube a 83.8%. Cada grado extra que aguante el material se traduce en eficiencia.</p>
+      <!-- ============ 1.4 · TERMINA TU TEXTO ============ -->
       
 <div class="calc" id="calc-carnot">
   <div class="calc-t"><b>Eficiencia máxima según la temperatura</b><code>η = 1 − T<sub>fría</sub> / T<sub>caliente</sub></code></div>
@@ -254,28 +273,40 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font
     </div>
     <div class="sub" id="s1-5">
       <h3><span>1.5</span>La presión militar</h3>
-      <!-- TEXTO 1.5: cambia estos párrafos por tu texto -->
-      <p>En los cazas la prioridad es otra: empuje, maniobra y, cada vez más, generar electricidad y disipar el calor de radares y sensores. La versión Block 4 del F-35, por ejemplo, necesita cerca de 25% más electricidad. Ahí también el material es el límite.</p>
+      <!-- ============ 1.5 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">En los cazas la prioridad es otra: empuje, maniobra y, cada vez más, generar electricidad y disipar el calor de radares y sensores. La versión Block 4 del F-35, por ejemplo, necesita cerca de 25% más electricidad. Ahí también el material es el límite.</p>
+      <!-- ============ 1.5 · TERMINA TU TEXTO ============ -->
     </div>
   </section>
   <section id="motor" class="sec">
     <p class="kick">Sección 2</p>
     <h2>Disección del motor: cada zona pide un material distinto</h2>
-    <!-- TEXTO 2: introducción de la sección -->
-    <p>Si se recorre un turbofán de adelante hacia atrás, el aire pasa primero por una zona fría y después por una zona caliente. Cada una exige cosas distintas al material, y por eso un motor moderno es una combinación de varios materiales.</p>
+    <!-- ============ 2 INTRODUCCIÓN DE LA SECCIÓN · EMPIEZA TU TEXTO ============
+         Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+         (sin class="base"; los que dicen class="base" son el texto de guía) -->
+    <p class="base">Si se recorre un turbofán de adelante hacia atrás, el aire pasa primero por una zona fría y después por una zona caliente. Cada una exige cosas distintas al material, y por eso un motor moderno es una combinación de varios materiales.</p>
+    <!-- ============ 2 INTRODUCCIÓN DE LA SECCIÓN · TERMINA TU TEXTO ============ -->
     <div class="sub" id="s2-1">
       <h3><span>2.1</span>Zona fría y zona caliente</h3>
-      <!-- TEXTO 2.1: cambia estos párrafos por tu texto -->
-      <p>En la zona fría, formada por el fan y el compresor, lo que más importa es el peso. El fan genera más del 80% del empuje de un turbofán comercial, y hoy se hace de fibra de carbono; el compresor, que trabaja entre 200 y 700 °C, usa titanio y aleaciones de níquel como el Inconel 718.</p>
-      <p>En la zona caliente cambia todo. En la cámara de combustión la llama supera los 1,800 °C, y la turbina de alta recibe gases de entre 1,500 y 1,700 °C. Ahí mandan las superaleaciones de níquel con recubrimiento cerámico, y cada vez más los compuestos de matriz cerámica (CMC). La turbina de baja, ya menos caliente (800–1,000 °C), empieza a usar aluminuro de titanio para ahorrar peso.</p>
+      <!-- ============ 2.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">En la zona fría, formada por el fan y el compresor, lo que más importa es el peso. El fan genera más del 80% del empuje de un turbofán comercial, y hoy se hace de fibra de carbono; el compresor, que trabaja entre 200 y 700 °C, usa titanio y aleaciones de níquel como el Inconel 718.</p>
+      <p class="base">En la zona caliente cambia todo. En la cámara de combustión la llama supera los 1,800 °C, y la turbina de alta recibe gases de entre 1,500 y 1,700 °C. Ahí mandan las superaleaciones de níquel con recubrimiento cerámico, y cada vez más los compuestos de matriz cerámica (CMC). La turbina de baja, ya menos caliente (800–1,000 °C), empieza a usar aluminuro de titanio para ahorrar peso.</p>
+      <!-- ============ 2.1 · TERMINA TU TEXTO ============ -->
       <figure class="m3"><div class="mbox" data-src="modelos/motor.html?embed=1&amp;vista=parts"><div class="mload">Cargando modelo 3D…</div></div><figcaption><b>Turbofán en 3D.</b> Arrástralo para girarlo. Usa los botones para ver el flujo, el calor, las fuerzas o desarmarlo. <a href="modelos/motor.html" target="_blank" rel="noopener">Abrir en pantalla completa ↗</a></figcaption></figure>
       <figure><div class="ibox"><img src="img/motor3d_calor.jpg" alt="Mapa de calor: la temperatura nace en la cámara de combustión y baja al pasar por las turbinas." loading="lazy"><a class="b3d" href="modelos/motor.html?vista=heat" target="_blank" rel="noopener">Ver en 3D ↗</a></div><figcaption><b>Figura 1.</b> Mapa de calor: la temperatura nace en la cámara de combustión y baja al pasar por las turbinas.</figcaption></figure>
     </div>
     <div class="sub" id="s2-2">
       <h3><span>2.2</span>El álabe de turbina: la pieza más exigida</h3>
-      <!-- TEXTO 2.2: cambia estos párrafos por tu texto -->
-      <p>El álabe de la turbina de alta es la pieza más difícil de todo el motor. Gira a unas 12,500 rpm, recibe gas más caliente que el punto de fusión de su propio metal y lo jala una fuerza centrífuga enorme. Con una masa de unos 300 g y un radio de 0.3 m, la fuerza es F = m·ω²·r ≈ 154,000 N, el peso de unas 16 toneladas colgando de cada álabe. Para aguantarla, el álabe se encaja en el disco con una raíz en forma de abeto.</p>
-      <p>La misma fórmula sirve al revés: si se sabe cuánta fuerza aguanta la raíz, se puede despejar a cuántas revoluciones se rompería el álabe.</p>
+      <!-- ============ 2.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El álabe de la turbina de alta es la pieza más difícil de todo el motor. Gira a unas 12,500 rpm, recibe gas más caliente que el punto de fusión de su propio metal y lo jala una fuerza centrífuga enorme. Con una masa de unos 300 g y un radio de 0.3 m, la fuerza es F = m·ω²·r ≈ 154,000 N, el peso de unas 16 toneladas colgando de cada álabe. Para aguantarla, el álabe se encaja en el disco con una raíz en forma de abeto.</p>
+      <p class="base">La misma fórmula sirve al revés: si se sabe cuánta fuerza aguanta la raíz, se puede despejar a cuántas revoluciones se rompería el álabe.</p>
+      <!-- ============ 2.2 · TERMINA TU TEXTO ============ -->
       <figure><div class="ibox"><img src="img/alabe3d_disco.jpg" alt="Los álabes se encajan en el disco con una raíz en forma de abeto." loading="lazy"><a class="b3d" href="modelos/alabe.html?vista=disk" target="_blank" rel="noopener">Ver en 3D ↗</a></div><figcaption><b>Figura 2.</b> Los álabes se encajan en el disco con una raíz en forma de abeto.</figcaption></figure>
       
 <div class="calc" id="calc-rpm">
@@ -293,25 +324,37 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font
     </div>
     <div class="sub" id="s2-3">
       <h3><span>2.3</span>El peso siempre cuenta</h3>
-      <!-- TEXTO 2.3: cambia estos párrafos por tu texto -->
-      <p>En ingeniería civil, una viga débil se refuerza agregándole material. En aeroespacial eso no se puede hacer, porque cada kilo extra cuesta combustible durante toda la vida del avión. Por eso cada material se elige buscando el mejor equilibrio entre resistencia, temperatura y densidad.</p>
+      <!-- ============ 2.3 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">En ingeniería civil, una viga débil se refuerza agregándole material. En aeroespacial eso no se puede hacer, porque cada kilo extra cuesta combustible durante toda la vida del avión. Por eso cada material se elige buscando el mejor equilibrio entre resistencia, temperatura y densidad.</p>
+      <!-- ============ 2.3 · TERMINA TU TEXTO ============ -->
     </div>
   </section>
   <section id="niquel" class="sec">
     <p class="kick">Sección 3</p>
     <h2>Lo viejo: superaleaciones de níquel</h2>
-    <!-- TEXTO 3: introducción de la sección -->
-    <p>Durante más de 50 años, la zona caliente del motor se ha hecho con superaleaciones base níquel. Su gran virtud es que mantienen la resistencia a temperaturas donde el acero ya se ablanda.</p>
+    <!-- ============ 3 INTRODUCCIÓN DE LA SECCIÓN · EMPIEZA TU TEXTO ============
+         Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+         (sin class="base"; los que dicen class="base" son el texto de guía) -->
+    <p class="base">Durante más de 50 años, la zona caliente del motor se ha hecho con superaleaciones base níquel. Su gran virtud es que mantienen la resistencia a temperaturas donde el acero ya se ablanda.</p>
+    <!-- ============ 3 INTRODUCCIÓN DE LA SECCIÓN · TERMINA TU TEXTO ============ -->
     <div class="sub" id="s3-1">
       <h3><span>3.1</span>Inconel 718 y los monocristales</h3>
-      <!-- TEXTO 3.1: cambia estos párrafos por tu texto -->
-      <p>Hay dos familias principales. El Inconel 718 es la superaleación más usada en discos, carcasas y partes del compresor, y trabaja bien hasta unos 650 °C. Para los álabes de la turbina de alta se usan monocristales, como el CMSX-4, el René N5 o el CMSX-10: la pieza entera crece como un solo cristal, sin fronteras de grano. Esas fronteras son justo los puntos débiles donde empieza el creep, la deformación lenta de un metal sometido a calor y carga durante mucho tiempo.</p>
+      <!-- ============ 3.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Hay dos familias principales. El Inconel 718 es la superaleación más usada en discos, carcasas y partes del compresor, y trabaja bien hasta unos 650 °C. Para los álabes de la turbina de alta se usan monocristales, como el CMSX-4, el René N5 o el CMSX-10: la pieza entera crece como un solo cristal, sin fronteras de grano. Esas fronteras son justo los puntos débiles donde empieza el creep, la deformación lenta de un metal sometido a calor y carga durante mucho tiempo.</p>
+      <!-- ============ 3.1 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s3-2">
       <h3><span>3.2</span>Cómo se fabrica un álabe monocristalino</h3>
-      <!-- TEXTO 3.2: cambia estos párrafos por tu texto -->
-      <p>El álabe se hace por fundición a la cera perdida. Primero se moldea en cera, después se cubre con capas de cerámica hasta formar un cascarón y se derrite la cera. El metal fundido se vierte al vacío en ese molde, que está sobre una placa de cobre enfriada. Luego el molde baja lentamente fuera del horno, de modo que el metal solidifica de abajo hacia arriba.</p>
-      <p>Al solidificar crecen dendritas con forma de pino, todas en la misma dirección. En la base del molde hay una espiral, el selector de grano, que funciona como un filtro: de los muchos granos que empiezan a crecer, solo uno logra atravesarla, y ese cristal único forma todo el álabe.</p>
+      <!-- ============ 3.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El álabe se hace por fundición a la cera perdida. Primero se moldea en cera, después se cubre con capas de cerámica hasta formar un cascarón y se derrite la cera. El metal fundido se vierte al vacío en ese molde, que está sobre una placa de cobre enfriada. Luego el molde baja lentamente fuera del horno, de modo que el metal solidifica de abajo hacia arriba.</p>
+      <p class="base">Al solidificar crecen dendritas con forma de pino, todas en la misma dirección. En la base del molde hay una espiral, el selector de grano, que funciona como un filtro: de los muchos granos que empiezan a crecer, solo uno logra atravesarla, y ese cristal único forma todo el álabe.</p>
+      <!-- ============ 3.2 · TERMINA TU TEXTO ============ -->
       <figure class="vid"><div class="vbox" data-src="videos/a4_fundicion.mp4"><img src="img/poster_a4_fundicion.jpg" alt="Fundición y selector de grano" loading="lazy"><button class="play" aria-label="Reproducir"></button><span class="dur">63 s</span></div><figcaption><b>Animación · Fundición y selector de grano.</b> Cera perdida, vertido, enfriamiento direccional y la espiral que deja pasar un solo cristal.</figcaption></figure>
       <div class="pair"><figure><div class="ibox"><img src="img/v_fundicion_crisol.jpg" alt="Horno de fundición: crisol, molde cerámico y placa de cobre." loading="lazy"></div><figcaption><b>Figura 3.</b> Horno de fundición: crisol, molde cerámico y placa de cobre. <span class="cr">Imagen tomada del video de Veritasium en español.</span></figcaption></figure><figure><div class="ibox"><img src="img/v_selector_espiral.jpg" alt="Selector de grano en espiral: de muchos granos a uno solo (simulación de Hongbiao Dong, Universidad de Birmingham)." loading="lazy"></div><figcaption><b>Figura 4.</b> Selector de grano en espiral: de muchos granos a uno solo (simulación de Hongbiao Dong, Universidad de Birmingham). <span class="cr">Imagen tomada del video de Veritasium en español.</span></figcaption></figure></div>
       <figure class="vid"><div class="vbox" data-src="videos/a3_dendritas.mp4"><img src="img/poster_a3_dendritas.jpg" alt="Crecimiento de dendritas" loading="lazy"><button class="play" aria-label="Reproducir"></button><span class="dur">47 s</span></div><figcaption><b>Animación · Crecimiento de dendritas.</b> Solidificación de abajo hacia arriba: dendritas en forma de pino y bloques γ′ dentro de ellas.</figcaption></figure>
@@ -319,86 +362,128 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font
     </div>
     <div class="sub" id="s3-3">
       <h3><span>3.3</span>La microestructura: fases γ y γ′</h3>
-      <!-- TEXTO 3.3: cambia estos párrafos por tu texto -->
-      <p>Dentro del cristal conviven dos fases. La fase γ es níquel con los demás elementos acomodados al azar. La fase γ′ (gamma prima) es Ni₃Al ordenado: en cada celda el aluminio ocupa las esquinas y el níquel el centro de las caras.</p>
-      <p>La γ′ precipita en forma de bloques casi cúbicos de menos de 1 µm, separados por canales delgados de γ. En el CMSX-4 estos bloques ocupan cerca del 70% del volumen. No forman una cuadrícula perfecta: tienen tamaños distintos, están desfasados y los canales no son rectos. Además, cada elemento de la aleación prefiere una fase: el renio y el tungsteno se quedan en los canales, y el aluminio, el titanio y el tantalio en los bloques.</p>
+      <!-- ============ 3.3 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Dentro del cristal conviven dos fases. La fase γ es níquel con los demás elementos acomodados al azar. La fase γ′ (gamma prima) es Ni₃Al ordenado: en cada celda el aluminio ocupa las esquinas y el níquel el centro de las caras.</p>
+      <p class="base">La γ′ precipita en forma de bloques casi cúbicos de menos de 1 µm, separados por canales delgados de γ. En el CMSX-4 estos bloques ocupan cerca del 70% del volumen. No forman una cuadrícula perfecta: tienen tamaños distintos, están desfasados y los canales no son rectos. Además, cada elemento de la aleación prefiere una fase: el renio y el tungsteno se quedan en los canales, y el aluminio, el titanio y el tantalio en los bloques.</p>
+      <!-- ============ 3.3 · TERMINA TU TEXTO ============ -->
       <figure class="vid"><div class="vbox" data-src="videos/a1_gamma_gammaprima.mp4"><img src="img/poster_a1_gamma_gammaprima.jpg" alt="De gamma a gamma prima" loading="lazy"><button class="play" aria-label="Reproducir"></button><span class="dur">52 s</span></div><figcaption><b>Animación · De gamma a gamma prima.</b> El aluminio se ordena dentro de la red de níquel y forma bloques irregulares de γ′.</figcaption></figure>
       <figure><div class="ibox"><img src="img/v_gammaprima_celda.jpg" alt="Celda de γ′ (Ni₃Al): aluminio en las esquinas, níquel en el centro de las caras." loading="lazy"></div><figcaption><b>Figura 6.</b> Celda de γ′ (Ni₃Al): aluminio en las esquinas, níquel en el centro de las caras. <span class="cr">Imagen tomada del video de Veritasium en español.</span></figcaption></figure>
     </div>
     <div class="sub" id="s3-4">
       <h3><span>3.4</span>Por qué no se deforma: dislocaciones y creep</h3>
-      <!-- TEXTO 3.4: cambia estos párrafos por tu texto -->
-      <p>Un metal se deforma cuando se mueven dislocaciones, que son defectos en el acomodo de los átomos. En un metal común avanzan con facilidad. En una superaleación, en cambio, la dislocación no puede cortar fácilmente los bloques ordenados de γ′, así que tiene que buscar camino por los canales de γ. Como los bloques están desfasados, ese camino es una escalera que cambia de dirección a cada rato. Al rodear cada bloque, la dislocación se curva y deja un anillo alrededor (mecanismo de Orowan), lo que hace cada vez más difícil seguir deformándola.</p>
-      <p>Si los bloques estuvieran en una cuadrícula perfecta, habría canales rectos y la dislocación pasaría con mucha más facilidad. Su irregularidad es parte de lo que hace al material tan resistente al creep.</p>
+      <!-- ============ 3.4 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Un metal se deforma cuando se mueven dislocaciones, que son defectos en el acomodo de los átomos. En un metal común avanzan con facilidad. En una superaleación, en cambio, la dislocación no puede cortar fácilmente los bloques ordenados de γ′, así que tiene que buscar camino por los canales de γ. Como los bloques están desfasados, ese camino es una escalera que cambia de dirección a cada rato. Al rodear cada bloque, la dislocación se curva y deja un anillo alrededor (mecanismo de Orowan), lo que hace cada vez más difícil seguir deformándola.</p>
+      <p class="base">Si los bloques estuvieran en una cuadrícula perfecta, habría canales rectos y la dislocación pasaría con mucha más facilidad. Su irregularidad es parte de lo que hace al material tan resistente al creep.</p>
+      <!-- ============ 3.4 · TERMINA TU TEXTO ============ -->
       <figure class="vid"><div class="vbox" data-src="videos/a2_dislocacion_cubos.mp4"><img src="img/poster_a2_dislocacion_cubos.jpg" alt="Dislocaciones y bloques γ′" loading="lazy"><button class="play" aria-label="Reproducir"></button><span class="dur">56 s</span></div><figcaption><b>Animación · Dislocaciones y bloques γ′.</b> La dislocación solo avanza por los canales, en escalera, y deja anillos alrededor de cada bloque.</figcaption></figure>
       <div class="pair"><figure><div class="ibox"><img src="img/v_cubos_sem.jpg" alt="Bloques γ′ reales al microscopio electrónico, a 12,000 aumentos." loading="lazy"></div><figcaption><b>Figura 7.</b> Bloques γ′ reales al microscopio electrónico, a 12,000 aumentos. <span class="cr">Imagen tomada del video de Veritasium en español.</span></figcaption></figure><figure><div class="ibox"><img src="img/v_cubos_dislocacion.jpg" alt="Camino de una dislocación entre los bloques γ′." loading="lazy"></div><figcaption><b>Figura 8.</b> Camino de una dislocación entre los bloques γ′. <span class="cr">Imagen tomada del video de Veritasium en español.</span></figcaption></figure></div>
     </div>
     <div class="sub" id="s3-5">
       <h3><span>3.5</span>Cómo sobreviven al calor: enfriamiento y TBC</h3>
-      <!-- TEXTO 3.5: cambia estos párrafos por tu texto -->
-      <p>El álabe sobrevive a gases más calientes que su punto de fusión gracias a dos trucos. Es hueco: por dentro recorre aire del compresor, a unos 600 °C, que sale por pequeños agujeros y forma una película que separa el metal del gas. Y por fuera lleva una barrera térmica (TBC) de zirconia estabilizada con itria, una cerámica que conduce muy poco el calor, pegada al metal con una capa de anclaje.</p>
+      <!-- ============ 3.5 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El álabe sobrevive a gases más calientes que su punto de fusión gracias a dos trucos. Es hueco: por dentro recorre aire del compresor, a unos 600 °C, que sale por pequeños agujeros y forma una película que separa el metal del gas. Y por fuera lleva una barrera térmica (TBC) de zirconia estabilizada con itria, una cerámica que conduce muy poco el calor, pegada al metal con una capa de anclaje.</p>
+      <!-- ============ 3.5 · TERMINA TU TEXTO ============ -->
       <figure class="m3"><div class="mbox" data-src="modelos/alabe.html?embed=1&amp;vista=creep"><div class="mload">Cargando modelo 3D…</div></div><figcaption><b>Álabe de turbina en 3D.</b> Arrástralo para girarlo. Prueba las vistas de capas, enfriamiento, corte, disco y creep. <a href="modelos/alabe.html" target="_blank" rel="noopener">Abrir en pantalla completa ↗</a></figcaption></figure>
       <div class="pair"><figure><div class="ibox"><img src="img/alabe3d_corte.jpg" alt="Corte del álabe: pared delgada, nervios, cavidades para el aire y barrera térmica." loading="lazy"><a class="b3d" href="modelos/alabe.html?vista=section" target="_blank" rel="noopener">Ver en 3D ↗</a></div><figcaption><b>Figura 9.</b> Corte del álabe: pared delgada, nervios, cavidades para el aire y barrera térmica.</figcaption></figure><figure><div class="ibox"><img src="img/alabe3d_enfriamiento.jpg" alt="El aire del compresor entra por la raíz, recorre el interior y sale por los agujeros." loading="lazy"><a class="b3d" href="modelos/alabe.html?vista=cool" target="_blank" rel="noopener">Ver en 3D ↗</a></div><figcaption><b>Figura 10.</b> El aire del compresor entra por la raíz, recorre el interior y sale por los agujeros.</figcaption></figure></div>
     </div>
     <div class="sub" id="s3-6">
       <h3><span>3.6</span>El límite físico</h3>
-      <!-- TEXTO 3.6: cambia estos párrafos por tu texto -->
-      <p>Estas aleaciones ya trabajan muy cerca de su punto de fusión, y pesan entre 8.2 y 8.7 g/cm³. Su resistencia llega al máximo entre 750 y 850 °C gracias a la fase γ′, mientras que un acero común, en un ensayo a 200 MPa, falla cerca de los 600 °C. El problema es que, para subir más la temperatura, hace falta más aire de enfriamiento, y ese aire se le roba al ciclo del motor, lo que le resta eficiencia.</p>
+      <!-- ============ 3.6 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Estas aleaciones ya trabajan muy cerca de su punto de fusión, y pesan entre 8.2 y 8.7 g/cm³. Su resistencia llega al máximo entre 750 y 850 °C gracias a la fase γ′, mientras que un acero común, en un ensayo a 200 MPa, falla cerca de los 600 °C. El problema es que, para subir más la temperatura, hace falta más aire de enfriamiento, y ese aire se le roba al ciclo del motor, lo que le resta eficiencia.</p>
+      <!-- ============ 3.6 · TERMINA TU TEXTO ============ -->
       <figure class="vid"><div class="vbox" data-src="videos/a5_traccion.mp4"><img src="img/poster_a5_traccion.jpg" alt="Acero contra superaleación de níquel" loading="lazy"><button class="play" aria-label="Reproducir"></button><span class="dur">50 s</span></div><figcaption><b>Animación · Acero contra superaleación de níquel.</b> Ensayo a 200 MPa mientras sube la temperatura, y curva de resistencia contra temperatura.</figcaption></figure>
     </div>
     <div class="sub" id="s3-7">
       <h3><span>3.7</span>El límite económico: el renio</h3>
-      <!-- TEXTO 3.7: cambia estos párrafos por tu texto -->
-      <p>Los monocristales más avanzados llevan entre 3% y 6% de renio, que mejora mucho la resistencia al creep. Pero el renio no se mina por sí solo: sale como subproducto del cobre y el molibdeno, así que su producción no puede crecer rápido. Según el USGS, en 2025 costó unos 2,600 dólares por kilo, 90% más que en 2024. Por eso fabricantes como GE desarrollaron aleaciones con menos renio y reciclan el metal de álabes viejos. Es un ejemplo de cómo el mercado de una materia prima también empuja a buscar otros materiales.</p>
+      <!-- ============ 3.7 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Los monocristales más avanzados llevan entre 3% y 6% de renio, que mejora mucho la resistencia al creep. Pero el renio no se mina por sí solo: sale como subproducto del cobre y el molibdeno, así que su producción no puede crecer rápido. Según el USGS, en 2025 costó unos 2,600 dólares por kilo, 90% más que en 2024. Por eso fabricantes como GE desarrollaron aleaciones con menos renio y reciclan el metal de álabes viejos. Es un ejemplo de cómo el mercado de una materia prima también empuja a buscar otros materiales.</p>
+      <!-- ============ 3.7 · TERMINA TU TEXTO ============ -->
     </div>
   </section>
   <section id="arena" class="sec">
     <p class="kick">Sección 4</p>
     <h2>El punto débil de las cerámicas: arena, polvo y sal</h2>
-    <!-- TEXTO 4: introducción de la sección -->
-    <p>La protección cerámica funciona muy bien en aire limpio, pero el aire real trae arena, polvo, ceniza volcánica y sal, y eso cambia las cosas.</p>
+    <!-- ============ 4 INTRODUCCIÓN DE LA SECCIÓN · EMPIEZA TU TEXTO ============
+         Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+         (sin class="base"; los que dicen class="base" son el texto de guía) -->
+    <p class="base">La protección cerámica funciona muy bien en aire limpio, pero el aire real trae arena, polvo, ceniza volcánica y sal, y eso cambia las cosas.</p>
+    <!-- ============ 4 INTRODUCCIÓN DE LA SECCIÓN · TERMINA TU TEXTO ============ -->
     <div class="sub" id="s4-1">
       <h3><span>4.1</span>Arena y polvo (CMAS)</h3>
-      <!-- TEXTO 4.1: cambia estos párrafos por tu texto -->
-      <p>La arena y el polvo están hechos de silicatos de calcio, magnesio y aluminio, conocidos como CMAS. Al pasar por la zona caliente se funden y se pegan a las piezas como vidrio. El primer daño es que tapan los agujeros de enfriamiento: sin la película de aire, el metal se calienta más de lo previsto. El segundo es que se infiltran en los poros de la cerámica; cuando el motor se enfría, el CMAS se solidifica dentro, la cerámica pierde flexibilidad, se agrieta y se desprende. Por eso los fabricantes prueban sus motores inyectándoles polvo a propósito; GE sometió las piezas de CMC del GE9X a unos 1,800 ciclos con polvo y residuos.</p>
+      <!-- ============ 4.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">La arena y el polvo están hechos de silicatos de calcio, magnesio y aluminio, conocidos como CMAS. Al pasar por la zona caliente se funden y se pegan a las piezas como vidrio. El primer daño es que tapan los agujeros de enfriamiento: sin la película de aire, el metal se calienta más de lo previsto. El segundo es que se infiltran en los poros de la cerámica; cuando el motor se enfría, el CMAS se solidifica dentro, la cerámica pierde flexibilidad, se agrieta y se desprende. Por eso los fabricantes prueban sus motores inyectándoles polvo a propósito; GE sometió las piezas de CMC del GE9X a unos 1,800 ciclos con polvo y residuos.</p>
+      <!-- ============ 4.1 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s4-2">
       <h3><span>4.2</span>Sal y corrosión en caliente</h3>
-      <!-- TEXTO 4.2: cambia estos párrafos por tu texto -->
-      <p>Los aviones navales respiran aire con sal, que en las zonas calientes reacciona con las superaleaciones y las corroe. En un portaaviones el ambiente es tan agresivo que los deflectores de la cubierta se enfrían con agua de mar, y el motor trabaja todo el tiempo rodeado de sal.</p>
+      <!-- ============ 4.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Los aviones navales respiran aire con sal, que en las zonas calientes reacciona con las superaleaciones y las corroe. En un portaaviones el ambiente es tan agresivo que los deflectores de la cubierta se enfrían con agua de mar, y el motor trabaja todo el tiempo rodeado de sal.</p>
+      <!-- ============ 4.2 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s4-3">
       <h3><span>4.3</span>Por qué importa en dinero</h3>
-      <!-- TEXTO 4.3: cambia estos párrafos por tu texto -->
-      <p>Las aerolíneas que operan en Medio Oriente, el norte de África o la India tienen que llevar sus motores al taller más seguido, y cada visita es muy cara. Los militares lo sufren todavía más, porque operan desde bases en el desierto y vuelan a baja altura, donde ingieren más polvo.</p>
+      <!-- ============ 4.3 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Las aerolíneas que operan en Medio Oriente, el norte de África o la India tienen que llevar sus motores al taller más seguido, y cada visita es muy cara. Los militares lo sufren todavía más, porque operan desde bases en el desierto y vuelan a baja altura, donde ingieren más polvo.</p>
+      <!-- ============ 4.3 · TERMINA TU TEXTO ============ -->
     </div>
   </section>
   <section id="cmc" class="sec">
     <p class="kick">Sección 5</p>
     <h2>Lo nuevo: compuestos de matriz cerámica (CMC)</h2>
-    <!-- TEXTO 5: introducción de la sección -->
-    <p>Los CMC de carburo de silicio (SiC/SiC) son la siguiente etapa: pesan un tercio que el metal y aguantan unos 1,315 °C, más que el punto de fusión de muchas superaleaciones.</p>
+    <!-- ============ 5 INTRODUCCIÓN DE LA SECCIÓN · EMPIEZA TU TEXTO ============
+         Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+         (sin class="base"; los que dicen class="base" son el texto de guía) -->
+    <p class="base">Los CMC de carburo de silicio (SiC/SiC) son la siguiente etapa: pesan un tercio que el metal y aguantan unos 1,315 °C, más que el punto de fusión de muchas superaleaciones.</p>
+    <!-- ============ 5 INTRODUCCIÓN DE LA SECCIÓN · TERMINA TU TEXTO ============ -->
     <div class="sub" id="s5-1">
       <h3><span>5.1</span>Qué es un CMC</h3>
-      <!-- TEXTO 5.1: cambia estos párrafos por tu texto -->
-      <p>Una cerámica común, como un plato, es dura pero frágil: si se golpea, se rompe de golpe, y eso no sirve en un motor. Un CMC es distinto. Está hecho de fibras de carburo de silicio tejidas y metidas en una matriz del mismo material. Si aparece una grieta, las fibras la frenan, y la pieza no falla de forma repentina.</p>
+      <!-- ============ 5.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Una cerámica común, como un plato, es dura pero frágil: si se golpea, se rompe de golpe, y eso no sirve en un motor. Un CMC es distinto. Está hecho de fibras de carburo de silicio tejidas y metidas en una matriz del mismo material. Si aparece una grieta, las fibras la frenan, y la pieza no falla de forma repentina.</p>
+      <!-- ============ 5.1 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s5-2">
       <h3><span>5.2</span>Su propio recubrimiento: EBC</h3>
-      <!-- TEXTO 5.2: cambia estos párrafos por tu texto -->
-      <p>El carburo de silicio tiene su propia debilidad: se degrada con el vapor de agua que sale de la combustión. Por eso los CMC necesitan una barrera ambiental (EBC), y esa barrera también es atacada por el CMAS. Desarrollar EBC que aguanten ambos es uno de los grandes retos actuales, y una línea de investigación importante de NASA Glenn.</p>
+      <!-- ============ 5.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El carburo de silicio tiene su propia debilidad: se degrada con el vapor de agua que sale de la combustión. Por eso los CMC necesitan una barrera ambiental (EBC), y esa barrera también es atacada por el CMAS. Desarrollar EBC que aguanten ambos es uno de los grandes retos actuales, y una línea de investigación importante de NASA Glenn.</p>
+      <!-- ============ 5.2 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s5-3">
       <h3><span>5.3</span>Dónde ya vuelan</h3>
-      <!-- TEXTO 5.3: cambia estos párrafos por tu texto -->
-      <p>El CFM LEAP, que usan el Airbus A320neo y el Boeing 737 MAX, fue el primer motor comercial con CMC en la turbina de alta: lleva 18 shrouds de CMC, que son los anillos estáticos que rodean a los álabes. El GE9X del Boeing 777X fue más lejos, con cinco piezas de CMC en la turbina y el combustor, y gasta 10% menos combustible que el GE90-115B al que reemplaza. Sin embargo, todas estas piezas son estáticas: ningún motor comercial usa todavía álabes giratorios de CMC.</p>
+      <!-- ============ 5.3 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El CFM LEAP, que usan el Airbus A320neo y el Boeing 737 MAX, fue el primer motor comercial con CMC en la turbina de alta: lleva 18 shrouds de CMC, que son los anillos estáticos que rodean a los álabes. El GE9X del Boeing 777X fue más lejos, con cinco piezas de CMC en la turbina y el combustor, y gasta 10% menos combustible que el GE90-115B al que reemplaza. Sin embargo, todas estas piezas son estáticas: ningún motor comercial usa todavía álabes giratorios de CMC.</p>
+      <!-- ============ 5.3 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s5-4">
       <h3><span>5.4</span>Álabes de cerámica vs álabes de aleaciones de níquel</h3>
-      <!-- TEXTO 5.4: cambia estos párrafos por tu texto -->
-      <p>Las cerámicas, por su lado, se caracterizan por su alta resistencia al calor y su poco peso. Un CMC aguanta hasta unos 1,315 °C con una densidad de apenas 2.7 a 2.9 g/cm³, así que la misma pieza pesa cerca de un tercio y necesita mucho menos aire de enfriamiento. No obstante, su debilidad es la fragilidad: aunque las fibras frenan las grietas, una cerámica sigue siendo menos tolerante a golpes y cargas que un metal. Además, se degrada con el vapor de agua, depende de su recubrimiento y todavía es cara y poco probada en piezas que giran.</p>
-      <p>Las superaleaciones de níquel, por otro lado, son muy tenaces y resistentes a cargas mecánicas a alta temperatura, y tienen más de 50 años de experiencia en vuelo. El CMSX-4 aguanta cerca de 1,100 °C en el metal, y más con enfriamiento y barrera térmica. Su desventaja es el peso, de 8.2 a 8.7 g/cm³, que ya trabajan al límite de su temperatura y que necesitan mucho aire de enfriamiento y elementos caros como el renio.</p>
-      <p>En pocas palabras, la cerámica gana en temperatura y peso, y el níquel gana en tenacidad y confianza. Por eso hoy los CMC se usan en piezas estáticas y el níquel sigue en las que giran.</p>
+      <!-- ============ 5.4 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Las cerámicas, por su lado, se caracterizan por su alta resistencia al calor y su poco peso. Un CMC aguanta hasta unos 1,315 °C con una densidad de apenas 2.7 a 2.9 g/cm³, así que la misma pieza pesa cerca de un tercio y necesita mucho menos aire de enfriamiento. No obstante, su debilidad es la fragilidad: aunque las fibras frenan las grietas, una cerámica sigue siendo menos tolerante a golpes y cargas que un metal. Además, se degrada con el vapor de agua, depende de su recubrimiento y todavía es cara y poco probada en piezas que giran.</p>
+      <p class="base">Las superaleaciones de níquel, por otro lado, son muy tenaces y resistentes a cargas mecánicas a alta temperatura, y tienen más de 50 años de experiencia en vuelo. El CMSX-4 aguanta cerca de 1,100 °C en el metal, y más con enfriamiento y barrera térmica. Su desventaja es el peso, de 8.2 a 8.7 g/cm³, que ya trabajan al límite de su temperatura y que necesitan mucho aire de enfriamiento y elementos caros como el renio.</p>
+      <p class="base">En pocas palabras, la cerámica gana en temperatura y peso, y el níquel gana en tenacidad y confianza. Por eso hoy los CMC se usan en piezas estáticas y el níquel sigue en las que giran.</p>
+      <!-- ============ 5.4 · TERMINA TU TEXTO ============ -->
       
 <div class="calc" id="calc-dens">
   <div class="calc-t"><b>La misma pieza en níquel y en CMC</b><code>masa = densidad × volumen</code></div>
@@ -415,82 +500,127 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font
   <section id="economia" class="sec">
     <p class="kick">Sección 6</p>
     <h2>El porqué económico: un material nuevo cuesta décadas y miles de millones</h2>
-    <!-- TEXTO 6: introducción de la sección -->
-    <p>Un material no llega al avión solo porque funcione en el laboratorio. Alguien tiene que pagar por desarrollarlo, certificarlo y, sobre todo, fabricarlo en volumen.</p>
+    <!-- ============ 6 INTRODUCCIÓN DE LA SECCIÓN · EMPIEZA TU TEXTO ============
+         Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+         (sin class="base"; los que dicen class="base" son el texto de guía) -->
+    <p class="base">Un material no llega al avión solo porque funcione en el laboratorio. Alguien tiene que pagar por desarrollarlo, certificarlo y, sobre todo, fabricarlo en volumen.</p>
+    <!-- ============ 6 INTRODUCCIÓN DE LA SECCIÓN · TERMINA TU TEXTO ============ -->
     <div class="sub" id="s6-1">
       <h3><span>6.1</span>La inversión</h3>
-      <!-- TEXTO 6.1: cambia estos párrafos por tu texto -->
-      <p>Los CMC tardaron más de 30 años en volar: GE obtuvo su primera patente sobre ellos en 1986, y la primera pieza voló en el LEAP a mediados de la década de 2010. En unos diez años, GE gastó más de 1,500 millones de dólares para llevarlos al mercado. No bastaba con inventar el material: había que construir una cadena completa. Antes, la única fábrica grande de fibra de carburo de silicio estaba en Japón, así que GE abrió en Huntsville, Alabama, una planta de fibra y otra de cinta de CMC, que juntas costaron más de 200 millones de dólares; las piezas terminadas se hacen en Asheville, Carolina del Norte. La planta de fibra recibió 21.9 millones de la Fuerza Aérea de Estados Unidos, porque el gobierno también necesita esa fibra para sus motores.</p>
+      <!-- ============ 6.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Los CMC tardaron más de 30 años en volar: GE obtuvo su primera patente sobre ellos en 1986, y la primera pieza voló en el LEAP a mediados de la década de 2010. En unos diez años, GE gastó más de 1,500 millones de dólares para llevarlos al mercado. No bastaba con inventar el material: había que construir una cadena completa. Antes, la única fábrica grande de fibra de carburo de silicio estaba en Japón, así que GE abrió en Huntsville, Alabama, una planta de fibra y otra de cinta de CMC, que juntas costaron más de 200 millones de dólares; las piezas terminadas se hacen en Asheville, Carolina del Norte. La planta de fibra recibió 21.9 millones de la Fuerza Aérea de Estados Unidos, porque el gobierno también necesita esa fibra para sus motores.</p>
+      <!-- ============ 6.1 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s6-2">
       <h3><span>6.2</span>Por qué vale la pena</h3>
-      <!-- TEXTO 6.2: cambia estos párrafos por tu texto -->
-      <p>GE estima que los CMC mejoran la eficiencia de combustible entre 1% y 2%, y que reducir 1% el consumo le ahorra a una aerolínea más de un millón de dólares al año. Multiplicado por miles de motores que vuelan 20 o 30 años, el ahorro justifica la inversión. Además, una pieza más durable pasa más tiempo en el ala y menos en el taller.</p>
+      <!-- ============ 6.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">GE estima que los CMC mejoran la eficiencia de combustible entre 1% y 2%, y que reducir 1% el consumo le ahorra a una aerolínea más de un millón de dólares al año. Multiplicado por miles de motores que vuelan 20 o 30 años, el ahorro justifica la inversión. Además, una pieza más durable pasa más tiempo en el ala y menos en el taller.</p>
+      <!-- ============ 6.2 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s6-3">
       <h3><span>6.3</span>Quién paga</h3>
-      <!-- TEXTO 6.3: cambia estos párrafos por tu texto -->
-      <p>El desarrollo combina dinero privado y público. Las aerolíneas pagan indirectamente, al comprar motores más caros pero más eficientes, y los gobiernos financian la parte de mayor riesgo porque la tecnología también sirve para defensa. El precio del petróleo decide el ritmo: en los años 80, GE desarrolló un motor de hélice abierta muy eficiente, el GE36, pero se abandonó cuando el petróleo bajó de precio.</p>
+      <!-- ============ 6.3 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El desarrollo combina dinero privado y público. Las aerolíneas pagan indirectamente, al comprar motores más caros pero más eficientes, y los gobiernos financian la parte de mayor riesgo porque la tecnología también sirve para defensa. El precio del petróleo decide el ritmo: en los años 80, GE desarrolló un motor de hélice abierta muy eficiente, el GE36, pero se abandonó cuando el petróleo bajó de precio.</p>
+      <!-- ============ 6.3 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s6-4">
       <h3><span>6.4</span>México en la cadena</h3>
-      <!-- TEXTO 6.4: cambia estos párrafos por tu texto -->
-      <p>México también forma parte de esta industria. Safran opera en el país desde hace 35 años, con 21 instalaciones y más de 16,000 empleados, y es el mayor empleador aeroespacial de México. En Querétaro fabrica piezas para motores CFM y ensambla motores LEAP, y en junio de 2026 abrió un taller de mantenimiento de motores CFM56 y LEAP con una inversión de 140 millones de dólares. Es decir, los motores que usan CMC también se ensamblan y reparan aquí.</p>
+      <!-- ============ 6.4 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">México también forma parte de esta industria. Safran opera en el país desde hace 35 años, con 21 instalaciones y más de 16,000 empleados, y es el mayor empleador aeroespacial de México. En Querétaro fabrica piezas para motores CFM y ensambla motores LEAP, y en junio de 2026 abrió un taller de mantenimiento de motores CFM56 y LEAP con una inversión de 140 millones de dólares. Es decir, los motores que usan CMC también se ensamblan y reparan aquí.</p>
+      <!-- ============ 6.4 · TERMINA TU TEXTO ============ -->
     </div>
   </section>
   <section id="militar" class="sec">
     <p class="kick">Sección 7</p>
     <h2>Comercial vs militar: mismos materiales, necesidades opuestas</h2>
-    <!-- TEXTO 7: introducción de la sección -->
-    <p>El motor comercial se diseña para gastar poco y durar mucho; el militar, para rendir al máximo aunque dure menos. Esa diferencia cambia dónde y cuándo entra cada material.</p>
+    <!-- ============ 7 INTRODUCCIÓN DE LA SECCIÓN · EMPIEZA TU TEXTO ============
+         Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+         (sin class="base"; los que dicen class="base" son el texto de guía) -->
+    <p class="base">El motor comercial se diseña para gastar poco y durar mucho; el militar, para rendir al máximo aunque dure menos. Esa diferencia cambia dónde y cuándo entra cada material.</p>
+    <!-- ============ 7 INTRODUCCIÓN DE LA SECCIÓN · TERMINA TU TEXTO ============ -->
     <div class="sub" id="s7-1">
       <h3><span>7.1</span>Lado comercial: la fiabilidad manda</h3>
-      <!-- TEXTO 7.1: cambia estos párrafos por tu texto -->
-      <p>Los motores de turbina actuales fallan más o menos una vez cada 375,000 horas de vuelo, frente a una vez cada 3,200 horas en los motores de pistón. Esa fiabilidad permitió la certificación ETOPS, que deja a bimotores como el B787 o el A350 volar a más de 300 minutos de un aeropuerto alternativo, y por eso desaparecieron los aviones de tres y cuatro motores. Si un avión depende de solo dos motores, cada uno debe ser muy confiable, así que la aviación comercial mete los materiales nuevos con cautela, primero en piezas estáticas y con certificación de la FAA o la EASA. En estos motores, además, cerca del 90% del aire rodea el núcleo y solo el 10% pasa por él.</p>
+      <!-- ============ 7.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">Los motores de turbina actuales fallan más o menos una vez cada 375,000 horas de vuelo, frente a una vez cada 3,200 horas en los motores de pistón. Esa fiabilidad permitió la certificación ETOPS, que deja a bimotores como el B787 o el A350 volar a más de 300 minutos de un aeropuerto alternativo, y por eso desaparecieron los aviones de tres y cuatro motores. Si un avión depende de solo dos motores, cada uno debe ser muy confiable, así que la aviación comercial mete los materiales nuevos con cautela, primero en piezas estáticas y con certificación de la FAA o la EASA. En estos motores, además, cerca del 90% del aire rodea el núcleo y solo el 10% pasa por él.</p>
+      <!-- ============ 7.1 · TERMINA TU TEXTO ============ -->
       <figure><div class="ibox"><img src="img/motor3d_flujo.jpg" alt="Cerca del 90% del aire rodea el núcleo (azul) y solo el 10% pasa por él." loading="lazy"><a class="b3d" href="modelos/motor.html?vista=flow" target="_blank" rel="noopener">Ver en 3D ↗</a></div><figcaption><b>Figura 11.</b> Cerca del 90% del aire rodea el núcleo (azul) y solo el 10% pasa por él.</figcaption></figure>
     </div>
     <div class="sub" id="s7-2">
       <h3><span>7.2</span>Lado militar: el rendimiento manda</h3>
-      <!-- TEXTO 7.2: cambia estos párrafos por tu texto -->
-      <p>En un caza manda el rendimiento. El programa soviético I-90 resumió los requisitos de quinta generación como «5S + 1M», entre ellos el supercrucero (volar supersónico sin postcombustor), la baja firma térmica y el mantenimiento sencillo en bases improvisadas. Cada uno castiga al material: el supercrucero obliga al núcleo a trabajar muy caliente durante mucho tiempo, la firma térmica exige controlar la temperatura del escape y las bases improvisadas significan más polvo. Su motor, el AL-41F, tenía derivación variable y toberas orientables, pero sufrió problemas de vida útil: cuando se lleva un motor al límite, el material es lo primero que falla.</p>
+      <!-- ============ 7.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">En un caza manda el rendimiento. El programa soviético I-90 resumió los requisitos de quinta generación como «5S + 1M», entre ellos el supercrucero (volar supersónico sin postcombustor), la baja firma térmica y el mantenimiento sencillo en bases improvisadas. Cada uno castiga al material: el supercrucero obliga al núcleo a trabajar muy caliente durante mucho tiempo, la firma térmica exige controlar la temperatura del escape y las bases improvisadas significan más polvo. Su motor, el AL-41F, tenía derivación variable y toberas orientables, pero sufrió problemas de vida útil: cuando se lleva un motor al límite, el material es lo primero que falla.</p>
+      <!-- ============ 7.2 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s7-3">
       <h3><span>7.3</span>El caso del F-35: electricidad y calor</h3>
-      <!-- TEXTO 7.3: cambia estos párrafos por tu texto -->
-      <p>El motor F135 del F-35 da unas 43,000 libras de empuje con postcombustor, así que el empuje no era su problema. El problema es que la versión Block 4 del avión necesita cerca de 25% más electricidad, y toda esa electrónica genera calor que el motor tiene que disipar. Había dos opciones: un motor adaptativo nuevo, unos 25% más eficiente pero más caro y que no cabía en el F-35B de despegue vertical, o una mejora del núcleo del F135 existente, más barata y compatible con las tres versiones.</p>
-      <p>En marzo de 2023 el Pentágono eligió la mejora del núcleo. Ya había más de 1,500 motores F135 entregados a 20 países, y era más barato mejorarlos que cambiarlos. En septiembre de 2026 la mejora pasó una revisión de diseño clave y, junto con un nuevo sistema de enfriamiento, promete 7% más alcance y empuje y el doble de capacidad de enfriamiento. La lección es que, incluso en lo militar, no siempre gana la mejor tecnología, sino la que se ajusta al presupuesto y a la flota que ya existe.</p>
+      <!-- ============ 7.3 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El motor F135 del F-35 da unas 43,000 libras de empuje con postcombustor, así que el empuje no era su problema. El problema es que la versión Block 4 del avión necesita cerca de 25% más electricidad, y toda esa electrónica genera calor que el motor tiene que disipar. Había dos opciones: un motor adaptativo nuevo, unos 25% más eficiente pero más caro y que no cabía en el F-35B de despegue vertical, o una mejora del núcleo del F135 existente, más barata y compatible con las tres versiones.</p>
+      <p class="base">En marzo de 2023 el Pentágono eligió la mejora del núcleo. Ya había más de 1,500 motores F135 entregados a 20 países, y era más barato mejorarlos que cambiarlos. En septiembre de 2026 la mejora pasó una revisión de diseño clave y, junto con un nuevo sistema de enfriamiento, promete 7% más alcance y empuje y el doble de capacidad de enfriamiento. La lección es que, incluso en lo militar, no siempre gana la mejor tecnología, sino la que se ajusta al presupuesto y a la flota que ya existe.</p>
+      <!-- ============ 7.3 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s7-4">
       <h3><span>7.4</span>No todo motor militar es de caza</h3>
-      <!-- TEXTO 7.4: cambia estos párrafos por tu texto -->
-      <p>También hay aviones militares de apoyo, como el E-3 Sentry (AWACS), que usa la célula de un Boeing 707 y motores pensados para vuelos de 8 horas, no para maniobrar. Su motor tarda unos 7 segundos en responder a un cambio de potencia, mientras que un caza necesita respuesta casi inmediata. Por eso, cuando este trabajo habla de motor militar, se refiere a los motores de combate.</p>
-      <p>En resumen, el motor comercial busca bajo consumo y larga vida, tiene una relación de derivación alta (cerca de 10:1 en el GE9X), no usa postcombustor y vuela en régimen estable; lo deciden la aerolínea y la autoridad civil. El motor de combate busca empuje, maniobra, electricidad y enfriamiento, tiene derivación baja (menor a 1:1), usa postcombustor, aguanta cambios bruscos de hasta 6.5 G y dura menos; lo deciden el gobierno y su presupuesto. Hoy los comerciales usan CMC solo en piezas estáticas, mientras que los militares los prueban en zonas más calientes, incluso en piezas que giran.</p>
+      <!-- ============ 7.4 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">También hay aviones militares de apoyo, como el E-3 Sentry (AWACS), que usa la célula de un Boeing 707 y motores pensados para vuelos de 8 horas, no para maniobrar. Su motor tarda unos 7 segundos en responder a un cambio de potencia, mientras que un caza necesita respuesta casi inmediata. Por eso, cuando este trabajo habla de motor militar, se refiere a los motores de combate.</p>
+      <p class="base">En resumen, el motor comercial busca bajo consumo y larga vida, tiene una relación de derivación alta (cerca de 10:1 en el GE9X), no usa postcombustor y vuela en régimen estable; lo deciden la aerolínea y la autoridad civil. El motor de combate busca empuje, maniobra, electricidad y enfriamiento, tiene derivación baja (menor a 1:1), usa postcombustor, aguanta cambios bruscos de hasta 6.5 G y dura menos; lo deciden el gobierno y su presupuesto. Hoy los comerciales usan CMC solo en piezas estáticas, mientras que los militares los prueban en zonas más calientes, incluso en piezas que giran.</p>
+      <!-- ============ 7.4 · TERMINA TU TEXTO ============ -->
     </div>
   </section>
   <section id="futuro" class="sec">
     <p class="kick">Sección 8</p>
     <h2>Necesidades futuras: hacia dónde van los materiales</h2>
-    <!-- TEXTO 8: introducción de la sección -->
-    <p>La aviación comercial y la militar van hacia el mismo lugar, aunque por razones distintas: núcleos más pequeños y más calientes, hechos cada vez más de CMC.</p>
+    <!-- ============ 8 INTRODUCCIÓN DE LA SECCIÓN · EMPIEZA TU TEXTO ============
+         Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+         (sin class="base"; los que dicen class="base" son el texto de guía) -->
+    <p class="base">La aviación comercial y la militar van hacia el mismo lugar, aunque por razones distintas: núcleos más pequeños y más calientes, hechos cada vez más de CMC.</p>
+    <!-- ============ 8 INTRODUCCIÓN DE LA SECCIÓN · TERMINA TU TEXTO ============ -->
     <div class="sub" id="s8-1">
       <h3><span>8.1</span>Comercial: el motor de fan abierto</h3>
-      <!-- TEXTO 8.1: cambia estos párrafos por tu texto -->
-      <p>CFM, la sociedad entre GE y Safran, desarrolla el programa RISE, un motor sin carcasa alrededor del fan. Busca gastar más de 20% menos combustible y emitir 20% menos CO₂ que los motores más eficientes de hoy, y podría entrar en servicio a mediados de la década de 2030. Para lograrlo necesita un fan enorme de compuestos de carbono y un núcleo compacto y más caliente, con CMC en la zona caliente, y debe funcionar con 100% de combustible sostenible. Rolls-Royce y Pratt &amp; Whitney siguen otro camino, con turbofanes con caja reductora como el UltraFan, pero con la misma necesidad de materiales que aguanten más calor.</p>
+      <!-- ============ 8.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">CFM, la sociedad entre GE y Safran, desarrolla el programa RISE, un motor sin carcasa alrededor del fan. Busca gastar más de 20% menos combustible y emitir 20% menos CO₂ que los motores más eficientes de hoy, y podría entrar en servicio a mediados de la década de 2030. Para lograrlo necesita un fan enorme de compuestos de carbono y un núcleo compacto y más caliente, con CMC en la zona caliente, y debe funcionar con 100% de combustible sostenible. Rolls-Royce y Pratt &amp; Whitney siguen otro camino, con turbofanes con caja reductora como el UltraFan, pero con la misma necesidad de materiales que aguanten más calor.</p>
+      <!-- ============ 8.1 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s8-2">
       <h3><span>8.2</span>Militar: motores adaptativos de sexta generación</h3>
-      <!-- TEXTO 8.2: cambia estos párrafos por tu texto -->
-      <p>La Fuerza Aérea de Estados Unidos desarrolla, dentro del programa NGAP, dos motores rivales para el caza F-47: el XA102 de GE y el XA103 de Pratt &amp; Whitney. Ambos tienen un tercer flujo de aire que les permite cambiar entre un modo eficiente y uno de máximo empuje, y que además sirve para enfriar la electrónica. El F-47 debería volar por primera vez en 2028, pero por recortes de presupuesto el motor no estaría listo para integrarse hasta 2030, así que es posible que los primeros aviones vuelen con un motor de la generación anterior.</p>
+      <!-- ============ 8.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">La Fuerza Aérea de Estados Unidos desarrolla, dentro del programa NGAP, dos motores rivales para el caza F-47: el XA102 de GE y el XA103 de Pratt &amp; Whitney. Ambos tienen un tercer flujo de aire que les permite cambiar entre un modo eficiente y uno de máximo empuje, y que además sirve para enfriar la electrónica. El F-47 debería volar por primera vez en 2028, pero por recortes de presupuesto el motor no estaría listo para integrarse hasta 2030, así que es posible que los primeros aviones vuelen con un motor de la generación anterior.</p>
+      <!-- ============ 8.2 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s8-3">
       <h3><span>8.3</span>Lo que viene en materiales</h3>
-      <!-- TEXTO 8.3: cambia estos párrafos por tu texto -->
-      <p>El gran objetivo pendiente son los álabes giratorios de CMC en la turbina de alta. Para llegar ahí hacen falta barreras ambientales que resistan la arena y el vapor de agua. Al mismo tiempo se buscan superaleaciones con menos renio, para no depender de una materia prima escasa, y crece la fabricación aditiva: el GE9X ya lleva unas 300 piezas impresas en 3D, que juntan varias partes en una sola.</p>
+      <!-- ============ 8.3 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El gran objetivo pendiente son los álabes giratorios de CMC en la turbina de alta. Para llegar ahí hacen falta barreras ambientales que resistan la arena y el vapor de agua. Al mismo tiempo se buscan superaleaciones con menos renio, para no depender de una materia prima escasa, y crece la fabricación aditiva: el GE9X ya lleva unas 300 piezas impresas en 3D, que juntan varias partes en una sola.</p>
+      <!-- ============ 8.3 · TERMINA TU TEXTO ============ -->
     </div>
     <div class="sub" id="s8-4">
       <h3><span>8.4</span>El factor que decide el ritmo</h3>
-      <!-- TEXTO 8.4: cambia estos párrafos por tu texto -->
-      <p>La historia muestra que la tecnología avanza más rápido cuando el combustible es caro. El fan abierto se abandonó en los 80 cuando bajó el petróleo; hoy, con el combustible por encima del 30% de los costos y metas de emisiones para 2050, la presión para adoptarlo es mucho mayor.</p>
+      <!-- ============ 8.4 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">La historia muestra que la tecnología avanza más rápido cuando el combustible es caro. El fan abierto se abandonó en los 80 cuando bajó el petróleo; hoy, con el combustible por encima del 30% de los costos y metas de emisiones para 2050, la presión para adoptarlo es mucho mayor.</p>
+      <!-- ============ 8.4 · TERMINA TU TEXTO ============ -->
     </div>
   </section>
   <section id="conclusion" class="sec">
@@ -498,15 +628,21 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font
     <h2>Conclusión: un motor híbrido, elegido según la necesidad</h2>
     <div class="sub" id="s9-1">
       <h3><span>9.1</span>El motor híbrido</h3>
-      <!-- TEXTO 9.1: cambia estos párrafos por tu texto -->
-      <p>El motor del futuro no será todo de cerámica, sino híbrido, con cada material donde mejor rinde. Las piezas con grandes cargas mecánicas, como los discos y las raíces de los álabes, seguirán siendo de superaleación de níquel. Las zonas de más calor, como el combustor, los shrouds y las toberas, serán de CMC. Y la zona fría usará compuestos de carbono para ahorrar peso.</p>
+      <!-- ============ 9.1 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">El motor del futuro no será todo de cerámica, sino híbrido, con cada material donde mejor rinde. Las piezas con grandes cargas mecánicas, como los discos y las raíces de los álabes, seguirán siendo de superaleación de níquel. Las zonas de más calor, como el combustor, los shrouds y las toberas, serán de CMC. Y la zona fría usará compuestos de carbono para ahorrar peso.</p>
+      <!-- ============ 9.1 · TERMINA TU TEXTO ============ -->
       <figure><div class="ibox"><img src="img/motor3d_partes.jpg" alt="El motor híbrido: cada parte con el material donde mejor rinde." loading="lazy"><a class="b3d" href="modelos/motor.html?vista=explode" target="_blank" rel="noopener">Ver en 3D ↗</a></div><figcaption><b>Figura 12.</b> El motor híbrido: cada parte con el material donde mejor rinde.</figcaption></figure>
     </div>
     <div class="sub" id="s9-2">
       <h3><span>9.2</span>Qué decide la elección del material</h3>
-      <!-- TEXTO 9.2: cambia estos párrafos por tu texto -->
-      <p>La elección no depende solo de lo que la ciencia permite, sino de lo que cada usuario necesita y puede pagar. La aviación comercial adopta los CMC porque ahorran combustible y ayudan con las metas de emisiones, pero lo hace despacio porque necesita motores que no fallen. La militar los necesita para más empuje, electricidad y enfriamiento, aunque también ahí manda el presupuesto, como mostró la decisión sobre el F135. Y las materias primas como el renio, junto con las inversiones en fábricas, deciden qué tan rápido una tecnología pasa del laboratorio al avión.</p>
-      <p>En resumen, la metalurgia de los motores avanza al ritmo de tres cosas: el precio del combustible, las exigencias de los gobiernos y el dinero disponible para fabricar a gran escala.</p>
+      <!-- ============ 9.2 · EMPIEZA TU TEXTO ============
+           Borra los párrafos de abajo y escribe los tuyos así:  <p>Tu párrafo aquí.</p>
+           (sin class="base"; los que dicen class="base" son el texto de guía) -->
+      <p class="base">La elección no depende solo de lo que la ciencia permite, sino de lo que cada usuario necesita y puede pagar. La aviación comercial adopta los CMC porque ahorran combustible y ayudan con las metas de emisiones, pero lo hace despacio porque necesita motores que no fallen. La militar los necesita para más empuje, electricidad y enfriamiento, aunque también ahí manda el presupuesto, como mostró la decisión sobre el F135. Y las materias primas como el renio, junto con las inversiones en fábricas, deciden qué tan rápido una tecnología pasa del laboratorio al avión.</p>
+      <p class="base">En resumen, la metalurgia de los motores avanza al ritmo de tres cosas: el precio del combustible, las exigencias de los gobiernos y el dinero disponible para fabricar a gran escala.</p>
+      <!-- ============ 9.2 · TERMINA TU TEXTO ============ -->
     </div>
   </section>
 
@@ -556,6 +692,14 @@ footer{border-top:1px solid var(--line);margin-top:50px;padding:26px 0 40px;font
 (function(){
   const $ = id => document.getElementById(id);
   const body = document.body, mq = window.matchMedia('(max-width:980px)');
+
+  // ---------- modo revisar (?revisar): marca en amarillo el texto de guía que falta cambiar ----------
+  if (/[?&]revisar/.test(location.search)){
+    body.classList.add('revisar');
+    const n = document.querySelectorAll('p.base').length, t = document.querySelectorAll('.sec p:not(.kick)').length;
+    $('rev').innerHTML = n ? '<b>Modo revisar.</b> Te faltan <b>' + n + '</b> párrafos por escribir con tus palabras (en amarillo).'
+                           : '<b>Modo revisar.</b> Ya no queda texto de guía. ¡Todo es tuyo!';
+  }
 
   // ---------- índice: abrir y cerrar ----------
   function stored(){ try { return localStorage.getItem('indice'); } catch(e){ return null; } }
