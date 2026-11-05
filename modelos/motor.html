@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Turbofán en 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: banco de pruebas — escena 3D grande a la izquierda, ficha técnica a la derecha; en teléfono la ficha baja. */
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --line:#d3dae2; --fg:#16202b; --muted:#5b6878;
+  --accent:#d9561f; --cool:#2f7de1; --stage:#dfe5ec; --stage2:#f4f6f9; --chip:#f3f5f8;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d131b; --panel:#141c27; --line:#263243; --fg:#e6ebf1; --muted:#93a1b3;
+  --accent:#ff7a3d; --cool:#5b9bff; --stage:#0e151f; --stage2:#1a2533; --chip:#1a2431; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d131b; --panel:#141c27; --line:#263243; --fg:#e6ebf1; --muted:#93a1b3;
+  --accent:#ff7a3d; --cool:#5b9bff; --stage:#0e151f; --stage2:#1a2533; --chip:#1a2431; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));}
+.wrap{max-width:1360px;margin:0 auto;padding-block:16px 28px;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4vw,40px);letter-spacing:.01em;margin:0;line-height:1;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;font-size:14px;max-width:62ch}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+button{font:600 14px var(--body);border:1px solid var(--line);background:var(--chip);color:var(--fg);padding:7px 12px;border-radius:6px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;background:radial-gradient(ellipse at 50% 35%,var(--stage2),var(--stage) 70%);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  height:min(74vh,660px);min-height:360px}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.labels{position:absolute;inset:0;pointer-events:none}
+.labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.labels line{stroke:var(--fg);stroke-opacity:.55;stroke-width:1}
+.labels circle{fill:var(--accent)}
+.lab{position:absolute;white-space:nowrap;font:600 12px var(--body);background:var(--panel);color:var(--fg);
+  border:1px solid var(--line);border-radius:5px;padding:3px 7px;box-shadow:0 2px 8px rgba(0,0,0,.14)}
+.lab small{display:block;font:400 11px var(--mono);color:var(--accent)}
+.tools{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;right:10px}
+.tools label{font:400 12px var(--mono);color:var(--muted);display:flex;align-items:center;gap:6px;
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+.badge{position:absolute;right:10px;top:10px;font:400 11px var(--mono);color:var(--muted);background:var(--panel);
+  border:1px solid var(--line);border-radius:5px;padding:4px 8px;max-width:calc(100% - 20px)}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+aside h2{font-family:var(--display);font-weight:600;font-size:24px;margin:0;line-height:1.1}
+aside p{margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-direction:column;gap:5px;font-size:13px}
+.legend span{display:flex;align-items:center;gap:8px}
+.legend i{width:14px;height:14px;border-radius:3px;display:inline-block;flex:none}
+.bar{height:12px;border-radius:3px;background:linear-gradient(90deg,#2b5fae,#2f8fd1,#d6b44a,#ff8a2a,#ff4e1f,#ffd34f,#fff6d8)}
+.barl{display:flex;justify-content:space-between;font:400 11px var(--mono);color:var(--muted)}
+.note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.calc{font-family:var(--mono);font-size:13px;background:var(--chip);border-radius:6px;padding:10px;line-height:1.6;overflow-x:auto}
+.loading{position:absolute;inset:0;display:grid;place-items:center;font:400 13px var(--mono);color:var(--muted)}
+
+.tourbtn{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+.tour{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);width:min(560px,calc(100% - 20px));z-index:5;
+  background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;
+  padding:12px 16px 12px;box-shadow:0 10px 28px rgba(0,0,0,.22);font:400 14px/1.5 var(--body)}
+.tr-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px}
+.tr-top span{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.tr-top button{font-size:12px;padding:3px 8px}
+.tour h3{font:600 20px var(--display);margin:0 0 4px;line-height:1.15}
+.tour p{margin:0 0 10px}
+.tr-bar{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.tr-bar i{display:block;height:100%;width:0;background:var(--accent)}
+.tr-nav{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.tr-nav button{font-size:13px;padding:5px 10px}
+body.touring .tools{display:none}
+
+.partsbtn{position:absolute;left:10px;top:10px}
+.partsbtn[aria-expanded="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.partspanel{position:absolute;left:10px;top:52px;width:250px;max-width:calc(100% - 20px);max-height:calc(100% - 120px);overflow:auto;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.16);font:400 13px var(--body)}
+.pp-head{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.pp-head b{font:600 13px var(--body);margin-right:auto}
+.pp-head button{font-size:12px;padding:4px 8px}
+.pp-row{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}
+.pp-row input{margin:0;accent-color:var(--accent)}
+.pp-row i{width:12px;height:12px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.15)}
+.pickcard{position:absolute;right:10px;top:44px;width:270px;max-width:calc(100% - 20px);background:var(--panel);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.16);font:400 13px/1.45 var(--body)}
+.pickcard h3{font:600 18px var(--display);margin:0 0 4px}
+.pickcard dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:6px 0}
+.pickcard dt{color:var(--muted)} .pickcard dd{margin:0}
+.pickcard .pc-actions{display:flex;gap:6px;margin-top:8px}
+.pickcard .pc-actions button{font-size:12px;padding:4px 8px}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+body.embed .wrap{padding-block:8px;max-width:none}
+body.embed h1, body.embed .sub, body.embed aside{display:none}
+body.embed .main{grid-template-columns:minmax(0,1fr)}
+body.embed .stage{height:calc(100vh - 66px);min-height:300px}
+body.embed header{justify-content:flex-start}
+.back{font:600 13px var(--body);color:var(--muted);text-decoration:none;display:inline-block;margin-bottom:6px}
+body.embed .back{display:none}
+body.embed.panel aside{display:flex;max-height:calc(100vh - 66px);overflow:auto}
+body.embed.panel .main{grid-template-columns:minmax(0,1fr) 300px}
+@media (max-width:760px){body.embed.panel aside{display:none} body.embed.panel .main{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<script>if(/[?&]embed=1/.test(location.search))document.body.classList.add('embed');if(/[?&]panel=1/.test(location.search))document.body.classList.add('panel');</script>
+
+<div class="wrap">
+  <header>
+    <div>
+      <a class="back" href="../index.html">← Volver al trabajo</a>
+      <h1>Turbofán en 3D</h1>
+      <p class="sub">Motor comercial de alta derivación, con un corte de 90° para ver el núcleo. Arrastra para girar, rueda o pellizco para acercar, clic derecho o dos dedos para mover.</p>
+    </div>
+    <div class="tabs" role="group" aria-label="Vista del modelo">
+      <button id="m-real" aria-pressed="true">Modelo</button>
+      <button id="m-parts" aria-pressed="false">Partes</button>
+      <button id="m-explode" aria-pressed="false">Explosionado</button>
+      <button id="m-flow" aria-pressed="false">Flujo de aire</button>
+      <button id="m-heat" aria-pressed="false">Calor</button>
+      <button id="m-force" aria-pressed="false">Fuerzas</button>
+    </div>
+  </header>
+  <div class="main">
+    <div class="stage" id="stage">
+      <div class="loading" id="loading">Cargando modelo 3D…</div>
+      <canvas id="c"></canvas>
+      <div class="labels" id="labels"><svg id="leaders"></svg></div>
+      <div class="badge" id="badge">toca una pieza para ver qué es</div>
+      <button class="partsbtn" id="t-parts" aria-expanded="false" aria-controls="partspanel">Piezas</button>
+      <div class="partspanel" id="partspanel" hidden>
+        <div class="pp-head"><b>Piezas visibles</b><button id="pp-all">Todas</button><button id="pp-core">Solo núcleo</button><button id="pp-none">Ninguna</button></div>
+        <div id="pp-list"></div>
+      </div>
+      <div class="pickcard" id="pickcard" hidden></div>
+      <div class="tour" id="tour" hidden role="region" aria-label="Recorrido guiado">
+        <div class="tr-top"><span id="tr-n">Paso 1</span><button id="tr-x">Cerrar</button></div>
+        <h3 id="tr-h"></h3><p id="tr-p"></p>
+        <div class="tr-bar"><i id="tr-bar"></i></div>
+        <div class="tr-nav"><button id="tr-prev">← Anterior</button><button id="tr-play">Pausar</button><button id="tr-next">Siguiente →</button></div>
+      </div>
+      <div class="tools">
+        <button id="t-tour" class="tourbtn">▶ Recorrido guiado</button>
+        <button id="t-cut">Cerrar corte</button>
+        <button id="t-play">Pausar</button>
+        <label for="t-speed">giro <input id="t-speed" type="range" min="0" max="2" step="0.05" value="1"></label>
+        <label for="t-explode">desarmar <input id="t-explode" type="range" min="0" max="1" step="0.01" value="0"></label>
+        <button id="t-orbit">Girar cámara</button>
+        <button id="t-reset">Vista inicial</button>
+      </div>
+    </div>
+    <aside id="info"></aside>
+  </div>
+</div>
+
+<script src="../lib/three.min.js"></script>
+<script src="../lib/OrbitControls.js"></script>
+<script>
+(function(){
+const QP = new URLSearchParams(location.search); if (QP.get('embed')) document.body.classList.add('embed'); if (QP.get('panel')) document.body.classList.add('panel');
+const QV = QP.get('vista');
+const $ = id => document.getElementById(id);
+const canvas = $('c'), stage = $('stage'), labelsEl = $('labels'), info = $('info'), svg = $('leaders');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+// ---------- render ----------
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x000000, 0);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 500);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.minDistance = 8; controls.maxDistance = 95; controls.autoRotateSpeed = 0.7;
+
+// entorno de estudio para reflejos metálicos
+(function studio(){
+  const env = new THREE.Scene();
+  const box = new THREE.Mesh(new THREE.BoxGeometry(60, 30, 60), new THREE.MeshBasicMaterial({color:0x2c3138, side:THREE.BackSide}));
+  env.add(box);
+  const panel = (w, h, x, y, z, ry, rx, c) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide}));
+    m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0); env.add(m); };
+  panel(26, 5, 0, 14.5, 0, 0, Math.PI / 2, 0xd9dde2);
+  panel(14, 7, -29, 4, 0, Math.PI / 2, 0, 0xc8bba6);
+  panel(10, 5, 29, 2, 8, -Math.PI / 2, 0, 0x9fb2cc);
+  panel(60, 10, 0, -14.5, 0, 0, Math.PI / 2, 0x16191d);
+  const pm = new THREE.PMREMGenerator(renderer);
+  scene.environment = pm.fromScene(env, 0.03).texture;
+})();
+scene.add(new THREE.HemisphereLight(0xffffff, 0x3c4450, 0.35));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(-8, 22, 12);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, {left:-20, right:20, top:14, bottom:-14, near:1, far:60}); sun.shadow.bias = -0.0004;
+scene.add(sun);
+const rim = new THREE.DirectionalLight(0xc8dcff, 0.5); rim.position.set(16, 4, -14); scene.add(rim);
+
+// ---------- perfiles (eje axial = y local, radio = r) ----------
+const interp = (xp, rp) => x => {
+  if (x <= xp[0]) return rp[0];
+  for (let i = 1; i < xp.length; i++) if (x <= xp[i]) { const k = (x - xp[i-1]) / (xp[i] - xp[i-1]); return rp[i-1] + (rp[i] - rp[i-1]) * k; }
+  return rp[rp.length-1];
+};
+const smooth = (xp, rp, n) => { const f = interp(xp, rp), xs = [], out = [];  // suaviza el perfil con promedio móvil
+  for (let i = 0; i < n; i++) xs.push(xp[0] + (xp[xp.length-1] - xp[0]) * i / (n - 1));
+  const raw = xs.map(f); for (let i = 0; i < n; i++){ let s = 0, c = 0; for (let j = -3; j <= 3; j++){ const k = Math.min(n-1, Math.max(0, i+j)); s += raw[k]; c++; } out.push(s / c); }
+  return interp(xs, out); };
+const NAC_IN  = smooth([-12.9,-12.3,-11.6,-6,-1,1.2],[4.95,4.72,4.6,4.45,4.0,3.75], 80);
+const NAC_OUT = smooth([-13.0,-12.7,-12.2,-8,-2,1.2],[5.05,5.3,5.42,5.48,4.95,3.95], 80);
+const CORE_OUT = interp([-10,-9,-7,-2,1,2.5,6.5,8.6],[2.25,2.3,2.1,1.9,1.9,2.05,2.35,1.95]);
+const CORE_SKIN = smooth([-10.05,-9.8,-8.5,-2,1,6.5,8.6],[2.25,2.5,2.78,2.55,2.45,2.55,1.98], 80);
+const HUB = interp([-13.4,-13.0,-12.4,-11.6,-11.0,-10.2,-8.2,-7,-2,-1.9,1,2.5,6.5,8.6,9.6,10.6],
+                   [0.0,0.42,0.9,1.2,1.27,1.3,1.25,1.0,1.55,1.15,1.15,1.45,1.1,0.9,0.5,0.02]);
+const TEMP = interp([-13,-10,-8.2,-2,-1.2,0.2,1.1,2.3,6.5,10.5],[15,15,150,600,1100,1500,1500,1050,620,600]);
+const HEAT = [[15,'#2b5fae'],[150,'#2f8fd1'],[400,'#d6b44a'],[600,'#ff8a2a'],[1000,'#ff4e1f'],[1300,'#ffd34f'],[1500,'#fff6d8']];
+function heatColor(T){
+  for (let i = 1; i < HEAT.length; i++) if (T <= HEAT[i][0]) { const k = (T - HEAT[i-1][0]) / (HEAT[i][0] - HEAT[i-1][0]);
+    return new THREE.Color(HEAT[i-1][1]).lerp(new THREE.Color(HEAT[i][1]), k); }
+  return new THREE.Color(HEAT[HEAT.length-1][1]);
+}
+const range = (a, b, n) => Array.from({length:n}, (_, i) => a + (b - a) * i / (n - 1));
+
+const world = new THREE.Group(); scene.add(world);
+const root = new THREE.Group();            // eje del motor = eje x del mundo
+root.rotation.z = -Math.PI / 2; world.add(root);
+const CUT_START = 0, CUT_LEN = Math.PI * 1.5;
+function lathe(points, cut, seg){ return new THREE.LatheGeometry(points, seg || 128, cut ? CUT_START : 0, cut ? CUT_LEN : Math.PI * 2); }
+function shellPts(xs, outerF, innerF){
+  const pts = xs.map(x => new THREE.Vector2(outerF(x), x));
+  xs.slice().reverse().forEach(x => pts.push(new THREE.Vector2(innerF(x), x)));
+  pts.push(pts[0].clone()); return pts;
+}
+function heatAttr(geo){
+  const p = geo.attributes.position, col = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++){ const c = heatColor(TEMP(p.getY(i))); col.set([c.r, c.g, c.b], i * 3); }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+}
+const std = (color, o) => new THREE.MeshStandardMaterial(Object.assign({color, metalness:.55, roughness:.38, side:THREE.DoubleSide, envMapIntensity:1}, o || {}));
+const heatMat = new THREE.MeshStandardMaterial({vertexColors:true, metalness:.1, roughness:.55, side:THREE.DoubleSide});
+function cast(o){ o.traverse(m => { if (m.isMesh){ m.castShadow = true; m.receiveShadow = true; } }); return o; }
+
+const shells = [];
+function makeShell(pts, real, part, name, heat, parent, seg){
+  const cutG = lathe(pts, true, seg), fullG = lathe(pts, false, seg);
+  if (heat){ heatAttr(cutG); heatAttr(fullG); }
+  const m = std(real, name === 'nacelle' ? {metalness:.15, roughness:.3} : {});
+  const mesh = cast(new THREE.Mesh(cutG, m)); (parent || root).add(mesh);
+  const s = {mesh, cutG, fullG, m, real, part, name, heat}; shells.push(s); return s;
+}
+// góndola con su pilón
+const nacGrp = new THREE.Group(); root.add(nacGrp);
+const nac = makeShell(shellPts(range(-13.0, 1.2, 90), NAC_OUT, NAC_IN), '#d7dce2', '#b9c1cb', 'nacelle', false, nacGrp);
+const lip = new THREE.Mesh(new THREE.TorusGeometry(5.0, 0.07, 10, 128, CUT_LEN), std('#b9c1cb', {metalness:.8, roughness:.25}));
+lip.rotation.x = Math.PI / 2; lip.rotation.z = CUT_START; lip.position.y = -12.95; nacGrp.add(lip);
+const pylonShape = new THREE.Shape();
+[[-9.0,0],[3.0,0],[5.5,1.5],[-4.0,1.5],[-9.0,0]].forEach(([y, h], i) => i ? pylonShape.lineTo(y, h) : pylonShape.moveTo(y, h));
+const pylonG = new THREE.ExtrudeGeometry(pylonShape, {depth:0.8, bevelEnabled:true, bevelSize:0.12, bevelThickness:0.12, bevelSegments:3});
+pylonG.translate(0, 0, -0.4);
+const pylon = cast(new THREE.Mesh(pylonG, std('#c3c9d0', {metalness:.2, roughness:.35})));
+pylon.rotation.set(0, 0, Math.PI / 2); pylon.position.x = -5.15;   // en el marco local: arriba = x negativo
+nacGrp.add(pylon);
+
+const coreGrp = new THREE.Group(); root.add(coreGrp);
+const core = makeShell(shellPts(range(-10.05, 8.6, 80), CORE_SKIN, CORE_OUT), '#8d97a3', '#8d97a3', 'core', true, coreGrp);
+const hubPts = range(-13.4, 10.6, 120).map(y => new THREE.Vector2(HUB(y), y));
+const hub = makeShell(hubPts, '#4b5562', '#4b5562', 'hub', true);
+// espiral pintada en el cono (referencia visual del giro)
+const spinMark = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.035, 6, 40, Math.PI * 1.2), new THREE.MeshBasicMaterial({color:'#f2f4f6'}));
+spinMark.position.y = -12.75; spinMark.rotation.x = Math.PI / 2; root.add(spinMark);
+
+function shaft(r, y0, y1, color){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, y1 - y0, 40, 1, true), std(color, {metalness:.7, roughness:.3}));
+  m.position.y = (y0 + y1) / 2; root.add(m); return m;
+}
+const lpShaft = shaft(0.22, -11.3, 7.0, '#3d7bea');
+const hpShaft = shaft(0.5, -6.9, 2.1, '#5fc46a');
+
+// ---------- geometría de álabes (perfil torcido a lo largo del radio) ----------
+function bladeGeo(r0, r1, chord0, chord1, stag0, stag1, thick, camber, sweep){
+  const NS = 10, NC = 12, pos = [], idx = [];
+  for (let k = 0; k <= NS; k++){
+    const s = k / NS, r = r0 + (r1 - r0) * s, c = chord0 + (chord1 - chord0) * s, b = stag0 + (stag1 - stag0) * s;
+    const ca = Math.cos(b), sa = Math.sin(b), sw = (sweep || 0) * s * s;
+    for (let side = 0; side < 2; side++) for (let i = 0; i <= NC; i++){
+      const u = side ? 1 - i / NC : i / NC, a = (u - 0.5) * c;
+      const t = thick * c * Math.sqrt(Math.max(0, u * (1 - u))) * 2 * (side ? -1 : 1);
+      const cam = camber * c * 4 * u * (1 - u);
+      const n = cam + t;                    // desplazamiento normal a la cuerda
+      pos.push(a * sa + n * ca, a * ca - n * sa + sw, r);   // x tangencial, y axial, z radial
+    }
+  }
+  const RW = (NC + 1) * 2;
+  for (let k = 0; k < NS; k++) for (let i = 0; i < RW - 1; i++){
+    const a = k * RW + i, b = a + 1, c = a + RW, d = b + RW; idx.push(a, c, b, b, c, d);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+const stages = [];
+function addStage(o){
+  const g = bladeGeo(o.r0, o.r1, o.c0, o.c1, o.b0, o.b1, o.t, o.cam, o.sweep);
+  const m = std(o.real, {metalness:o.metal ?? .7, roughness:o.rough ?? .32});
+  const inst = new THREE.InstancedMesh(g, m, o.n); const M = new THREE.Matrix4();
+  for (let i = 0; i < o.n; i++){ inst.setMatrixAt(i, M.makeRotationY(i / o.n * Math.PI * 2 + (o.ph || 0))); }
+  inst.castShadow = true;
+  const grp = new THREE.Group(); grp.position.y = o.y; grp.add(inst); (o.parent || root).add(grp);
+  const s = Object.assign({grp, m, home:o.y}, o); stages.push(s); return s;
+}
+const C = {fan:'#2c3644', ti:'#7f8b99', ni:'#8f8778', hpt:'#a88a5a', vane:'#5d6774'};
+addStage({kind:'fan', y:-11.3, n:22, r0:1.25, r1:4.58, c0:0.55, c1:1.15, b0:0.45, b1:1.1, t:0.06, cam:0.08, sweep:-0.35, real:C.fan, part:'#3d7bea', spool:'lp', metal:.45, rough:.35});
+addStage({kind:'ogv', y:-9.0, n:44, r0:2.85, r1:4.48, c0:0.5, c1:0.5, b0:-0.25, b1:-0.25, t:0.05, cam:-0.06, real:C.vane, part:'#8b97a6', spool:null});
+[-9.6,-9.0,-8.4].forEach((y, i) => addStage({kind:'lpc', y, n:44, r0:HUB(y), r1:CORE_OUT(y) - 0.03, c0:0.26, c1:0.22, b0:0.75, b1:0.95, t:0.05, cam:0.05, real:C.ti, part:'#3d7bea', spool:'lp'}));
+[-9.3,-8.7].forEach(y => addStage({kind:'stat', y, n:52, r0:HUB(y) + 0.05, r1:CORE_OUT(y) - 0.02, c0:0.2, c1:0.2, b0:-0.45, b1:-0.45, t:0.05, cam:-0.04, real:C.vane, part:'#8b97a6', spool:null}));
+for (let i = 0; i < 9; i++){ const y = -6.8 + i * 0.55;
+  addStage({kind:'hpc', y, n:50, r0:HUB(y), r1:CORE_OUT(y) - 0.03, c0:0.2, c1:0.18, b0:0.85, b1:1.0, t:0.05, cam:0.04, real:i < 4 ? C.ti : C.ni, part:'#5fc46a', spool:'hp'});
+  if (i < 8) addStage({kind:'stat', y:y + 0.27, n:60, r0:HUB(y + 0.27) + 0.04, r1:CORE_OUT(y + 0.27) - 0.02, c0:0.15, c1:0.15, b0:-0.5, b1:-0.5, t:0.05, cam:-0.03, real:C.vane, part:'#8b97a6', spool:null}); }
+addStage({kind:'ngv', y:1.05, n:36, r0:HUB(1.05) + 0.02, r1:CORE_OUT(1.05) - 0.02, c0:0.3, c1:0.3, b0:0.6, b1:0.6, t:0.12, cam:0.1, real:'#e9e4da', part:'#e9e4da', spool:null, metal:.05, rough:.8});
+[1.4, 2.0].forEach(y => addStage({kind:'hpt', y, n:64, r0:HUB(y), r1:CORE_OUT(y) - 0.03, c0:0.3, c1:0.26, b0:-0.85, b1:-1.0, t:0.12, cam:-0.12, real:C.hpt, part:'#3f6fd8', spool:'hp', metal:.6}));
+for (let i = 0; i < 5; i++){ const y = 2.9 + i * 0.75;
+  addStage({kind:'lpt', y, n:72, r0:HUB(y), r1:CORE_OUT(y) - 0.03, c0:0.34, c1:0.3, b0:-0.8, b1:-0.95, t:0.09, cam:-0.1, real:C.ni, part:'#3d7bea', spool:'lp'}); }
+
+// cámara de combustión
+const combGrp = new THREE.Group(); root.add(combGrp);
+const combPts = [new THREE.Vector2(1.25,-1.9), new THREE.Vector2(1.3,0.9), new THREE.Vector2(1.82,0.9), new THREE.Vector2(1.82,-1.9), new THREE.Vector2(1.25,-1.9)];
+const combCut = lathe(combPts, true), combFull = lathe(combPts, false);
+const combMat = std('#9aa2ac', {transparent:true, opacity:.35, metalness:.4, depthWrite:false});
+const comb = new THREE.Mesh(combCut, combMat); combGrp.add(comb);
+const flameMat = new THREE.MeshBasicMaterial({color:'#ff7a1a', transparent:true, opacity:.6, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending});
+const flamePts = [new THREE.Vector2(1.45,-1.6), new THREE.Vector2(1.38,-0.6), new THREE.Vector2(1.42,0.75), new THREE.Vector2(1.68,0.75), new THREE.Vector2(1.72,-0.6), new THREE.Vector2(1.62,-1.6), new THREE.Vector2(1.45,-1.6)];
+const flame = new THREE.Mesh(lathe(flamePts, false, 64), flameMat); combGrp.add(flame);
+const nozMat = std('#2a3038', {metalness:.6});
+for (let i = 0; i < 18; i++){ const th = i / 18 * Math.PI * 2, b = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.3, 12), nozMat);
+  b.position.set(1.55 * Math.sin(th), -1.8, 1.55 * Math.cos(th)); combGrp.add(b); }
+const glow = new THREE.PointLight(0xff8a3a, 0, 6); glow.position.set(-1.6, 0, 0); root.add(glow);
+
+// banco de pruebas y piso
+const floorY = -7.2;
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.ShadowMaterial({opacity:.2}));
+floor.rotation.x = -Math.PI / 2; floor.position.y = floorY; floor.receiveShadow = true; world.add(floor);
+const standMat = std('#4d5662', {metalness:.6, roughness:.5});
+const standGrp = new THREE.Group(); world.add(standGrp);
+[-6.5, 4.5].forEach(x => {
+  [-1, 1].forEach(sz => { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 5.2, 0.35), standMat);
+    leg.position.set(x, floorY + 2.4, sz * 1.9); leg.rotation.x = -sz * 0.32; standGrp.add(leg); });
+  const cradle = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 4.6), standMat); cradle.position.set(x, floorY + 0.2, 0); standGrp.add(cradle);
+});
+const rail = new THREE.Mesh(new THREE.BoxGeometry(14, 0.3, 0.3), standMat); rail.position.set(-1, floorY + 0.15, 0); standGrp.add(rail);
+cast(standGrp);
+
+// ---------- partículas de aire ----------
+function dotTexture(){ const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; }
+const NP = 2600, NCORE = Math.round(NP * 0.10);
+const pPos = new Float32Array(NP * 3), pCol = new Float32Array(NP * 3), P = [];
+for (let i = 0; i < NP; i++){ const coreP = i < NCORE;
+  P.push({core:coreP, f:0.08 + Math.random() * 0.84, th:Math.random() * Math.PI * 2, y:-18 + Math.random() * (coreP ? 31 : 25), r0: coreP ? 0.95 + Math.random() * 1.1 : 2.5 + Math.random() * 1.9}); }
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3)); pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+const points = new THREE.Points(pGeo, new THREE.PointsMaterial({size:0.28, map:dotTexture(), vertexColors:true, transparent:true, depthWrite:false, alphaTest:0.05}));
+root.add(points);
+const BYPASS_DUMMY = 0; const BYPASS = new THREE.Color('#1f8bff'), SPLIT = -10;
+function radiusOf(p, y){
+  if (p.core){
+    let tgt = (y > 8.6) ? 0.35 + p.f * (CORE_OUT(8.6) - 0.45) : HUB(y) + p.f * (CORE_OUT(y) - HUB(y));
+    if (y < SPLIT){ const k = Math.min(1, Math.max(0, (y + 18) / (SPLIT + 18))); tgt = p.r0 + (HUB(SPLIT) + p.f * (CORE_OUT(SPLIT) - HUB(SPLIT)) - p.r0) * k; }
+    return tgt;
+  }
+  const lo = y > SPLIT ? CORE_SKIN(Math.min(y, 8.6)) : 2.3, hi = y < 1.2 ? NAC_IN(y) : NAC_IN(1.2) + (y - 1.2) * 0.04;
+  let tgt = lo + 0.06 + p.f * (hi - lo - 0.12);
+  if (y < SPLIT){ const k = Math.min(1, Math.max(0, (y + 18) / (SPLIT + 18))); tgt = p.r0 + (CORE_SKIN(SPLIT) + 0.1 + p.f * (NAC_IN(SPLIT) - CORE_SKIN(SPLIT) - 0.1) - p.r0) * k; }
+  return tgt;
+}
+function updateParticles(dt){
+  for (let i = 0; i < NP; i++){
+    const p = P[i]; p.y += dt * (p.core ? 4.0 * (TEMP(p.y) > 1000 ? 1.9 : 1) : 6.2);
+    if (p.y > (p.core ? 14 : 8)) p.y = -18 - Math.random() * 2;
+    const r = radiusOf(p, p.y);
+    pPos[i*3] = r * Math.sin(p.th); pPos[i*3+1] = p.y; pPos[i*3+2] = r * Math.cos(p.th);
+    const c = p.core ? heatColor(TEMP(p.y)) : BYPASS; pCol[i*3] = c.r; pCol[i*3+1] = c.g; pCol[i*3+2] = c.b;
+  }
+  pGeo.attributes.position.needsUpdate = true; pGeo.attributes.color.needsUpdate = true;
+}
+
+// ---------- fuerzas (flechas gruesas) ----------
+function arrow(len, color, r){
+  const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color, metalness:.1, roughness:.4, emissive:color, emissiveIntensity:.25});
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len * 0.75, 16), m); body.position.y = len * 0.375;
+  const head = new THREE.Mesh(new THREE.ConeGeometry(r * 2.6, len * 0.25, 20), m); head.position.y = len * 0.875;
+  g.add(body, head); return g;
+}
+function aim(obj, from, dir){ obj.position.copy(from); obj.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize()); return obj; }
+const forceGrp = new THREE.Group(); world.add(forceGrp);
+forceGrp.add(aim(arrow(5, '#22a861', 0.16), new THREE.Vector3(-14.2, 0, 0), new THREE.Vector3(-1, 0, 0)));
+forceGrp.add(aim(arrow(4, '#ff7a2f', 0.12), new THREE.Vector3(11.2, 0, 0), new THREE.Vector3(1, 0, 0)));
+const hptStage = stages.find(s => s.kind === 'hpt');
+const centri = new THREE.Group(); hptStage.grp.add(centri);
+for (let i = 0; i < 10; i++){ const th = i / 10 * Math.PI * 2, d = new THREE.Vector3(Math.sin(th), 0, Math.cos(th));
+  centri.add(aim(arrow(1.7, '#22a861', 0.06), d.clone().multiplyScalar(hptStage.r1 + 0.05), d)); }
+function torque(y, r, color){
+  const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:.3});
+  const arc = new THREE.Mesh(new THREE.TorusGeometry(r, 0.06, 10, 60, Math.PI * 1.5), m); arc.rotation.x = Math.PI / 2; g.add(arc);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 16), m); cone.position.set(r, 0, 0); cone.rotation.x = Math.PI / 2; g.add(cone);
+  g.position.y = y; root.add(g); return g;
+}
+const tqLP = torque(7.5, 0.75, '#3d7bea'), tqHP = torque(2.45, 1.1, '#5fc46a');
+
+// ---------- etiquetas con líneas guía ----------
+function makeLabel(html){ const d = document.createElement('div'); d.className = 'lab'; d.innerHTML = html; d.hidden = true; labelsEl.appendChild(d);
+  const ln = document.createElementNS(SVGNS, 'line'), dot = document.createElementNS(SVGNS, 'circle'); dot.setAttribute('r', '3'); svg.append(ln, dot);
+  return {d, ln, dot}; }
+const LABEL_PHI = Math.PI * 1.75;
+const cyl = (r, y, phi) => root.localToWorld(new THREE.Vector3(r * Math.sin(phi), y, r * Math.cos(phi)));
+const EXPLODE = {fan:-6.5, ogv:-4.8, lpc:-3.6, stat:null, hpc:-1.0, ngv:1.3, hpt:2.4, lpt:4.6, comb:1.0};
+const statHome = y => y < -8 ? EXPLODE.lpc : EXPLODE.hpc;
+const EX_C = -1, EX_SPREAD = 0.55;
+function exY(kind, y){ const off = kind === 'stat' ? statHome(y) : (EXPLODE[kind] || 0); return y + explodeK * (off + (y - EX_C) * EX_SPREAD); }
+const PARTS = [
+  ['Ventilador (fan)', 'fibra de carbono / titanio', () => cyl(4.0, exY('fan', -11.3), LABEL_PHI)],
+  ['Álabes guía de salida', 'enderezan el aire de derivación', () => cyl(3.6, exY('ogv', -9.0), LABEL_PHI)],
+  ['Compresor de baja', 'titanio', () => cyl(1.9, exY('lpc', -9.0), LABEL_PHI)],
+  ['Compresor de alta', 'titanio → Níquel', () => cyl(1.7, exY('hpc', -4.4), LABEL_PHI)],
+  ['Cámara de combustión', 'Níquel + TBC → CMC', () => cyl(1.7, exY('comb', -0.5), LABEL_PHI)],
+  ['Turbina de alta', 'monocristal de Níquel', () => cyl(1.85, exY('hpt', 1.7), LABEL_PHI)],
+  ['Turbina de baja', 'Níquel / TiAl', () => cyl(2.1, exY('lpt', 4.4), LABEL_PHI)],
+  ['Tobera y cono', 'Níquel / CMC', () => cyl(0.8, 9.4, LABEL_PHI)],
+  ['Góndola y pilón', 'aluminio / compuestos', () => root.localToWorld(new THREE.Vector3(-(6.6 + 9 * explodeK), -4, 0))],
+].map(([n, m, f]) => Object.assign(makeLabel(n + '<small>' + m + '</small>'), {f}));
+const FORCE_LABELS = [
+  ['Empuje', '≈ 80–90% viene del aire de derivación', () => new THREE.Vector3(-17.5, 0.3, 0)],
+  ['Fuerza centrífuga', '≈ 16 t por álabe de turbina', () => cyl(hptStage.r1 + 1.6, 1.4, Math.PI * 1.8)],
+  ['Par en los ejes', 'las turbinas mueven fan y compresor', () => cyl(1.0, 7.5, Math.PI)],
+  ['Gas de escape', 'sale caliente y rápido', () => new THREE.Vector3(14.2, 0.3, 0)],
+].map(([n, m, f]) => Object.assign(makeLabel(n + '<small>' + m + '</small>'), {f}));
+const HEAT_LABELS = [
+  ['15 °C', 'entrada', () => cyl(3.4, -12.6, LABEL_PHI)], ['≈ 600 °C', 'salida del compresor', () => cyl(1.75, -2.2, LABEL_PHI)],
+  ['≈ 1,500 °C', 'combustión', () => cyl(1.55, -0.4, LABEL_PHI)], ['1,500 → 1,000 °C', 'turbina de alta', () => cyl(1.8, 1.7, LABEL_PHI)],
+  ['≈ 600 °C', 'escape', () => cyl(1.4, 8.2, LABEL_PHI)],
+].map(([n, m, f]) => Object.assign(makeLabel(n + '<small>' + m + '</small>'), {f}));
+const ALL_LABELS = [...PARTS, ...FORCE_LABELS, ...HEAT_LABELS];
+
+const v3 = new THREE.Vector3();
+function layout(list){
+  const W = stage.clientWidth, Hh = stage.clientHeight, placed = [];
+  const items = list.map(L => { v3.copy(L.f()).project(camera); return {L, x:(v3.x + 1) / 2 * W, y:(1 - v3.y) / 2 * Hh, ok: v3.z < 1}; })
+                    .sort((a, b) => a.x - b.x);
+  items.forEach(it => {
+    const {L} = it; L.d.hidden = !it.ok; L.ln.style.display = L.dot.style.display = it.ok ? '' : 'none'; if (!it.ok) return;
+    const w = L.d.offsetWidth || 120, h = L.d.offsetHeight || 30;
+    let lx = Math.min(W - w - 8, Math.max(8, it.x - w / 2)), ly = it.y - h - 34;
+    for (let tries = 0; tries < 12; tries++){
+      const hit = placed.find(p => lx < p.x + p.w + 6 && lx + w + 6 > p.x && ly < p.y + p.h + 4 && ly + h + 4 > p.y);
+      if (!hit) break; ly = hit.y - h - 6;
+    }
+    if (ly < 6) ly = it.y + 30;
+    placed.push({x:lx, y:ly, w, h});
+    L.d.style.left = lx + 'px'; L.d.style.top = ly + 'px';
+    const ax = it.x, ay = it.y, bx = Math.min(lx + w - 4, Math.max(lx + 4, ax)), by = ly < ay ? ly + h : ly;
+    L.ln.setAttribute('x1', ax); L.ln.setAttribute('y1', ay); L.ln.setAttribute('x2', bx); L.ln.setAttribute('y2', by);
+    L.dot.setAttribute('cx', ax); L.dot.setAttribute('cy', ay);
+  });
+}
+function hideLabels(list){ list.forEach(L => { L.d.hidden = true; L.ln.style.display = L.dot.style.display = 'none'; }); }
+
+// ---------- modos ----------
+let mode = 'real', cut = true, playing = !reduce, speed = 1, explodeK = 0, explodeTarget = 0, camAnim = null;
+const VIEWS = {
+  real:{pos:[-21, 11, 27], tgt:[-1, -0.5, 0]}, parts:{pos:[-6, 12, 33], tgt:[-1, 0.5, 0]}, explode:{pos:[-3, 19, 60], tgt:[-2, 0.5, 0]},
+  flow:{pos:[-9, 10, 31], tgt:[-1, 0, 0]}, heat:{pos:[0, 9, 30], tgt:[-1, 0, 0]}, force:{pos:[-4, 12, 43], tgt:[-1.5, 0, 0]}
+};
+function goView(m){
+  const v = VIEWS[m], k = camera.aspect < 1 ? 1.8 : camera.aspect < 1.4 ? 1.25 : 1;
+  const tgt = new THREE.Vector3(...v.tgt), pos = new THREE.Vector3(...v.pos).sub(tgt).multiplyScalar(k).add(tgt);
+  camAnim = {p0:camera.position.clone(), t0:controls.target.clone(), p1:pos, t1:tgt, k:0};
+}
+const INFO = {
+  real:`<h2>El motor completo</h2><p>Un turbofán de alta derivación, del tipo que usan el A320neo, el 737 MAX o el 787. El corte deja ver el núcleo: compresores, cámara de combustión y turbinas.</p>
+   <dl class="kv"><dt>Relación de derivación</dt><dd>≈ 10 : 1</dd><dt>Presión máxima</dt><dd>≈ 50 atm</dd><dt>Temperatura máxima</dt><dd>≈ 1,500 °C</dd><dt>Eje de alta</dt><dd>≈ 12,500 rpm</dd><dt>Masa de referencia</dt><dd>≈ 1.3 t</dd></dl>
+   <p class="note">Los álabes que giran (rotor) se alternan con álabes fijos (estator, gris). El eje de baja une el fan con la turbina de baja; el de alta une el compresor de alta con la turbina de alta.</p>`,
+  parts:`<h2>Partes y materiales</h2><div class="legend">
+   <span><i style="background:#3d7bea"></i>Eje de baja: fan, compresor y turbina de baja</span>
+   <span><i style="background:#5fc46a"></i>Eje de alta: compresor de alta</span>
+   <span><i style="background:#3f6fd8;outline:2px solid #ff6a4a"></i>Turbina de alta: la zona más exigida</span>
+   <span><i style="background:#8b97a6"></i>Álabes fijos (estatores)</span>
+   <span><i style="background:#e9e4da;outline:1px solid #999"></i>Toberas de turbina: candidatas a CMC</span></div>
+   <p>En la zona fría se busca poco peso (titanio, fibra de carbono). En la zona caliente se busca resistencia al calor (superaleaciones de Níquel y, cada vez más, CMC).</p>`,
+  explode:`<h2>Vista explosionada</h2><p>Los módulos se separan a lo largo del eje en el orden en que pasa el aire: fan → compresor de baja → compresor de alta → combustión → turbina de alta → turbina de baja → tobera.</p>
+   <p class="note">Cada módulo se fabrica y se mantiene por separado. Un taller puede cambiar la turbina de alta sin desarmar todo el motor, y eso abarata el mantenimiento.</p>`,
+  flow:`<h2>Flujo de aire</h2><div class="legend"><span><i style="background:#58aef5"></i>≈ 90% del aire rodea el núcleo (derivación)</span><span><i style="background:#ff8a2a"></i>≈ 10% entra al núcleo; su color indica la temperatura</span></div>
+   <p>El aire de derivación sale frío y da la mayor parte del empuje. El del núcleo se comprime hasta unas 50 atm, se quema con el combustible y mueve las turbinas.</p>
+   <p class="note">Mover mucho aire despacio gasta menos energía que mover poco aire rápido (Impulso = m·Δv; energía = ½·m·Δv²). Por eso el fan es tan grande.</p>`,
+  heat:`<h2>Mapa de calor</h2><div class="bar"></div><div class="barl"><span>15 °C</span><span>600 °C</span><span>1,500 °C</span></div>
+   <p>El calor nace en la cámara de combustión y viaja hacia atrás. Las turbinas le quitan energía al gas y por eso se va enfriando hasta el escape.</p>
+   <p>La turbina de alta recibe gas más caliente que el punto de fusión de su propio metal (≈ 1,300 °C). Sobrevive por el enfriamiento interno y la barrera térmica cerámica.</p>`,
+  force:`<h2>Fuerzas</h2><p><b>Empuje</b> (verde, al frente): reacción al aire que el motor lanza hacia atrás.</p>
+   <p><b>Par en los ejes</b>: las turbinas toman energía del gas y la mandan por los ejes al compresor y al fan.</p>
+   <p><b>Fuerza centrífuga</b> en cada álabe de la turbina de alta:</p>
+   <div class="calc">F = m · ω² · r<br>m = 0.3 kg, ω = 1,309 rad/s, r ≈ 0.3 m<br>F ≈ 154,000 N ≈ 16 t</div>
+   <p class="note">Esa carga pasa al disco por la raíz en forma de abeto (ver el modelo del álabe).</p>`
+};
+function setMode(m){
+  mode = m;
+  Object.keys(VIEWS).forEach(k => $('m-' + k).setAttribute('aria-pressed', String(k === m)));
+  info.innerHTML = INFO[m];
+  const partsColor = (m === 'parts' || m === 'explode');
+  stages.forEach(s => {
+    const T = TEMP(s.y);
+    s.m.color.set(m === 'heat' ? heatColor(T) : partsColor ? s.part : s.real);
+    s.m.emissive.set(m === 'heat' ? heatColor(T) : (partsColor && s.kind === 'hpt') ? '#6a1608' : '#000000');
+    s.m.emissiveIntensity = m === 'heat' ? (T > 900 ? 0.55 : 0.2) : 1;
+    const fade = m === 'flow' && s.kind !== 'fan'; s.m.transparent = fade; s.m.opacity = fade ? 0.35 : 1; s.m.depthWrite = !fade; s.m.needsUpdate = true;
+  });
+  shells.forEach(s => {
+    s.mesh.material = (m === 'heat' && s.heat) ? heatMat : s.m;
+    s.m.color.set(partsColor ? s.part : s.real);
+    const ghost = (m === 'flow' && (s.name === 'nacelle' || s.name === 'core'));
+    s.m.transparent = ghost; s.m.opacity = ghost ? (s.name === 'nacelle' ? 0.1 : 0.22) : 1; s.m.depthWrite = !ghost; s.m.needsUpdate = true;
+  });
+  explodeTarget = m === 'explode' ? Math.max(explodeTarget, 1) : 0; $('t-explode').value = explodeTarget;
+  pylon.material.transparent = m === 'flow'; pylon.material.opacity = m === 'flow' ? 0.2 : 1; pylon.material.needsUpdate = true;
+  points.visible = (m === 'flow');
+  forceGrp.visible = centri.visible = tqLP.visible = tqHP.visible = (m === 'force');
+  flameMat.opacity = m === 'heat' ? 0.8 : 0.6; glow.intensity = m === 'heat' ? 1.4 : 0.7;
+  hideLabels(ALL_LABELS); $('pickcard').hidden = true;
+  goView(m);
+}
+Object.keys(VIEWS).forEach(k => $('m-' + k).addEventListener('click', () => setMode(k)));
+$('t-cut').addEventListener('click', () => {
+  cut = !cut; $('t-cut').textContent = cut ? 'Cerrar corte' : 'Abrir corte';
+  shells.forEach(s => s.mesh.geometry = cut ? s.cutG : s.fullG); comb.geometry = cut ? combCut : combFull;
+});
+$('t-play').addEventListener('click', () => { playing = !playing; $('t-play').textContent = playing ? 'Pausar' : 'Reanudar'; });
+$('t-speed').addEventListener('input', e => speed = parseFloat(e.target.value));
+$('t-orbit').addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; $('t-orbit').textContent = controls.autoRotate ? 'Detener cámara' : 'Girar cámara'; });
+$('t-reset').addEventListener('click', () => goView(mode));
+controls.addEventListener('start', () => { camAnim = null; });
+if (!playing) $('t-play').textContent = 'Reanudar';
+
+// ---------- piezas: registro, visibilidad y selección ----------
+const PART_INFO = {
+  nacelle:['Góndola', 'Aluminio y compuestos', 'Ambiente', 'Carcasa que guía el aire de derivación y reduce el ruido.', '#d7dce2'],
+  pylon:['Pilón', 'Titanio y aluminio', 'Ambiente', 'Une el motor con el ala y transmite el empuje al avión.', '#c3c9d0'],
+  core:['Carenado del núcleo', 'Aluminio / titanio', 'Hasta ≈ 150 °C por fuera', 'Separa el flujo de derivación del flujo del núcleo.', '#8d97a3'],
+  hub:['Cono y cubo central', 'Titanio / Níquel', '15–600 °C', 'Cono de entrada y cuerpo interior por donde pasa el aire del núcleo.', '#4b5562'],
+  fan:['Ventilador (fan)', 'Fibra de carbono o titanio', 'Ambiente', 'Mueve ≈ 90% del aire y da la mayor parte del empuje.', '#2c3644'],
+  ogv:['Álabes guía de salida', 'Compuestos / aluminio', 'Ambiente', 'Enderezan el aire que sale del fan para que empuje recto.', '#5d6774'],
+  lpc:['Compresor de baja', 'Titanio', '15–150 °C', 'Primera compresión del aire que entra al núcleo.', '#7f8b99'],
+  hpc:['Compresor de alta', 'Titanio → superaleación de Níquel', '150–600 °C', 'Sube la presión hasta ≈ 50 atm en 9 etapas.', '#8f8778'],
+  stat:['Estatores (álabes fijos)', 'Titanio / acero / Níquel', '15–600 °C', 'No giran: redirigen el aire entre cada etapa del compresor.', '#5d6774'],
+  comb:['Cámara de combustión', 'Níquel + TBC (futuro: CMC)', '≈ 1,500 °C', 'Mezcla el combustible con el aire comprimido y lo quema.', '#ffa045'],
+  ngv:['Toberas de turbina', 'Níquel con TBC (GE9X: CMC)', '≈ 1,500 °C', 'Álabes fijos que aceleran y orientan el gas hacia la turbina.', '#e9e4da'],
+  hpt:['Turbina de alta', 'Monocristal de Níquel (CMSX-4)', '1,500 → 1,000 °C', 'Mueve el compresor de alta. Cada álabe soporta ≈ 16 t de fuerza centrífuga.', '#a88a5a'],
+  lpt:['Turbina de baja', 'Níquel / aluminuro de titanio', '1,000 → 600 °C', 'Toma la energía que queda en el gas y mueve el fan.', '#8f8778'],
+  lpshaft:['Eje de baja', 'Acero de alta resistencia / Níquel', '—', 'Une la turbina de baja con el fan (≈ 4,000 rpm).', '#3d7bea'],
+  hpshaft:['Eje de alta', 'Superaleación de Níquel', '—', 'Une la turbina de alta con el compresor de alta (≈ 12,500 rpm).', '#5fc46a'],
+  stand:['Banco de pruebas', 'Acero', '—', 'Soporte para la demostración; no forma parte del motor.', '#4d5662'],
+};
+const ORDER = ['nacelle','pylon','core','fan','ogv','lpc','hpc','stat','comb','ngv','hpt','lpt','lpshaft','hpshaft','hub','stand'];
+const REG = {}; const VIS = {};
+ORDER.forEach(p => { REG[p] = []; VIS[p] = true; });
+function reg(p, ...objs){ objs.forEach(o => { REG[p].push(o); o.traverse(c => c.userData.part = p); }); }
+reg('nacelle', nac.mesh); reg('pylon', pylon); reg('core', core.mesh); reg('hub', hub.mesh, spinMark);
+stages.forEach(st => reg(st.kind, st.grp));
+reg('comb', combGrp); reg('lpshaft', lpShaft); reg('hpshaft', hpShaft); reg('stand', standGrp);
+lip.traverse(c => c.userData.part = 'nacelle');
+function modeAllows(p){
+  if (mode === 'heat' && (p === 'nacelle' || p === 'pylon')) return false;
+  if (p === 'stand' && explodeK > 0.05) return false;
+  return true;
+}
+function applyVis(){
+  ORDER.forEach(p => { const v = VIS[p] && modeAllows(p); REG[p].forEach(o => o.visible = v); });
+  lip.visible = cut && VIS.nacelle && modeAllows('nacelle');
+}
+const ppList = $('pp-list');
+ORDER.forEach(p => {
+  const row = document.createElement('label'); row.className = 'pp-row';
+  row.innerHTML = `<input type="checkbox" id="pp-${p}" checked><i style="background:${PART_INFO[p][4]}"></i><span>${PART_INFO[p][0]}</span>`;
+  ppList.appendChild(row);
+  row.querySelector('input').addEventListener('change', e => { VIS[p] = e.target.checked; });
+});
+function setAll(fn){ ORDER.forEach(p => { VIS[p] = fn(p); $('pp-' + p).checked = VIS[p]; }); }
+$('pp-all').addEventListener('click', () => setAll(() => true));
+$('pp-none').addEventListener('click', () => setAll(() => false));
+$('pp-core').addEventListener('click', () => setAll(p => !['nacelle','pylon','core','fan','ogv','stand'].includes(p)));
+$('t-parts').addEventListener('click', () => { const pp = $('partspanel'); pp.hidden = !pp.hidden; $('t-parts').setAttribute('aria-expanded', String(!pp.hidden)); });
+$('t-explode').addEventListener('input', e => { explodeTarget = parseFloat(e.target.value); });
+
+// tocar una pieza
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null, flash = null;
+function shown(o){ for (let c = o; c; c = c.parent) if (!c.visible) return false; return true; }
+canvas.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+canvas.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const r = canvas.getBoundingClientRect();
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(world.children, true).find(h => h.object.userData.part && shown(h.object) && !(h.object.material && h.object.material.opacity < 0.2));
+  if (!hit){ $('pickcard').hidden = true; return; }
+  showPart(hit.object.userData.part);
+});
+function showPart(p){
+  const [name, mat, temp, fn] = PART_INFO[p], card = $('pickcard');
+  card.innerHTML = `<h3>${name}</h3><p style="margin:0">${fn}</p><dl><dt>Material</dt><dd>${mat}</dd><dt>Temperatura</dt><dd>${temp}</dd></dl>
+    <div class="pc-actions"><button id="pc-hide">Ocultar esta pieza</button><button id="pc-only">Ver solo esta</button><button id="pc-close">Cerrar</button></div>`;
+  card.hidden = false;
+  $('pc-hide').onclick = () => { VIS[p] = false; $('pp-' + p).checked = false; card.hidden = true; };
+  $('pc-only').onclick = () => { setAll(q => q === p); };
+  $('pc-close').onclick = () => { card.hidden = true; };
+  if (flash) flash.restore();
+  const mats = []; REG[p].forEach(o => o.traverse(c => { if (c.material && c.material.emissive && !mats.includes(c.material)) mats.push(c.material); }));
+  const saved = mats.map(m => [m.emissive.getHex(), m.emissiveIntensity]);
+  mats.forEach(m => { m.emissive.set('#ff6a1f'); m.emissiveIntensity = 0.6; });
+  flash = {restore(){ mats.forEach((m, i) => { m.emissive.setHex(saved[i][0]); m.emissiveIntensity = saved[i][1]; }); flash = null; }};
+  setTimeout(() => { if (flash) flash.restore(); }, 1400);
+}
+
+const TOUR = [
+  {h:'Un turbofán por dentro', p:'Motor de avión comercial con un corte para ver el núcleo. Los dos ejes giran a distinta velocidad: el de baja ≈ 4,000 rpm y el de alta ≈ 12,500 rpm.', d:9, run(){ setMode('real'); }},
+  {h:'Sus partes', p:'El aire pasa por el fan, el compresor de baja, el compresor de alta, la cámara de combustión, la turbina de alta, la turbina de baja y sale por la tobera.', d:10, run(){ setMode('parts'); }},
+  {h:'El camino del aire', p:'Cerca del 90% del aire rodea el núcleo (azul) y da la mayor parte del empuje. Solo ≈ 10% entra al núcleo, se comprime hasta ≈ 50 atm y se quema.', d:11, run(){ setMode('flow'); }},
+  {h:'Dónde nace el calor', p:'El calor nace en la cámara de combustión (≈ 1,500 °C) y baja al pasar por las turbinas, que le quitan energía al gas.', d:10, run(){ setMode('heat'); }},
+  {h:'La pieza más exigida', p:'La turbina de alta recibe el gas más caliente y gira más rápido. Sus álabes son monocristales de Níquel con enfriamiento y barrera térmica.', d:10, run(){ setMode('parts'); setTimeout(() => { if (tourI === 4) showPart('hpt'); }, 900); }},
+  {h:'Las fuerzas', p:'El empuje sale de lanzar aire hacia atrás. Las turbinas mueven el fan y el compresor por los ejes, y cada álabe de la turbina de alta soporta ≈ 16 t de fuerza centrífuga.', d:11, run(){ setMode('force'); }},
+  {h:'Pieza por pieza', p:'Desarmado: cada etapa de álabes, la cámara de combustión, los ejes, la góndola y el carenado. Toca cualquier pieza para ver de qué material es.', d:11, run(){ setMode('explode'); }},
+  {h:'¿Qué material va en cada zona?', p:'Zona fría: titanio y fibra de carbono. Zona caliente: superaleaciones de Níquel y, cada vez más, compuestos cerámicos (CMC). Usa «Piezas» para ocultar lo que quieras.', d:10, run(){ setMode('real'); }},
+];
+
+// ---------- recorrido guiado ----------
+let tourI = -1, tourT = 0, tourPlay = true;
+function tourGo(i){
+  tourI = Math.max(0, Math.min(TOUR.length - 1, i)); tourT = 0; const s = TOUR[tourI];
+  s.run();
+  $('tr-n').textContent = 'Recorrido · paso ' + (tourI + 1) + ' de ' + TOUR.length;
+  $('tr-h').textContent = s.h; $('tr-p').textContent = s.p; $('tour').hidden = false; document.body.classList.add('touring');
+  $('tr-prev').disabled = tourI === 0; $('tr-next').textContent = tourI === TOUR.length - 1 ? 'Terminar' : 'Siguiente →';
+}
+function tourEnd(){ tourI = -1; $('tour').hidden = true; document.body.classList.remove('touring'); }
+function tourTick(dt){
+  if (tourI < 0) return;
+  if (tourPlay) tourT += dt;
+  const d = TOUR[tourI].d || 9; $('tr-bar').style.width = Math.min(100, tourT / d * 100) + '%';
+  if (tourPlay && tourT >= d){ if (tourI < TOUR.length - 1) tourGo(tourI + 1); else { tourPlay = false; $('tr-play').textContent = 'Repetir'; } }
+}
+$('t-tour').addEventListener('click', () => { tourPlay = true; $('tr-play').textContent = 'Pausar'; tourGo(0); });
+$('tr-x').addEventListener('click', tourEnd);
+$('tr-prev').addEventListener('click', () => tourGo(tourI - 1));
+$('tr-next').addEventListener('click', () => { if (tourI === TOUR.length - 1) tourEnd(); else tourGo(tourI + 1); });
+$('tr-play').addEventListener('click', () => {
+  if ($('tr-play').textContent === 'Repetir'){ tourPlay = true; $('tr-play').textContent = 'Pausar'; tourGo(0); return; }
+  tourPlay = !tourPlay; $('tr-play').textContent = tourPlay ? 'Pausar' : 'Seguir';
+});
+Object.keys(VIEWS).forEach(k => $('m-' + k).addEventListener('click', tourEnd));
+if (/[?&]tour=1/.test(location.search)) setTimeout(() => $('t-tour').click(), 600);
+
+function resize(){ const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(() => { resize(); }).observe(stage); resize();
+
+const clock = new THREE.Clock();
+setMode(QV && VIEWS[QV] ? QV : 'real');
+{ const v = camAnim; camera.position.copy(v.p1); controls.target.copy(v.t1); camAnim = null; }
+$('loading').hidden = true; $('loading').style.display = 'none';
+function tick(){
+  const dt = Math.min(clock.getDelta(), 0.1), t = clock.elapsedTime, run = playing ? speed : 0;
+  stages.forEach(s => { if (s.spool) s.grp.rotation.y += dt * run * (s.spool === 'hp' ? 2.6 : 1.0); });
+  lpShaft.rotation.y += dt * run * 1.0; hpShaft.rotation.y += dt * run * 2.6; spinMark.rotation.z += dt * run * 1.0;
+  tqLP.rotation.y += dt * run * 1.0; tqHP.rotation.y += dt * run * 2.6;
+  const fl = 1 + 0.035 * Math.sin(t * 23) + 0.02 * Math.sin(t * 37);
+  flame.scale.set(fl, 1, fl); glow.intensity *= 0.98 + 0.04 * Math.random();
+  explodeK += (explodeTarget - explodeK) * Math.min(1, dt * 3);
+  stages.forEach(s => { s.grp.position.y = exY(s.kind, s.home); });
+  combGrp.position.y = exY('comb', -0.5) + 0.5; glow.position.y = combGrp.position.y - 0.4;
+  nacGrp.position.x = -9 * explodeK; pylon.position.x = -5.15 - 5 * explodeK; coreGrp.position.x = 6 * explodeK;
+  lpShaft.position.x = 2.2 * explodeK; hpShaft.position.x = 1.2 * explodeK;
+  applyVis();
+  if (mode === 'flow' && run > 0) updateParticles(dt * run);
+  tourTick(dt);
+  if (camAnim){ camAnim.k = Math.min(1, camAnim.k + dt / 1.1); const e = camAnim.k * camAnim.k * (3 - 2 * camAnim.k);
+    camera.position.lerpVectors(camAnim.p0, camAnim.p1, e); controls.target.lerpVectors(camAnim.t0, camAnim.t1, e); if (camAnim.k >= 1) camAnim = null; }
+  controls.update(); renderer.render(scene, camera);
+  if (mode === 'parts' || mode === 'explode') layout(PARTS);
+  else if (mode === 'force') layout(FORCE_LABELS);
+  else if (mode === 'heat') layout(HEAT_LABELS);
+  requestAnimationFrame(tick);
+}
+updateParticles(0);
+tick();
+})();
+</script>
+
+</body>
+</html>

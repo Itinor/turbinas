@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Álabe de turbina en 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: mesa de inspección — el álabe ocupa la escena; a la derecha, la ficha de cada vista. */
+:root{
+  --bg:#f0f1ee; --panel:#ffffff; --line:#d6d9d2; --fg:#1b2026; --muted:#5f6772;
+  --accent:#c8551d; --cool:#2477c9; --stage:#dcdfd9; --stage2:#f3f4f1; --chip:#f4f5f2;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101316; --panel:#171c21; --line:#2a323b; --fg:#e8ebee; --muted:#97a1ac;
+  --accent:#ff8247; --cool:#5aa6ff; --stage:#0f1317; --stage2:#1d242b; --chip:#1d242b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101316; --panel:#171c21; --line:#2a323b; --fg:#e8ebee; --muted:#97a1ac;
+  --accent:#ff8247; --cool:#5aa6ff; --stage:#0f1317; --stage2:#1d242b; --chip:#1d242b; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));}
+.wrap{max-width:1320px;margin:0 auto;padding-block:16px 28px;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4vw,40px);margin:0;line-height:1;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;font-size:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+button{font:600 14px var(--body);border:1px solid var(--line);background:var(--chip);color:var(--fg);padding:7px 12px;border-radius:6px;cursor:pointer}
+.tabs button[aria-pressed="true"],.chips button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;background:radial-gradient(ellipse at 50% 30%,var(--stage2),var(--stage) 70%);border:1px solid var(--line);border-radius:10px;overflow:hidden;height:min(72vh,640px);min-height:360px}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.labels{position:absolute;inset:0;pointer-events:none}
+.labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.labels line{stroke:var(--fg);stroke-opacity:.55;stroke-width:1}
+.labels circle{fill:var(--accent)}
+.lab{position:absolute;white-space:nowrap;font:600 12px var(--body);background:var(--panel);color:var(--fg);
+  border:1px solid var(--line);border-radius:5px;padding:3px 7px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.lab small{display:block;font:400 11px var(--mono);color:var(--accent)}
+.tools{position:absolute;left:10px;bottom:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap}
+.loading{position:absolute;inset:0;display:grid;place-items:center;font:400 13px var(--mono);color:var(--muted)}
+.partsbtn{position:absolute;left:10px;top:10px}
+.partsbtn[aria-expanded="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.partspanel{position:absolute;left:10px;top:52px;width:240px;max-width:calc(100% - 20px);max-height:calc(100% - 120px);overflow:auto;z-index:4;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.16);font:400 13px var(--body)}
+.pp-head{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.pp-head b{font:600 13px var(--body);margin-right:auto}
+.pp-head button{font-size:12px;padding:4px 8px}
+.pp-row{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}
+.pp-row input{margin:0;accent-color:var(--accent)}
+.pp-row i{width:12px;height:12px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.15)}
+.pickcard{position:absolute;right:10px;top:10px;width:270px;max-width:calc(100% - 20px);background:var(--panel);border:1px solid var(--line);z-index:4;
+  border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.16);font:400 13px/1.45 var(--body)}
+.pickcard h3{font:600 18px var(--display);margin:0 0 4px}
+.pickcard dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:6px 0}
+.pickcard dt{color:var(--muted)} .pickcard dd{margin:0}
+.pickcard .pc-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.pickcard .pc-actions button{font-size:12px;padding:4px 8px}
+.tools label{font:400 12px var(--mono);color:var(--muted);display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+
+.tourbtn{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+.tour{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);width:min(560px,calc(100% - 20px));z-index:5;
+  background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;
+  padding:12px 16px 12px;box-shadow:0 10px 28px rgba(0,0,0,.22);font:400 14px/1.5 var(--body)}
+.tr-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px}
+.tr-top span{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.tr-top button{font-size:12px;padding:3px 8px}
+.tour h3{font:600 20px var(--display);margin:0 0 4px;line-height:1.15}
+.tour p{margin:0 0 10px}
+.tr-bar{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.tr-bar i{display:block;height:100%;width:0;background:var(--accent)}
+.tr-nav{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.tr-nav button{font-size:13px;padding:5px 10px}
+body.touring .tools{display:none}
+
+aside{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+aside h2{font-family:var(--display);font-weight:600;font-size:24px;margin:0;line-height:1.1}
+aside p{margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-direction:column;gap:5px;font-size:13px}
+.legend span{display:flex;align-items:center;gap:8px}
+.legend i{width:14px;height:14px;border-radius:3px;display:inline-block;flex:none}
+.bar{height:12px;border-radius:3px;background:linear-gradient(90deg,#2f8fd1,#d6b44a,#ff8a2a,#ff4e1f,#ffd34f)}
+.barl{display:flex;justify-content:space-between;font:400 11px var(--mono);color:var(--muted)}
+.note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.calc{font-family:var(--mono);font-size:13px;background:var(--chip);border-radius:6px;padding:10px;line-height:1.6}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.meter{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;background:var(--chip);border-radius:6px;padding:10px;display:grid;grid-template-columns:auto 1fr;gap:2px 12px}
+.meter b{font-weight:600}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+body.embed .wrap{padding-block:8px;max-width:none}
+body.embed h1, body.embed .sub, body.embed aside{display:none}
+body.embed .main{grid-template-columns:minmax(0,1fr)}
+body.embed .stage{height:calc(100vh - 66px);min-height:300px}
+body.embed header{justify-content:flex-start}
+.back{font:600 13px var(--body);color:var(--muted);text-decoration:none;display:inline-block;margin-bottom:6px}
+body.embed .back{display:none}
+body.embed.panel aside{display:flex;max-height:calc(100vh - 66px);overflow:auto}
+body.embed.panel .main{grid-template-columns:minmax(0,1fr) 300px}
+@media (max-width:760px){body.embed.panel aside{display:none} body.embed.panel .main{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<script>if(/[?&]embed=1/.test(location.search))document.body.classList.add('embed');if(/[?&]panel=1/.test(location.search))document.body.classList.add('panel');</script>
+
+<div class="wrap">
+  <header>
+    <div>
+      <a class="back" href="../index.html">← Volver al trabajo</a>
+      <h1>Álabe de turbina en 3D</h1>
+      <p class="sub">Álabe de la turbina de alta presión, monocristal de superaleación de Níquel. Arrastra para girar, rueda o pellizco para acercar, clic derecho o dos dedos para mover.</p>
+    </div>
+    <div class="tabs" role="group" aria-label="Vista del álabe">
+      <button id="m-real" aria-pressed="true">Modelo</button>
+      <button id="m-layers" aria-pressed="false">Capas</button>
+      <button id="m-cool" aria-pressed="false">Enfriamiento</button>
+      <button id="m-section" aria-pressed="false">Corte</button>
+      <button id="m-heat" aria-pressed="false">Calor</button>
+      <button id="m-force" aria-pressed="false">Fuerzas</button>
+      <button id="m-disk" aria-pressed="false">En el disco</button>
+      <button id="m-creep" aria-pressed="false">Granos y creep</button>
+      <button id="m-explode" aria-pressed="false">Desarmado</button>
+    </div>
+  </header>
+  <div class="main">
+    <div class="stage" id="stage">
+      <div class="loading" id="loading">Cargando modelo 3D…</div>
+      <canvas id="c"></canvas>
+      <div class="labels" id="labels"><svg id="leaders"></svg></div>
+      <button class="partsbtn" id="t-parts" aria-expanded="false" aria-controls="partspanel">Piezas</button>
+      <div class="partspanel" id="partspanel" hidden>
+        <div class="pp-head"><b>Piezas visibles</b><button id="pp-all">Todas</button><button id="pp-none">Ninguna</button></div>
+        <div id="pp-list"></div>
+      </div>
+      <div class="pickcard" id="pickcard" hidden></div>
+      <div class="tour" id="tour" hidden role="region" aria-label="Recorrido guiado">
+        <div class="tr-top"><span id="tr-n">Paso 1</span><button id="tr-x">Cerrar</button></div>
+        <h3 id="tr-h"></h3><p id="tr-p"></p>
+        <div class="tr-bar"><i id="tr-bar"></i></div>
+        <div class="tr-nav"><button id="tr-prev">← Anterior</button><button id="tr-play">Pausar</button><button id="tr-next">Siguiente →</button></div>
+      </div>
+      <div class="tools"><button id="t-tour" class="tourbtn">▶ Recorrido guiado</button><label for="t-explode">desarmar <input id="t-explode" type="range" min="0" max="1" step="0.01" value="0"></label><button id="t-spin">Girar cámara</button><button id="t-reset">Vista inicial</button></div>
+    </div>
+    <aside id="info"></aside>
+  </div>
+</div>
+
+<script src="../lib/three.min.js"></script>
+<script src="../lib/OrbitControls.js"></script>
+<script>
+(function(){
+const QP = new URLSearchParams(location.search); if (QP.get('embed')) document.body.classList.add('embed'); if (QP.get('panel')) document.body.classList.add('panel');
+const QV = QP.get('vista');
+const $ = id => document.getElementById(id);
+const canvas = $('c'), stage = $('stage'), labelsEl = $('labels'), info = $('info');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.localClippingEnabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x000000, 0);
+const svg = $('leaders'), SVGNS = 'http://www.w3.org/2000/svg';
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 300);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.minDistance = 2.5; controls.maxDistance = 60;
+controls.autoRotateSpeed = 1.2;
+(function studio(){
+  const env = new THREE.Scene();
+  env.add(new THREE.Mesh(new THREE.BoxGeometry(40, 20, 40), new THREE.MeshBasicMaterial({color:0x2c3138, side:THREE.BackSide})));
+  const panel = (w, h, x, y, z, ry, rx, c) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide}));
+    m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0); env.add(m); };
+  panel(16, 4, 0, 9.5, 0, 0, Math.PI / 2, 0xe2e5e9); panel(10, 6, -19, 3, 0, Math.PI / 2, 0, 0xcbbca4);
+  panel(8, 5, 19, 1, 6, -Math.PI / 2, 0, 0x9fb2cc); panel(40, 8, 0, -9.5, 0, 0, Math.PI / 2, 0x16191d);
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(env, 0.03).texture;
+})();
+scene.add(new THREE.HemisphereLight(0xffffff, 0x3c4450, 0.3));
+const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(5, 10, 7); scene.add(key);
+key.castShadow = true; key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, {left:-5, right:5, top:6, bottom:-4, near:1, far:40}); key.shadow.bias = -0.0005;
+const fill = new THREE.DirectionalLight(0xcfe0ff, 0.5); fill.position.set(-7, 2, -5); scene.add(fill);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({opacity:.22}));
+floor.rotation.x = -Math.PI / 2; floor.position.y = -1.55; floor.receiveShadow = true; scene.add(floor);
+
+// ---------- perfil aerodinámico (NACA con mucha curvatura, como un álabe de turbina) ----------
+const H = 4.0, NH = 30, K = 40;         // altura de la pala, puntos por lado, secciones
+const CAM = 0.13, PCAM = 0.42, THK = 0.22;
+function sectionParams(s){ return {c:1.6 * (1 - 0.12 * s), tw:-0.28 * s}; }
+function camber(xc){ return xc < PCAM ? CAM / (PCAM*PCAM) * (2*PCAM*xc - xc*xc) : CAM / ((1-PCAM)*(1-PCAM)) * ((1 - 2*PCAM) + 2*PCAM*xc - xc*xc); }
+function dcamber(xc){ return xc < PCAM ? 2*CAM / (PCAM*PCAM) * (PCAM - xc) : 2*CAM / ((1-PCAM)*(1-PCAM)) * (PCAM - xc); }
+function thick(xc){ return THK / 0.2 * (0.2969*Math.sqrt(xc) - 0.126*xc - 0.3516*xc*xc + 0.2843*xc**3 - 0.1015*xc**4); }
+// punto en coordenadas de la sección: x a lo largo de la cuerda, z hacia el lado convexo
+function surf2(xc, side){
+  const yc = camber(xc), th = Math.atan(dcamber(xc)), yt = thick(xc);
+  return side > 0 ? [xc - yt*Math.sin(th), yc + yt*Math.cos(th)] : [xc + yt*Math.sin(th), yc - yt*Math.cos(th)];
+}
+function toLocal(p2, s, d2){   // p2 = [x,z] normalizado; d2 = desplazamiento extra [dx,dz]
+  const {c, tw} = sectionParams(s);
+  let x = (p2[0] - 0.45) * c + (d2 ? d2[0] : 0), z = p2[1] * c + (d2 ? d2[1] : 0);
+  const cx = Math.cos(tw), sx = Math.sin(tw);
+  return new THREE.Vector3(x*cx - z*sx, s * H, x*sx + z*cx);
+}
+const XC = Array.from({length:NH}, (_, i) => (1 - Math.cos(Math.PI * i / (NH - 1))) / 2);
+const RING = []; // [xc, side]
+for (let i = NH - 1; i >= 0; i--) RING.push([XC[i], 1]);
+for (let i = 1; i < NH; i++) RING.push([XC[i], -1]);
+const NR = RING.length;
+function ringPoints(s, off){
+  const pts = RING.map(([xc, sd]) => surf2(xc, sd));
+  if (!off) return pts.map(p => toLocal(p, s));
+  let cxm = 0, czm = 0; pts.forEach(p => { cxm += p[0]; czm += p[1]; }); cxm /= NR; czm /= NR;
+  return pts.map((p, i) => {
+    const a = pts[(i - 1 + NR) % NR], b = pts[(i + 1) % NR];
+    let nx = b[1] - a[1], nz = -(b[0] - a[0]); const L = Math.hypot(nx, nz) || 1; nx /= L; nz /= L;
+    if ((p[0] - cxm) * nx + (p[1] - czm) * nz < 0){ nx = -nx; nz = -nz; }
+    const {c} = sectionParams(s);
+    return toLocal(p, s, [nx * off * 1, nz * off * 1].map(v => v / 1)).add(new THREE.Vector3(0,0,0));
+  });
+}
+function loft(off){
+  const pos = [], uv = [], idx = [];
+  for (let k = 0; k <= K; k++){
+    const s = k / K, ring = ringPoints(s, off);
+    ring.forEach((p, i) => { pos.push(p.x, p.y, p.z); uv.push(RING[i][0], s); });
+  }
+  for (let k = 0; k < K; k++) for (let i = 0; i < NR; i++){
+    const a = k*NR + i, b = k*NR + (i+1) % NR, c = (k+1)*NR + (i+1) % NR, d = (k+1)*NR + i;
+    idx.push(a, b, d, b, c, d);
+  }
+  [0, K].forEach(k => {            // tapas
+    let cx = 0, cy = 0, cz = 0;
+    for (let i = 0; i < NR; i++){ cx += pos[(k*NR+i)*3]; cy += pos[(k*NR+i)*3+1]; cz += pos[(k*NR+i)*3+2]; }
+    const ci = pos.length / 3; pos.push(cx/NR, cy/NR, cz/NR); uv.push(0.5, k / K);
+    for (let i = 0; i < NR; i++){ const a = k*NR + i, b = k*NR + (i+1) % NR; k === 0 ? idx.push(ci, b, a) : idx.push(ci, a, b); }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals();
+  g.userData.base = Float32Array.from(pos);
+  return g;
+}
+
+const blade = new THREE.Group();          // álabe principal
+const rotor = new THREE.Group(); rotor.position.y = -6.4; scene.add(rotor);
+const bladeHolder = new THREE.Group(); bladeHolder.position.y = 6.4; bladeHolder.add(blade); rotor.add(bladeHolder);
+
+const metalMat = new THREE.MeshStandardMaterial({color:'#a9aeb5', metalness:.85, roughness:.3});
+const heatMat = new THREE.MeshStandardMaterial({vertexColors:true, metalness:0, roughness:.7, envMapIntensity:.15, toneMapped:false});
+const grainMat = new THREE.MeshStandardMaterial({vertexColors:true, metalness:.2, roughness:.5, envMapIntensity:.4});
+const airGeo = loft(0);
+const airfoil = new THREE.Mesh(airGeo, metalMat); airfoil.castShadow = true; blade.add(airfoil);
+
+// capas (exageradas para que se vean)
+const tbcPlane = new THREE.Plane(new THREE.Vector3(0,-1,0), 2.2), bondPlane = new THREE.Plane(new THREE.Vector3(0,-1,0), 3.05);
+const bond = new THREE.Mesh(loft(0.022), new THREE.MeshStandardMaterial({color:'#c9a24e', metalness:.7, roughness:.35, clippingPlanes:[bondPlane], side:THREE.DoubleSide}));
+const tbc = new THREE.Mesh(loft(0.06), new THREE.MeshStandardMaterial({color:'#f1ede4', metalness:0, roughness:.9, clippingPlanes:[tbcPlane], side:THREE.DoubleSide}));
+blade.add(bond, tbc);
+
+// plataforma y raíz de abeto
+const platform = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.24, 1.32), metalMat);
+platform.position.set(0.02, -0.12, 0.05); platform.castShadow = true; blade.add(platform);
+const shape = new THREE.Shape();
+const tree = [[-0.42,0],[-0.42,-0.22],[-0.66,-0.36],[-0.44,-0.55],[-0.6,-0.68],[-0.38,-0.86],[-0.52,-0.98],[-0.3,-1.16],[0.3,-1.16],[0.52,-0.98],[0.38,-0.86],[0.6,-0.68],[0.44,-0.55],[0.66,-0.36],[0.42,-0.22],[0.42,0]];
+tree.forEach(([x, y], i) => i ? shape.lineTo(x, y) : shape.moveTo(x, y));
+const rootGeo = new THREE.ExtrudeGeometry(shape, {depth:1.7, bevelEnabled:false});
+rootGeo.translate(0, 0, -0.85); rootGeo.rotateY(Math.PI / 2);
+const rootMat = metalMat.clone(); rootMat.emissive = new THREE.Color('#000000');
+const root = new THREE.Mesh(rootGeo, rootMat); root.position.set(0.02, -0.24, 0.05); root.castShadow = true; blade.add(root);
+// punta con borde (squealer tip)
+const tipRing = ringPoints(1.0, 0).map(p => new THREE.Vector3(p.x, p.y, p.z));
+const tipCurve = new THREE.CatmullRomCurve3(tipRing, true);
+const tipRim = new THREE.Mesh(new THREE.TubeGeometry(tipCurve, 120, 0.022, 6, true), metalMat);
+tipRim.position.y = 0.03; blade.add(tipRim);
+// ranuras en el borde de fuga
+const slotMat = new THREE.MeshBasicMaterial({color:'#15191e'});
+const slots = new THREE.Group(); blade.add(slots);
+for (let i = 0; i < 12; i++){ const s = 0.1 + i * 0.07, p = toLocal(surf2(0.93, -1), s), q = toLocal(surf2(0.98, -1), s);
+  const m = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.035, 0.012), slotMat); m.position.copy(p).lerp(q, 0.5); m.lookAt(q.clone().add(new THREE.Vector3(0, 0, 1))); slots.add(m); }
+
+// colores por vértice: calor y granos
+function setColors(geo, fn){
+  const p = geo.attributes.position, u = geo.attributes.uv, col = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++){ const c = fn(u.getX(i), u.getY(i), p.getX(i), p.getY(i), p.getZ(i)); col.set([c.r, c.g, c.b], i*3); }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+}
+const HEAT = [[550,'#2f8fd1'],[750,'#d6b44a'],[900,'#ff8a2a'],[1050,'#ff4e1f'],[1150,'#ffd34f']];
+function heatColor(T){ for (let i = 1; i < HEAT.length; i++) if (T <= HEAT[i][0]){ const k = (T - HEAT[i-1][0]) / (HEAT[i][0] - HEAT[i-1][0]); return new THREE.Color(HEAT[i-1][1]).lerp(new THREE.Color(HEAT[i][1]), Math.max(0,k)); } return new THREE.Color(HEAT[HEAT.length-1][1]); }
+const metalT = (u, s) => 760 + 300 * Math.sin(Math.PI / 2 * Math.min(1, s * 1.35)) + 90 * Math.exp(-u / 0.06) + 60 * Math.exp(-(1 - u) / 0.05) - 40 * Math.exp(-Math.pow((u - 0.5) / 0.18, 2));
+const heatGeo = airGeo.clone(); setColors(heatGeo, (u, s) => heatColor(metalT(u, s)));
+const rootHeatGeo = rootGeo.clone(); setColorsRoot(rootHeatGeo);
+function setColorsRoot(g){ const p = g.attributes.position, col = new Float32Array(p.count*3); for (let i = 0; i < p.count; i++){ const c = heatColor(600 + 120 * (p.getY(i) + 1.16)); col.set([c.r,c.g,c.b], i*3); } g.setAttribute('color', new THREE.BufferAttribute(col, 3)); }
+
+const GRAIN = ['#ff7ac8','#4fd1e0','#7fdc6a','#ffb347','#a68bff','#ffe066','#ff6161','#62a8ff'];
+function grainSet(type){
+  const g = airGeo.clone();
+  let seeds = [];
+  const rnd = mulberry(type === 'eq' ? 7 : 3);
+  if (type === 'eq') for (let i = 0; i < 46; i++) seeds.push([rnd()*1.8-0.9, rnd()*4.2-0.1, rnd()*0.8-0.4]);
+  if (type === 'col') for (let i = 0; i < 6; i++) seeds.push([-0.8 + i * 0.32 + rnd()*0.1, 2, rnd()*0.6-0.3]);
+  setColors(g, (u, s, x, y, z) => {
+    if (type === 'sx') return new THREE.Color(GRAIN[0]);
+    let best = 1e9, bi = 0;
+    seeds.forEach((sd, i) => { const wy = type === 'col' ? 0.02 : 1; const d = (x-sd[0])**2 + wy*(y-sd[1])**2 + (z-sd[2])**2; if (d < best){ best = d; bi = i; } });
+    return new THREE.Color(GRAIN[bi % GRAIN.length]);
+  });
+  g.userData.base = airGeo.userData.base;
+  return g;
+}
+function mulberry(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const GRAINS = {eq:grainSet('eq'), col:grainSet('col'), sx:grainSet('sx')};
+
+// ---------- enfriamiento ----------
+function camberPt(u, s, out){ const yc = camber(u); return toLocal([u, yc], s, out ? [0, out] : null); }
+const passPts = [];
+[[0.32,-1.0,0.0],[0.32,0,0.92],[0.55,0.92,0.06],[0.75,0.06,0.92]].forEach(([u, s0, s1], j) => {
+  const n = 8; for (let i = 0; i <= n; i++){ if (j && i === 0) continue; const s = s0 + (s1 - s0) * i / n;
+    passPts.push(s < 0 ? new THREE.Vector3(0.0, s * 1.2, 0.05) : camberPt(u, s)); }
+});
+passPts.push(camberPt(0.93, 0.9), camberPt(1.04, 0.82));
+const passCurve = new THREE.CatmullRomCurve3(passPts, false, 'catmullrom', 0.2);
+const leCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0.0,-1.1,0.05), new THREE.Vector3(-0.3,-0.2,0.1), camberPt(0.07, 0.05), camberPt(0.07, 0.5), camberPt(0.07, 0.95)]);
+const coolMat = new THREE.MeshStandardMaterial({color:'#3fa3ff', metalness:0, roughness:.4, transparent:true, opacity:.8});
+const coolGrp = new THREE.Group(); blade.add(coolGrp);
+coolGrp.add(new THREE.Mesh(new THREE.TubeGeometry(passCurve, 160, 0.075, 10, false), coolMat));
+coolGrp.add(new THREE.Mesh(new THREE.TubeGeometry(leCurve, 80, 0.05, 10, false), coolMat));
+const holes = [];
+const holeMat = new THREE.MeshBasicMaterial({color:'#101418'});
+for (let r = 0; r < 14; r++) for (const [u, sd] of [[0.012, 1], [0.035, 1], [0.035, -1], [0.12, 1], [0.3, 1]]){
+  const s = 0.08 + r * 0.062 + (u === 0.035 ? 0.03 : 0), p = toLocal(surf2(u, sd), s);
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), holeMat); m.position.copy(p); blade.add(m); holes.push({u, sd, s, m});
+}
+const NCP = 260, NFP = 300;
+const cGeo = new THREE.BufferGeometry(), cPos = new Float32Array((NCP + NFP) * 3), cCol = new Float32Array((NCP + NFP) * 3);
+cGeo.setAttribute('position', new THREE.BufferAttribute(cPos, 3)); cGeo.setAttribute('color', new THREE.BufferAttribute(cCol, 3));
+const coolPts = new THREE.Points(cGeo, new THREE.PointsMaterial({size:0.055, vertexColors:true, depthWrite:false, transparent:true}));
+blade.add(coolPts);
+const CP = Array.from({length:NCP}, (_, i) => ({t:Math.random(), le:i % 4 === 0}));
+const FP = Array.from({length:NFP}, () => ({h:holes[Math.floor(Math.random()*holes.length)], k:Math.random()}));
+function updateCool(dt){
+  const cool = new THREE.Color('#5ab8ff'), warm = new THREE.Color('#ffb15a');
+  CP.forEach((p, i) => {
+    p.t += dt * (p.le ? 0.22 : 0.12); if (p.t > 1) p.t -= 1;
+    const v = (p.le ? leCurve : passCurve).getPointAt(p.t);
+    cPos.set([v.x, v.y, v.z], i*3); const c = cool.clone().lerp(warm, p.t * 0.8); cCol.set([c.r, c.g, c.b], i*3);
+  });
+  FP.forEach((p, j) => {
+    p.k += dt * 0.35; if (p.k > 1){ p.k = 0; p.h = holes[Math.floor(Math.random()*holes.length)]; }
+    const u = Math.min(0.98, p.h.u + p.k * 0.85), v = toLocal(surf2(u, p.h.sd), p.h.s + p.k * 0.03);
+    const n = toLocal(surf2(u, p.h.sd), p.h.s).sub(camberPt(u, p.h.s)).normalize().multiplyScalar(0.03 + 0.03 * p.k);
+    v.add(n); const i = NCP + j; cPos.set([v.x, v.y, v.z], i*3);
+    const c = cool.clone().lerp(warm, 0.6 + 0.4 * p.k); cCol.set([c.r, c.g, c.b], i*3);
+  });
+  cGeo.attributes.position.needsUpdate = true; cGeo.attributes.color.needsUpdate = true;
+}
+
+// ---------- corte transversal ----------
+const S_CUT = 0.55, cutPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), S_CUT * H);
+const toShape = p => new THREE.Vector2(p.x, -p.z);
+function inner(xc, sd, w){ const t = Math.max(0.006, thick(xc) - w); return [xc, camber(xc) + sd * t]; }
+const secGrp = new THREE.Group(); blade.add(secGrp);
+(function(){
+  const outer = ringPoints(S_CUT, 0).map(toShape);
+  const shp = new THREE.Shape(outer);
+  const CAV = [[0.035, 0.2], [0.26, 0.48], [0.54, 0.75], [0.81, 0.92]];
+  CAV.forEach(([a, b]) => { const pts = [], n = 14;
+    for (let i = 0; i <= n; i++){ const xc = a + (b - a) * i / n; pts.push(toShape(toLocal(inner(xc, 1, 0.032), S_CUT))); }
+    for (let i = n; i >= 0; i--){ const xc = a + (b - a) * i / n; pts.push(toShape(toLocal(inner(xc, -1, 0.032), S_CUT))); }
+    shp.holes.push(new THREE.Path(pts)); });
+  const g = new THREE.ShapeGeometry(shp, 24); g.rotateX(-Math.PI / 2); g.translate(0, S_CUT * H + 0.002, 0);
+  secGrp.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:'#b7bdc5', metalness:.3, roughness:.35, side:THREE.DoubleSide})));
+  const tb = new THREE.Shape(ringPoints(S_CUT, 0.05).map(toShape)); tb.holes.push(new THREE.Path(outer.slice().reverse()));
+  const g2 = new THREE.ShapeGeometry(tb, 24); g2.rotateX(-Math.PI / 2); g2.translate(0, S_CUT * H + 0.004, 0);
+  secGrp.add(new THREE.Mesh(g2, new THREE.MeshStandardMaterial({color:'#efe9dc', roughness:.9, side:THREE.DoubleSide})));
+  const bc = new THREE.Shape(ringPoints(S_CUT, 0.018).map(toShape)); bc.holes.push(new THREE.Path(outer.slice().reverse()));
+  const g3 = new THREE.ShapeGeometry(bc, 24); g3.rotateX(-Math.PI / 2); g3.translate(0, S_CUT * H + 0.006, 0);
+  secGrp.add(new THREE.Mesh(g3, new THREE.MeshStandardMaterial({color:'#c9a24e', metalness:.7, roughness:.35, side:THREE.DoubleSide})));
+})();
+
+// ---------- disco y álabes vecinos ----------
+const RD = 6.4 - 0.24;
+const diskMat = new THREE.MeshStandardMaterial({color:'#949aa3', metalness:.8, roughness:.32, transparent:true, opacity:1});
+const NB = 30;
+const diskShape = new THREE.Shape();
+(function(){
+  const pts = [];
+  for (let i = 0; i < NB; i++){
+    const th = i / NB * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
+    let notch = tree.map(([x, y]) => { const zl = -x * 1.05 + 0.05, yl = y * 1.03 - 0.24 + 6.4;
+      const yw = yl * c - zl * sn, zw = yl * sn + zl * c; return [-zw, yw]; });
+    const ang = p => Math.atan2(p[1], p[0]);
+    let a0 = ang(notch[0]), a1 = ang(notch[notch.length - 1]);
+    const d = Math.atan2(Math.sin(a1 - a0), Math.cos(a1 - a0)); if (d < 0) notch.reverse();
+    pts.push(notch);
+  }
+  pts.sort((A, B) => Math.atan2(A[0][1], A[0][0]) - Math.atan2(B[0][1], B[0][0]));
+  const out = [];
+  pts.forEach((n, i) => {
+    n.forEach(p => out.push(p));
+    const nx = pts[(i + 1) % pts.length][0], a0 = Math.atan2(n[n.length-1][1], n[n.length-1][0]);
+    let a1 = Math.atan2(nx[1], nx[0]); while (a1 < a0) a1 += Math.PI * 2;
+    for (let k = 1; k < 6; k++){ const a = a0 + (a1 - a0) * k / 6; out.push([RD * Math.cos(a), RD * Math.sin(a)]); }
+  });
+  out.forEach(([u, v], i) => i ? diskShape.lineTo(u, v) : diskShape.moveTo(u, v));
+  const hole = new THREE.Path(); hole.absarc(0, 0, 0.9, 0, Math.PI * 2, true); diskShape.holes.push(hole);
+})();
+const diskGeo = new THREE.ExtrudeGeometry(diskShape, {depth:1.75, bevelEnabled:true, bevelSize:0.04, bevelThickness:0.04, bevelSegments:2, curveSegments:48});
+diskGeo.translate(0, 0, -0.875); diskGeo.rotateY(Math.PI / 2); diskGeo.translate(0.02, 0, 0);
+const disk = new THREE.Mesh(diskGeo, diskMat); disk.castShadow = true; rotor.add(disk);
+const hubDisk = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 2.6, 48, 1, true), new THREE.MeshStandardMaterial({color:'#5c636c', metalness:.7, roughness:.4}));
+hubDisk.rotation.z = Math.PI / 2; rotor.add(hubDisk);
+const neighbors = new THREE.Group(); rotor.add(neighbors);
+const ghostMat = metalMat.clone();
+for (let i = 1; i < NB; i++){
+  const h = new THREE.Group(); h.rotation.x = i / NB * Math.PI * 2;
+  const g = new THREE.Group(); g.position.y = 6.4; h.add(g);
+  g.add(new THREE.Mesh(airGeo, ghostMat), new THREE.Mesh(platform.geometry, ghostMat).translateX(0.02).translateY(-0.12).translateZ(0.05),
+        new THREE.Mesh(rootGeo, ghostMat).translateX(0.02).translateY(-0.24).translateZ(0.05));
+  neighbors.add(h);
+}
+
+// ---------- fuerzas ----------
+const forceGrp = new THREE.Group(); blade.add(forceGrp);
+function arrow(len, color, r){
+  const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color, metalness:.1, roughness:.4, emissive:color, emissiveIntensity:.3});
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len * 0.72, 14), m); body.position.y = len * 0.36;
+  const head = new THREE.Mesh(new THREE.ConeGeometry(r * 2.6, len * 0.28, 18), m); head.position.y = len * 0.86;
+  g.add(body, head); return g;
+}
+function aim(o, from, dir){ o.position.copy(from); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize()); return o; }
+forceGrp.add(aim(arrow(1.9, '#22a861', 0.07), new THREE.Vector3(0, 4.25, 0.05), new THREE.Vector3(0, 1, 0)));
+for (let i = 0; i < 5; i++){ const s = 0.15 + i * 0.18, p = toLocal(surf2(0.45, -1), s), d = new THREE.Vector3(0.25, 0, 1).normalize();
+  forceGrp.add(aim(arrow(0.65, '#3d8bff', 0.025), p.clone().sub(d.clone().multiplyScalar(0.72)), d)); }
+[[-0.36,1],[-0.68,1],[-0.98,1],[-0.36,-1],[-0.68,-1],[-0.98,-1]].forEach(([y, sd]) => {
+  const d = new THREE.Vector3(0, -0.6, -sd).normalize(), o = new THREE.Vector3(0.02, y - 0.24 - 0.05, 0.05 + sd * 1.15);
+  forceGrp.add(aim(arrow(0.42, '#ff4d5a', 0.022), o, d));
+});
+
+// ---------- etiquetas ----------
+function mk(html){ const d = document.createElement('div'); d.className = 'lab'; d.innerHTML = html; d.hidden = true; labelsEl.appendChild(d);
+  const ln = document.createElementNS(SVGNS, 'line'), dot = document.createElementNS(SVGNS, 'circle'); dot.setAttribute('r', '3'); svg.append(ln, dot); return {d, ln, dot}; }
+const LABELS = {
+  real:[['Pala (perfil aerodinámico)<small>monocristal CMSX-4</small>', () => toLocal(surf2(0.4, 1), 0.75)],
+        ['Borde de ataque<small>recibe el gas más caliente</small>', () => toLocal(surf2(0, 1), 0.45)],
+        ['Plataforma<small>sella el paso del gas</small>', () => new THREE.Vector3(0.9, -0.05, 0.6)],
+        ['Raíz de abeto<small>se encaja en el disco</small>', () => new THREE.Vector3(0.02, -0.7, 0.75)]],
+  layers:[['Barrera térmica (TBC)<small>zirconia + itria, cerámica</small>', () => toLocal(surf2(0.4, 1), 0.3, [0, 0.06])],
+          ['Capa de anclaje<small>NiCoCrAlY, metálica</small>', () => toLocal(surf2(0.4, 1), 0.68, [0, 0.03])],
+          ['Superaleación<small>monocristal de Níquel</small>', () => toLocal(surf2(0.4, 1), 0.88)]],
+  cool:[['Aire del compresor<small>entra por la raíz</small>', () => new THREE.Vector3(0.02, -1.25, 0.6)],
+        ['Canal en serpentín<small>lo forma el núcleo cerámico</small>', () => camberPt(0.55, 0.62, 0.05)],
+        ['Película de aire<small>sale por los agujeros</small>', () => toLocal(surf2(0.15, 1), 0.85, [0, 0.08])],
+        ['Salida por el borde de fuga', () => camberPt(1.0, 0.86)]],
+  force:[['Fuerza centrífuga<small>≈ 16 t</small>', () => new THREE.Vector3(0, 6.1, 0.05)],
+         ['Presión del gas<small>empuja la pala y hace girar el disco</small>', () => toLocal(surf2(0.45, -1), 0.5, [0, -0.9])],
+         ['Reacción en los dientes<small>aquí se concentra el esfuerzo</small>', () => new THREE.Vector3(0.02, -0.75, 1.0)]],
+  section:[['Pared exterior<small>≈ 1 mm de superaleación</small>', () => toLocal(surf2(0.62, 1), S_CUT)],
+           ['Cavidades de enfriamiento<small>por aquí pasa el aire</small>', () => toLocal([0.36, camber(0.36)], S_CUT)],
+           ['Nervios internos<small>dan rigidez y guían el aire</small>', () => toLocal([0.51, camber(0.51)], S_CUT)],
+           ['TBC + capa de anclaje<small>la capa clara del borde</small>', () => toLocal(surf2(0.2, -1), S_CUT, [0, -0.05])],
+           ['Agujeros del borde de ataque<small>"regadera" de aire</small>', () => toLocal(surf2(0.02, 1), 0.4)]],
+  disk:[['Ranura en abeto<small>el álabe entra deslizándose</small>', () => new THREE.Vector3(0.9, -0.8, 0.05)],
+        ['Disco de turbina<small>superaleación de polvo</small>', () => new THREE.Vector3(0.9, -3.2, 0.5)]],
+};
+const labelEls = {}; Object.keys(LABELS).forEach(k => labelEls[k] = LABELS[k].map(([h]) => mk(h)));
+
+// ---------- textos ----------
+const INFO = {
+  real:`<h2>El álabe completo</h2><p>Una sola pieza fundida como un solo cristal: pala, plataforma y raíz. En un motor hay unas 60 a 90 iguales en la primera etapa de la turbina de alta.</p>
+   <dl class="kv"><dt>Masa</dt><dd>≈ 300 g</dd><dt>Material</dt><dd>CMSX-4 (Ni, Al, Co, Cr, Ta, W, Re…)</dd><dt>Densidad</dt><dd>≈ 8.7 g/cm³</dd><dt>Gas que recibe</dt><dd>≈ 1,500 °C</dd><dt>Fusión del metal</dt><dd>≈ 1,320–1,380 °C</dd><dt>Giro</dt><dd>≈ 12,500 rpm</dd></dl>`,
+  layers:`<h2>Capas de protección</h2><div class="legend"><span><i style="background:#f1ede4;outline:1px solid #999"></i>Barrera térmica (TBC): zirconia estabilizada con itria</span><span><i style="background:#c9a24e"></i>Capa de anclaje metálica (NiCoCrAlY)</span><span><i style="background:#b9bec5"></i>Superaleación monocristalina</span></div>
+   <p>La cerámica conduce muy poco el calor: con unas décimas de milímetro baja la temperatura del metal unos 100 a 150 °C. La capa de anclaje la sujeta y protege al metal de la oxidación.</p>
+   <p class="note">Grosores exagerados para que se vean. La arena fundida (CMAS) daña justo esta capa.</p>`,
+  cool:`<h2>Enfriamiento interno</h2><p>El álabe es hueco. Le entra aire del compresor a unos 600 °C por la raíz, recorre canales en serpentín y sale por cientos de agujeros pequeños.</p>
+   <p>Ese aire forma una <b>película</b> pegada a la superficie que separa al metal del gas a 1,500 °C.</p>
+   <p class="note">Los canales se forman con un núcleo cerámico dentro del molde durante la fundición. El aire de enfriamiento se le quita al ciclo del motor, por eso los CMC, que casi no lo necesitan, ahorran combustible.</p>`,
+  section:`<h2>Corte transversal</h2><p>El álabe se corta a media altura para ver su interior. No es macizo: tiene una pared delgada y cavidades separadas por nervios.</p>
+   <div class="legend"><span><i style="background:#d3d7dc"></i>Pared de superaleación monocristalina</span><span><i style="background:#c9a24e"></i>Capa de anclaje</span><span><i style="background:#efe9dc;outline:1px solid #999"></i>Barrera térmica cerámica (TBC)</span><span><i style="background:#3fa3ff"></i>Aire de enfriamiento</span></div>
+   <p class="note">Las cavidades se forman con el núcleo cerámico que se mete al molde y después se disuelve con sustancias químicas. Grosores de las capas exagerados.</p>`,
+  heat:`<h2>Temperatura del metal</h2><div class="bar"></div><div class="barl"><span>550 °C</span><span>850 °C</span><span>1,150 °C</span></div>
+   <p>El gas está a unos 1,500 °C, pero gracias al enfriamiento y a la TBC el metal se queda cerca de 1,000–1,100 °C. Lo más caliente es el borde de ataque y la parte media-alta de la pala; la raíz trabaja mucho más fría.</p>
+   <p class="note">Distribución ilustrativa. El metal trabaja a casi 80% de su temperatura de fusión.</p>`,
+  force:`<h2>Fuerzas sobre el álabe</h2><p><b>Centrífuga</b> (verde): el giro jala la pala hacia afuera.</p>
+   <div class="calc">F = m · ω² · r<br>= 0.3 kg × (1,309 rad/s)² × 0.3 m<br>≈ 154,000 N ≈ 16 t</div>
+   <p><b>Presión del gas</b> (azul): empuja el lado cóncavo y genera el par que mueve el disco.</p>
+   <p><b>Reacción</b> (rojo): los dientes de la raíz de abeto reparten las 16 t contra el disco. Esa zona es la más cargada mecánicamente.</p>`,
+  disk:`<h2>En el disco</h2><p>Los álabes se deslizan en ranuras con forma de abeto en el borde del disco. El disco de la turbina de alta gira a unos 12,500 rpm.</p>
+   <dl class="kv"><dt>Álabes por disco</dt><dd>≈ 60–90 (aquí 30)</dd><dt>Velocidad en la punta</dt><dd>≈ 500 m/s</dd><dt>Material del disco</dt><dd>superaleación policristalina (polvo)</dd></dl>
+   <p class="note">El disco trabaja más frío pero con más carga, por eso usa una aleación distinta a la del álabe.</p>`,
+  explode:`<h2>El álabe desarmado</h2><p>Las capas y piezas se separan para ver de qué está hecho. Mueve la barra «desarmar» o toca cualquier pieza para ver qué es.</p>
+   <div class="legend"><span><i style="background:#efe9dc;outline:1px solid #999"></i>Barrera térmica (TBC), cerámica</span><span><i style="background:#c9a24e"></i>Capa de anclaje, metálica</span><span><i style="background:#a9aeb5"></i>Pala de superaleación</span><span><i style="background:#3fa3ff"></i>Canales de enfriamiento (hueco interno)</span></div>
+   <p class="note">En la pieza real todo es un solo cuerpo: la TBC mide décimas de milímetro y los canales son huecos dentro del metal.</p>`,
+  creep:`<h2>Granos y creep</h2><div class="chips" role="group" aria-label="Estructura de granos"><button id="g-eq" aria-pressed="false">Equiaxial</button><button id="g-col" aria-pressed="false">Columnar</button><button id="g-sx" aria-pressed="true">Monocristal</button></div>
+   <p>Cada color es un grano con su propia orientación. Con carga y calor durante miles de horas, el metal se estira poco a poco (creep), y las fronteras de grano son el punto débil.</p>
+   <button id="g-run">Simular 10,000 horas</button>
+   <div class="meter"><span>Tiempo</span><b id="g-h">0 h</b><span>Alargamiento</span><b id="g-e">0.0 %</b></div>
+   <p class="note">Deformación exagerada para comparar. Por eso los álabes de la turbina de alta se funden monocristalinos.</p>`
+};
+
+// ---------- modos ----------
+let mode = 'real', autoSpin = false, grain = 'sx', creepT = 0, creepRun = false, explodeK = 0, explodeTarget = 0;
+const CREEP = {eq:0.10, col:0.04, sx:0.012};
+const VIEWS = {
+  real:[[6.6,4.2,8.4],[0,1.4,0]], layers:[[5.2,3.6,6.4],[0,1.8,0]], cool:[[5.6,3.0,7.0],[0,1.3,0]], heat:[[6.6,4.2,8.4],[0,1.4,0]],
+  force:[[6.0,4.6,-9.0],[0,1.4,0]], disk:[[16,5,15],[0,-4.5,0]], creep:[[6.4,3.6,8.2],[0,1.5,0]], section:[[3.4,6.4,4.4],[0,1.4,0]], explode:[[10.5,4.8,13],[0.4,0.8,0]]
+};
+let camAnim = null;
+function goView(m, instant){
+  const [p, t] = VIEWS[m], k = camera.aspect < 1 ? 1.7 : camera.aspect < 1.3 ? 1.2 : 1;
+  const tgt = new THREE.Vector3(...t), pos = new THREE.Vector3(...p).sub(tgt).multiplyScalar(k).add(tgt);
+  if (instant){ camera.position.copy(pos); controls.target.copy(tgt); camAnim = null; return; }
+  camAnim = {p0:camera.position.clone(), t0:controls.target.clone(), p1:pos, t1:tgt, k:0};
+}
+controls.addEventListener('start', () => { camAnim = null; });
+function applyGrain(){ airfoil.geometry = GRAINS[grain]; ['eq','col','sx'].forEach(k => { const b = $('g-' + k); if (b) b.setAttribute('aria-pressed', String(k === grain)); }); deform(creepT); }
+function setMode(m){
+  mode = m;
+  ALLP.forEach(o => o.visible = true);
+  Object.keys(VIEWS).forEach(k => $('m-' + k).setAttribute('aria-pressed', String(k === m)));
+  info.innerHTML = INFO[m];
+  creepRun = false; creepT = 0; deform(0);
+  airfoil.geometry = m === 'heat' ? heatGeo : m === 'creep' ? GRAINS[grain] : airGeo;
+  airfoil.material = m === 'heat' ? heatMat : m === 'creep' ? grainMat : metalMat;
+  root.geometry = m === 'heat' ? rootHeatGeo : rootGeo; root.material = m === 'heat' ? heatMat : rootMat;
+  rootMat.emissive.set(m === 'force' ? '#7a0f12' : '#000000');
+  [metalMat, rootMat].forEach(mm => { mm.transparent = (m === 'cool'); mm.opacity = m === 'cool' ? 0.22 : 1; mm.depthWrite = m !== 'cool';
+    mm.clippingPlanes = m === 'section' ? [cutPlane] : []; mm.side = m === 'section' ? THREE.DoubleSide : THREE.FrontSide; mm.needsUpdate = true; });
+  coolMat.clippingPlanes = m === 'section' ? [cutPlane] : []; coolMat.needsUpdate = true;
+  secGrp.visible = (m === 'section'); tipRim.visible = (m !== 'section');
+  bond.visible = tbc.visible = (m === 'layers' || m === 'explode');
+  tbc.material.clippingPlanes = m === 'explode' ? [] : [tbcPlane]; bond.material.clippingPlanes = m === 'explode' ? [] : [bondPlane]; tbc.material.needsUpdate = bond.material.needsUpdate = true;
+  coolGrp.visible = (m === 'cool' || m === 'section' || m === 'explode'); coolPts.visible = (m === 'cool');
+  holes.forEach(h => h.m.visible = (m === 'cool' || m === 'real' || m === 'layers' || (m === 'section' && h.s < S_CUT)));
+  slots.visible = (m === 'real' || m === 'cool' || m === 'section'); slots.children.forEach((c, i) => c.visible = m !== 'section' || (0.1 + i * 0.07) < S_CUT);
+  forceGrp.visible = (m === 'force');
+  const showDisk = (m === 'force' || m === 'disk');
+  disk.visible = hubDisk.visible = neighbors.visible = showDisk; floor.visible = !showDisk;
+  diskMat.opacity = m === 'force' ? 0.3 : 1; diskMat.depthWrite = m !== 'force'; diskMat.needsUpdate = true;
+  ghostMat.transparent = m === 'force'; ghostMat.opacity = m === 'force' ? 0.25 : 1; ghostMat.needsUpdate = true;
+  rotor.rotation.x = 0;
+  explodeTarget = m === 'explode' ? 1 : 0; $('t-explode').value = explodeTarget;
+  ALLP.forEach(o => o.userData.base = o.visible);
+  $('pickcard').hidden = true;
+  Object.keys(labelEls).forEach(k => labelEls[k].forEach(L => { L.d.hidden = true; L.ln.style.display = L.dot.style.display = 'none'; }));
+  goView(m);
+  if (m === 'creep'){
+    ['eq','col','sx'].forEach(k => $('g-' + k).addEventListener('click', () => { grain = k; creepT = 0; creepRun = false; applyGrain(); readout(); }));
+    $('g-run').addEventListener('click', () => { creepT = 0; creepRun = true; });
+    applyGrain(); readout();
+  }
+}
+function readout(){ const h = $('g-h'), e = $('g-e'); if (!h) return; h.textContent = Math.round(creepT * 10000).toLocaleString('es-MX') + ' h'; e.textContent = (CREEP[grain] * ease(creepT) * 100).toFixed(1) + ' %'; }
+function ease(t){ return t * t * (3 - 2 * t); }
+function deform(t){
+  const g = airfoil.geometry, base = airGeo.userData.base, p = g.attributes.position;
+  const e = CREEP[grain] * ease(t), neck = (grain === 'eq' ? 0.16 : grain === 'col' ? 0.06 : 0.015) * ease(t);
+  for (let i = 0; i < p.count; i++){
+    const x = base[i*3], y = base[i*3+1], z = base[i*3+2];
+    const gy = Math.exp(-Math.pow((y / H - 0.45) / 0.22, 2));
+    p.setXYZ(i, x * (1 - neck * gy), y * (1 + e), z * (1 - neck * gy));
+  }
+  p.needsUpdate = true; g.computeVertexNormals();
+}
+Object.keys(VIEWS).forEach(k => $('m-' + k).addEventListener('click', () => setMode(k)));
+$('t-spin').addEventListener('click', () => { autoSpin = !autoSpin; controls.autoRotate = autoSpin; $('t-spin').textContent = autoSpin ? 'Detener cámara' : 'Girar cámara'; });
+$('t-reset').addEventListener('click', () => goView(mode));
+
+// ---------- piezas del álabe ----------
+const PART_INFO = {
+  pala:['Pala (perfil aerodinámico)', 'Monocristal CMSX-4', '≈ 1,000–1,100 °C (metal)', 'Recibe el gas a ≈ 1,500 °C y lo convierte en giro.', '#a9aeb5'],
+  punta:['Punta con borde', 'CMSX-4', '≈ 1,050 °C', 'Borde delgado que sella el hueco con la carcasa y se desgasta primero si roza.', '#a9aeb5'],
+  plataforma:['Plataforma', 'CMSX-4', '≈ 900 °C', 'Forma el piso del paso del gas y protege la raíz del calor.', '#8f949b'],
+  raiz:['Raíz de abeto', 'CMSX-4', '≈ 600–700 °C', 'Encaja en el disco; sus dientes reparten las ≈ 16 t de fuerza centrífuga.', '#7d838b'],
+  tbc:['Barrera térmica (TBC)', 'Zirconia estabilizada con itria (cerámica)', 'Cara caliente ≈ 1,200 °C', 'Capa de ≈ 0.1–0.3 mm que baja la temperatura del metal 100–150 °C.', '#efe9dc'],
+  anclaje:['Capa de anclaje', 'NiCoCrAlY (metálica)', '≈ 1,050 °C', 'Une la cerámica al metal y forma una capa de óxido que lo protege.', '#c9a24e'],
+  canales:['Canales de enfriamiento', 'Hueco interno (núcleo cerámico disuelto)', 'Aire ≈ 600 °C', 'El aire del compresor recorre el serpentín y sale por los agujeros.', '#3fa3ff'],
+  agujeros:['Agujeros de película', 'Perforados con láser o electroerosión', '—', 'Sacan el aire que forma una película fría sobre la superficie.', '#15191e'],
+  disco:['Disco de turbina', 'Superaleación de polvo (policristal)', '≈ 600–700 °C', 'Sostiene todos los álabes y transmite el giro al eje.', '#949aa3'],
+  vecinos:['Otros álabes', 'CMSX-4', '—', 'En la primera etapa hay entre 60 y 90 álabes por disco.', '#a9aeb5'],
+};
+const PORDER = ['tbc','anclaje','pala','punta','canales','agujeros','plataforma','raiz','disco','vecinos'];
+const REG = {}, VIS = {}; PORDER.forEach(p => { REG[p] = []; VIS[p] = true; });
+function reg(p, ...objs){ objs.forEach(o => { REG[p].push(o); o.traverse(c => c.userData.part = p); }); }
+reg('pala', airfoil, slots); reg('punta', tipRim); reg('plataforma', platform); reg('raiz', root);
+reg('tbc', tbc); reg('anclaje', bond); reg('canales', coolGrp); holes.forEach(h => reg('agujeros', h.m));
+reg('disco', disk, hubDisk); reg('vecinos', neighbors);
+const ALLP = [].concat(...PORDER.map(p => REG[p]));
+const HOME = new Map(ALLP.map(o => [o, o.position.clone()]));
+const EXP = {raiz:[0,-1.6,0], plataforma:[0,-0.6,0], punta:[0,1.0,0], anclaje:[1.9,0,0.5], tbc:[3.8,0,1.0], canales:[-2.4,0,-0.4], agujeros:[0,0,0], pala:[0,0,0], disco:[0,0,0], vecinos:[0,0,0]};
+function applyParts(){
+  PORDER.forEach(p => REG[p].forEach(o => {
+    const h = HOME.get(o), d = EXP[p];
+    o.position.set(h.x + d[0] * explodeK, h.y + d[1] * explodeK, h.z + d[2] * explodeK);
+    let base = o.userData.base !== undefined ? o.userData.base : o.visible;
+    if (explodeK > 0.03 && ['tbc','anclaje','canales'].includes(p)) base = true;
+    o.visible = base && VIS[p];
+  }));
+  if (explodeK > 0.03){ tbc.material.clippingPlanes = []; bond.material.clippingPlanes = []; }
+}
+const ppList = $('pp-list');
+PORDER.forEach(p => {
+  const row = document.createElement('label'); row.className = 'pp-row';
+  row.innerHTML = `<input type="checkbox" id="pp-${p}" checked><i style="background:${PART_INFO[p][4]}"></i><span>${PART_INFO[p][0]}</span>`;
+  ppList.appendChild(row); row.querySelector('input').addEventListener('change', e => { VIS[p] = e.target.checked; });
+});
+function setAll(fn){ PORDER.forEach(p => { VIS[p] = fn(p); $('pp-' + p).checked = VIS[p]; }); }
+$('pp-all').addEventListener('click', () => setAll(() => true));
+$('pp-none').addEventListener('click', () => setAll(() => false));
+$('t-parts').addEventListener('click', () => { const pp = $('partspanel'); pp.hidden = !pp.hidden; $('t-parts').setAttribute('aria-expanded', String(!pp.hidden)); });
+$('t-explode').addEventListener('input', e => { explodeTarget = parseFloat(e.target.value); });
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null, flash = null;
+function shown(o){ for (let c = o; c; c = c.parent) if (!c.visible) return false; return true; }
+canvas.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+canvas.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const r = canvas.getBoundingClientRect();
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(scene.children, true).find(h => h.object.userData.part && shown(h.object) && !(h.object.material && h.object.material.transparent && h.object.material.opacity < 0.3 && h.object.userData.part !== 'canales'));
+  if (!hit){ $('pickcard').hidden = true; return; }
+  showPart(hit.object.userData.part);
+});
+function showPart(p){
+  const [name, mat, temp, fn] = PART_INFO[p], card = $('pickcard');
+  card.innerHTML = `<h3>${name}</h3><p style="margin:0">${fn}</p><dl><dt>Material</dt><dd>${mat}</dd><dt>Temperatura</dt><dd>${temp}</dd></dl>
+    <div class="pc-actions"><button id="pc-hide">Ocultar esta pieza</button><button id="pc-only">Ver solo esta</button><button id="pc-close">Cerrar</button></div>`;
+  card.hidden = false;
+  $('pc-hide').onclick = () => { VIS[p] = false; $('pp-' + p).checked = false; card.hidden = true; };
+  $('pc-only').onclick = () => setAll(q => q === p);
+  $('pc-close').onclick = () => { card.hidden = true; };
+  if (flash) flash.restore();
+  const mats = []; REG[p].forEach(o => o.traverse(c => { if (c.material && c.material.emissive && !mats.includes(c.material)) mats.push(c.material); }));
+  const saved = mats.map(m => [m.emissive.getHex(), m.emissiveIntensity]);
+  mats.forEach(m => { m.emissive.set('#ff6a1f'); m.emissiveIntensity = 0.55; });
+  flash = {restore(){ mats.forEach((m, i) => { m.emissive.setHex(saved[i][0]); m.emissiveIntensity = saved[i][1]; }); flash = null; }};
+  setTimeout(() => { if (flash) flash.restore(); }, 1400);
+}
+const TOUR = [
+  {h:'El álabe de turbina', p:'Una sola pieza de superaleación de Níquel fundida como un solo cristal: pala, plataforma y raíz. Pesa unos 300 g.', d:8, run(){ setMode('real'); }},
+  {h:'Capas de protección', p:'Sobre el metal va una capa de anclaje y encima una barrera térmica cerámica. La cerámica baja la temperatura del metal 100 a 150 °C.', d:9, run(){ setMode('layers'); }},
+  {h:'Enfriamiento interno', p:'El álabe es hueco. Aire del compresor entra por la raíz, recorre un serpentín y sale por cientos de agujeros, formando una película fría.', d:10, run(){ setMode('cool'); }},
+  {h:'Por dentro', p:'Cortado a media altura se ven la pared delgada, los nervios y las cavidades por donde pasa el aire.', d:9, run(){ setMode('section'); }},
+  {h:'Temperatura del metal', p:'El gas está a ≈ 1,500 °C, pero el metal se queda cerca de 1,000–1,100 °C. Lo más caliente es el borde de ataque.', d:9, run(){ setMode('heat'); }},
+  {h:'Fuerzas', p:'La fuerza centrífuga jala cada álabe con ≈ 16 t. El gas empuja la pala y los dientes de la raíz reparten la carga contra el disco.', d:10, run(){ setMode('force'); }},
+  {h:'En el disco', p:'Cada álabe entra en una ranura con forma de abeto. El disco gira a ≈ 12,500 rpm con 60 a 90 álabes.', d:9, run(){ setMode('disk'); }},
+  {h:'Por qué un solo cristal', p:'Con calor y carga por miles de horas el metal se estira (creep). Mira cómo se deforma un álabe con muchos granos frente a uno monocristalino.', d:12,
+   run(){ setMode('creep'); grain = 'eq'; applyGrain(); creepT = 0; creepRun = true; setTimeout(() => { if (mode === 'creep' && tourI === 7){ grain = 'sx'; applyGrain(); creepT = 0; creepRun = true; } }, 6200); }},
+  {h:'Todas sus piezas', p:'Desarmado: TBC, capa de anclaje, pala, canales internos, plataforma y raíz. Toca cualquier pieza para ver de qué está hecha.', d:10, run(){ setMode('explode'); }},
+];
+
+// ---------- recorrido guiado ----------
+let tourI = -1, tourT = 0, tourPlay = true;
+function tourGo(i){
+  tourI = Math.max(0, Math.min(TOUR.length - 1, i)); tourT = 0; const s = TOUR[tourI];
+  s.run();
+  $('tr-n').textContent = 'Recorrido · paso ' + (tourI + 1) + ' de ' + TOUR.length;
+  $('tr-h').textContent = s.h; $('tr-p').textContent = s.p; $('tour').hidden = false; document.body.classList.add('touring');
+  $('tr-prev').disabled = tourI === 0; $('tr-next').textContent = tourI === TOUR.length - 1 ? 'Terminar' : 'Siguiente →';
+}
+function tourEnd(){ tourI = -1; $('tour').hidden = true; document.body.classList.remove('touring'); }
+function tourTick(dt){
+  if (tourI < 0) return;
+  if (tourPlay) tourT += dt;
+  const d = TOUR[tourI].d || 9; $('tr-bar').style.width = Math.min(100, tourT / d * 100) + '%';
+  if (tourPlay && tourT >= d){ if (tourI < TOUR.length - 1) tourGo(tourI + 1); else { tourPlay = false; $('tr-play').textContent = 'Repetir'; } }
+}
+$('t-tour').addEventListener('click', () => { tourPlay = true; $('tr-play').textContent = 'Pausar'; tourGo(0); });
+$('tr-x').addEventListener('click', tourEnd);
+$('tr-prev').addEventListener('click', () => tourGo(tourI - 1));
+$('tr-next').addEventListener('click', () => { if (tourI === TOUR.length - 1) tourEnd(); else tourGo(tourI + 1); });
+$('tr-play').addEventListener('click', () => {
+  if ($('tr-play').textContent === 'Repetir'){ tourPlay = true; $('tr-play').textContent = 'Pausar'; tourGo(0); return; }
+  tourPlay = !tourPlay; $('tr-play').textContent = tourPlay ? 'Pausar' : 'Seguir';
+});
+Object.keys(VIEWS).forEach(k => $('m-' + k).addEventListener('click', tourEnd));
+if (/[?&]tour=1/.test(location.search)) setTimeout(() => $('t-tour').click(), 600);
+
+function resize(){ const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+const tmp = new THREE.Vector3();
+function layout(defs, els){
+  const W = stage.clientWidth, Hh = stage.clientHeight, placed = [];
+  const items = defs.map(([, f], i) => { tmp.copy(f()); blade.localToWorld(tmp); tmp.project(camera);
+    return {L:els[i], x:(tmp.x + 1) / 2 * W, y:(1 - tmp.y) / 2 * Hh, ok:tmp.z < 1}; });
+  const cx = W * 0.5;
+  items.sort((a, b) => a.y - b.y).forEach(it => {
+    const {L} = it; L.d.hidden = !it.ok; L.ln.style.display = L.dot.style.display = it.ok ? '' : 'none'; if (!it.ok) return;
+    const w = L.d.offsetWidth || 140, h = L.d.offsetHeight || 32, right = it.x >= cx;
+    let lx = right ? Math.min(W - w - 8, it.x + 60) : Math.max(8, it.x - 60 - w), ly = it.y - h / 2;
+    for (let t = 0; t < 14; t++){ const hit = placed.find(p => lx < p.x + p.w + 6 && lx + w + 6 > p.x && ly < p.y + p.h + 6 && ly + h + 6 > p.y);
+      if (!hit) break; ly = hit.y + hit.h + 6; }
+    ly = Math.max(6, Math.min(Hh - h - 56, ly)); placed.push({x:lx, y:ly, w, h});
+    L.d.style.left = lx + 'px'; L.d.style.top = ly + 'px';
+    const bx = right ? lx : lx + w, by = ly + h / 2;
+    L.ln.setAttribute('x1', it.x); L.ln.setAttribute('y1', it.y); L.ln.setAttribute('x2', bx); L.ln.setAttribute('y2', by);
+    L.dot.setAttribute('cx', it.x); L.dot.setAttribute('cy', it.y);
+  });
+}
+
+const clock = new THREE.Clock();
+{ const v0 = QV && VIEWS[QV] ? QV : 'real'; setMode(v0); goView(v0, true); }
+$('loading').hidden = true; $('loading').style.display = 'none';
+function tick(){
+  const dt = Math.min(clock.getDelta(), 0.1);
+  if (camAnim){ camAnim.k = Math.min(1, camAnim.k + dt / 1.0); const e = camAnim.k * camAnim.k * (3 - 2 * camAnim.k);
+    camera.position.lerpVectors(camAnim.p0, camAnim.p1, e); controls.target.lerpVectors(camAnim.t0, camAnim.t1, e); if (camAnim.k >= 1) camAnim = null; }
+  if (mode === 'cool' && !reduce) updateCool(dt);
+  if (mode === 'disk' && !reduce) rotor.rotation.x -= dt * 0.9;
+  if (mode === 'creep' && creepRun){ creepT = Math.min(1, creepT + dt / 6); deform(creepT); readout(); if (creepT >= 1) creepRun = false; }
+  explodeK += (explodeTarget - explodeK) * Math.min(1, dt * 3); applyParts(); tourTick(dt);
+  floor.position.y = -1.55 - 1.75 * explodeK;
+  controls.update(); renderer.render(scene, camera);
+  if (LABELS[mode] && tourI < 0) layout(LABELS[mode], labelEls[mode]);
+  requestAnimationFrame(tick);
+}
+updateCool(0);
+tick();
+})();
+</script>
+
+</body>
+</html>
