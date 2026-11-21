@@ -200,13 +200,15 @@ const DB = {
 
   /* ---------- Eliminar contenido (admin o autor) ---------- */
   autorDe(tipo, id) { const L = { post: E.posts, propuesta: E.propuestas, ranking: E.rankings, venta: E.ventas, nivel: E.niveles }[tipo]; return L?.find(x => x.id === id)?.autor; },
-  puedeEliminar(tipo, id) { return this.esAdmin() || (this.autorDe(tipo, id) && this.autorDe(tipo, id) === E.sesion); },
+  /* Las predicciones con ramitas apostadas nunca se eliminan (ni el admin): así queda constancia de quién apostó y quién ganó */
+  conRamitas(id) { const p = E.propuestas.find(x => x.id === id); return !!(p && p.tipo === 'prediccion' && p.apuestas.length); },
+  puedeEliminar(tipo, id) { if (tipo === 'propuesta' && this.conRamitas(id)) return false; return this.esAdmin() || (this.autorDe(tipo, id) && this.autorDe(tipo, id) === E.sesion); },
   eliminar(tipo, id, extra) {
     if (!this.puedeEliminar(tipo, id) && !(tipo === 'comentario' && E.posts.find(p => p.id === id)?.comentarios[+extra]?.autor === E.sesion)) return false;
     const quita = k => { E[k] = E[k].filter(x => x.id !== id); };
     if (tipo === 'post') quita('posts');
     else if (tipo === 'comentario') E.posts.find(p => p.id === id)?.comentarios.splice(+extra, 1);
-    else if (tipo === 'propuesta') { const p = E.propuestas.find(x => x.id === id); if (p && p.apuestas.length && (p.estado === 'abierta' || p.estado === 'congelada')) this.anular(id, 'Se eliminó la predicción y se devolvieron tus ramitas'); quita('propuestas'); }
+    else if (tipo === 'propuesta') quita('propuestas');
     else if (tipo === 'ranking') quita('rankings');
     else if (tipo === 'venta') quita('ventas');
     else if (tipo === 'nivel') quita('niveles');

@@ -82,7 +82,7 @@ function admContenido() {
   const quitar = id => `<button class="btn-peligro" style="min-height:38px;padding:0 12px" data-a="eliminar" data-tipo="${t}" data-id="${esc(id)}">Eliminar</button>`;
   const filas = lista.slice().reverse().map(x => {
     if (t === 'post') return fila(esc(x.texto.slice(0, 90)), `${esc(nombreVisible(x.autor))} · ${hace(x.fecha)} · ${x.comentarios.length} comentarios`, quitar(x.id));
-    if (t === 'propuesta') return fila(esc(x.titulo), `${x.tipo} · ${x.estado} · ${esc(nombreVisible(x.autor))}${x.apuestas.length ? ' · pozo ' + DB.pozo(x) : ''}`, quitar(x.id));
+    if (t === 'propuesta') return fila(esc(x.titulo), `${x.tipo} · ${x.estado} · ${esc(nombreVisible(x.autor))}${x.apuestas.length ? ' · pozo ' + DB.pozo(x) : ''}`, DB.conRamitas(x.id) ? '<span class="insignia i-amarillo">Con ramitas: protegida</span>' : quitar(x.id));
     if (t === 'ranking') return fila(esc(x.titulo), `${x.estado} · ${Object.keys(x.votos).length} votos · ${esc(nombreVisible(x.autor))}`, quitar(x.id));
     if (t === 'venta') return fila(esc(x.titulo), `${x.tipo} · ${esc(nombreVisible(x.autor))} · ${hace(x.fecha)}`, quitar(x.id));
     if (t === 'nivel') return fila(esc(x.nombre), `${x.oficial ? 'oficial' : 'comunidad'} · ${x.likes} me gusta · ${esc(nombreVisible(x.autor))}`, quitar(x.id));
