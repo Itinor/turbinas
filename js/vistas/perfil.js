@@ -14,7 +14,6 @@ VISTAS.perfil = {
     if (!DB.verPerfil(u.id)) return `<div class="tarjeta" style="text-align:center">${avatar(u.id, true)}<h2 style="margin-top:10px">@${esc(u.usuario)}</h2><p class="gris">Este perfil es privado.</p></div>`;
     const [rango, grad] = rangoReputacion(u.reputacion), amigo = DB.sonAmigos(u.id, yo.id) && !mio;
     const ins = u.insignias.filter(i => !u.ocultas.includes(i));
-    const sp = u.cancion?.enlace && embedSpotify(u.cancion.enlace);
     const stats = [[E_aportes(u), 'Aportes'], [u.amigos.length, 'Amigos'], [u.racha.dias || 0, 'Racha']];
     return `<div class="pila">
       <section class="tarjeta" style="text-align:center;padding:0;overflow:hidden">
@@ -25,10 +24,7 @@ VISTAS.perfil = {
           <span class="insignia i-morado" style="margin-top:10px">Reputación ${rango} · ${u.reputacion} pts</span>
           <div class="fila" style="justify-content:center;margin-top:12px">${mio ? '<a class="btn3" href="#/editar-perfil">Editar perfil</a>' : `<button class="${amigo ? 'btn3' : 'btn2'}" data-a="amigo" data-u="${u.id}">${amigo ? 'Amigos' : 'Agregar amigo'}</button>${DB.puedeEscribir(u.id) ? `<button class="btn3" data-a="escribirA" data-u="${u.id}">Escribir</button>` : ''}<button class="icono-btn" data-a="menuPerfil" data-u="${u.id}" aria-label="Más opciones">${icono('puntos')}</button>`}</div></div></section>
       ${ins.length ? `<div class="fila">${ins.map(i => `<span class="insignia ${INSIGNIAS[i].clase}">${INSIGNIAS[i].texto}</span>`).join('')}</div>` : ''}
-      ${u.cancion ? `<section class="tarjeta" style="background:#1B1530;color:#fff;border:0"><div class="fila" style="flex-wrap:nowrap">${vinilo(u.cancion)}
-        <span style="flex:1"><span class="etiqueta" style="color:var(--amarillo)">Canción del perfil</span><br><b>${esc(u.cancion.titulo)}</b><br><span class="mini" style="color:#C9C2DA">${esc(u.cancion.artista || '')}</span></span>
-        ${u.cancion.archivo ? `<button class="icono-btn" style="background:var(--g-accion);color:#1B1530;border-radius:50%;width:48px;height:48px" data-a="playPerfil" data-src="${esc(u.cancion.archivo)}" data-u="${u.id}" aria-label="Reproducir o pausar la canción" data-repro="${esc(u.cancion.archivo)}">${icono(REPRO.sonando(u.cancion.archivo) ? 'pausa' : 'play', 20)}</button>` : ''}</div>
-        ${sp ? `<iframe title="Reproductor de Spotify" src="${sp}" width="100%" height="80" style="border:0;border-radius:12px;margin-top:10px" allow="encrypted-media"></iframe>` : u.cancion.enlace && urlSegura(u.cancion.enlace) ? `<a class="btn3" style="margin-top:10px" href="${esc(u.cancion.enlace)}" target="_blank" rel="noopener">Escuchar</a>` : ''}</section>` : ''}
+      ${seccionCanciones(u, mio)}
       ${(() => { const R = u.redes || {}, filas = [['instagram', 'Instagram', R.instagram], ['tiktok', 'TikTok', R.tiktok]].filter(x => x[2]); if (!filas.length) return '';
         return `<section class="tarjeta"><h2 style="margin-bottom:8px">${mio ? 'Mis redes' : 'Sus redes'}</h2><div class="pila" style="gap:8px">${filas.map(([k, n, h]) => { const nd = (R.destacadas || []).filter(x => embedRed(x)?.red === k).length; return `<a href="#/redes/${esc(u.usuario)}/${k}" class="fila" style="flex-wrap:nowrap;min-height:56px;padding:8px 12px;border-radius:14px;border:1px solid var(--linea);text-decoration:none;color:inherit"><span style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:${k === 'instagram' ? 'var(--suave);color:var(--moradoTxt)' : '#DCE8FB;color:#174EAD'}">${icono(k, 22)}</span><span style="flex:1"><b>${n}</b><br><span class="mini gris">@${esc(h)}${nd ? ` · ${nd} destacada${nd > 1 ? 's' : ''}` : ''}</span></span>${icono('atras', 18, 'style="transform:rotate(180deg);color:var(--gris)"')}</a>`; }).join('')}</div></section>`; })()}
       ${u.playlists.length ? `<section class="tarjeta"><h2 style="margin-bottom:8px">${mio ? 'Mis playlists' : 'Sus playlists'}</h2>${u.playlists.map(p => { const [, s, c] = servicioDe(p.url); const href = urlSegura(p.url); return `<a ${href ? `href="${esc(href)}" target="_blank" rel="noopener"` : ''} class="fila" style="flex-wrap:nowrap;padding:8px 0;border-bottom:1px solid var(--linea);text-decoration:none;color:inherit"><span style="width:40px;height:40px;border-radius:10px;background:var(--g-marca);flex:none"></span><b class="peq" style="flex:1">${esc(p.nombre)}</b><span class="insignia ${c}">${s}</span></a>`; }).join('')}</section>` : ''}
@@ -42,7 +38,7 @@ VISTAS.perfil = {
   }
 };
 function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).length + DB.estado.propuestas.filter(p => p.autor === u.id).length + DB.estado.rankings.filter(r => r.autor === u.id).length; }
-function reproducir(src, auto, dueno) { const u = DB.usuario(dueno) || Object.values(DB.estado.usuarios).find(x => x.cancion?.archivo === src); return REPRO.alternar(u?.cancion?.archivo === src ? u.cancion : { archivo: src, titulo: 'Canción' }, u?.id, auto); }
+function reproducir(src, auto, dueno) { const u = DB.usuario(dueno) || Object.values(DB.estado.usuarios).find(x => DB.canciones(x).some(c => c.archivo === src)); const c = u && DB.canciones(u).find(x => x.archivo === src); return REPRO.alternar(c || { archivo: src, titulo: 'Canción' }, u?.id, auto); }
 ACC.playPerfil = b => reproducir(b.dataset.src, false, b.dataset.u);
 ACC.amigo = b => { DB.alternarAmigo(b.dataset.u); refrescar(); };
 ACC.menuPerfil = b => abrirHoja(`<div class="pila" style="gap:8px">${DB.esAdmin() ? `<button class="btn-peligro ancho" data-a="suspender" data-u="${b.dataset.u}">${DB.usuario(b.dataset.u).suspendido ? 'Reactivar cuenta' : 'Suspender cuenta (admin)'}</button>` : ''}<button class="btn3 ancho" style="color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${b.dataset.u}" data-quien="${b.dataset.u}">${icono('bandera', 18)}Reportar perfil</button><button class="btn3 ancho" data-a="bloquear" data-u="${b.dataset.u}">${icono('bloquear', 18)}Bloquear</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
@@ -59,7 +55,7 @@ VISTAS['editar-perfil'] = {
       ${bloque('Nombre real', `<label class="oculto" for="en">Nombre real</label><input id="en" name="nombre" required value="${esc(u.nombre)}" data-orig="${esc(u.nombre)}"><label class="campo" for="ev" style="margin-top:10px">Lo ven</label><select id="ev" name="nombreVis" data-orig="${u.nombreVis}">${[['todos', 'Todos'], ['amigos', 'Amigos'], ['elegidos', 'Quien yo elija'], ['yo', 'Solo yo']].map(([k, t]) => `<option value="${k}" ${u.nombreVis === k ? 'selected' : ''}>${t}</option>`).join('')}</select><label class="campo" for="ee" style="margin-top:10px">Si eliges "Quien yo elija"</label><input id="ee" name="nombreElegidos" placeholder="@vale.a, @pedro.g" value="${esc((u.nombreElegidos || []).map(i => '@' + DB.usuario(i)?.usuario).join(', '))}" data-orig="${esc((u.nombreElegidos || []).map(i => '@' + DB.usuario(i)?.usuario).join(', '))}">`)}
       ${bloque('Sobre mí', `<label class="oculto" for="eb">Sobre mí</label><textarea id="eb" name="bio" maxlength="160" data-orig="${esc(u.bio)}">${esc(u.bio)}</textarea>`)}
       ${bloque('Carrera y generación', `<p style="margin:0">${esc(u.carrera)}${u.gen ? ' · Gen ' + u.gen : ''}</p><p class="mini gris" style="margin:4px 0 0">Se cambia desde Ajustes o subiendo tu horario.</p>`)}
-      ${bloque('Canción del perfil', `<label class="campo" for="ct">Título</label><input id="ct" name="cTitulo" maxlength="60" value="${esc(u.cancion?.titulo || '')}" data-orig="${esc(u.cancion?.titulo || '')}"><label class="campo" for="ca" style="margin-top:8px">Artista</label><input id="ca" name="cArtista" maxlength="60" value="${esc(u.cancion?.artista || '')}" data-orig="${esc(u.cancion?.artista || '')}"><label class="campo" for="cl" style="margin-top:8px">Enlace de Spotify, Apple Music o YouTube</label><input id="cl" name="cEnlace" type="url" placeholder="https://open.spotify.com/track/…" value="${esc(u.cancion?.enlace || '')}" data-orig="${esc(u.cancion?.enlace || '')}"><p class="mini gris">Con un enlace de canción de Spotify aparece su reproductor en tu perfil.</p><div class="fila" style="margin-top:8px"><label class="btn3" style="cursor:pointer">${icono('musica', 18)}${u.cancion?.archivo ? 'Cambiar archivo' : 'O sube un archivo de audio'}<input type="file" accept="audio/*" class="oculto" data-cambio="audioSubir"></label><span class="mini gris" id="audioNombre">${u.cancion?.archivo ? 'Archivo subido ✓' : 'MP3, M4A, WAV… hasta 15 MB'}</span></div><input type="hidden" name="cArchivo" value="" data-orig="">`)}
+      ${bloque('Canciones', `<div id="listaCanciones">${listaCancionesEdit()}</div><div class="rejilla2" style="margin-top:10px"><label class="btn3" style="cursor:pointer">${icono('musica', 18)}Subir archivo<input type="file" accept="audio/*,video/*" class="oculto" data-cambio="audioSubir"></label><button type="button" class="btn3" data-a="cancionEnlace">${icono('mas', 18)}Agregar enlace</button></div><p class="mini gris" style="margin:6px 0 0">Archivos tuyos (MP3, M4A, video…) o enlaces de YouTube, Spotify o Apple Music. Hasta 8.</p>`)}
       ${bloque('Mis redes', `<div class="pila" style="gap:8px"><div><label class="campo" for="rig">Instagram</label><div class="fila" style="flex-wrap:nowrap"><span class="pastilla" style="display:grid;place-items:center">@</span><input id="rig" name="redIg" maxlength="30" pattern="[A-Za-z0-9._]{1,30}" autocapitalize="off" value="${esc(u.redes?.instagram || '')}" data-orig="${esc(u.redes?.instagram || '')}"></div></div>
         <div><label class="campo" for="rtt">TikTok</label><div class="fila" style="flex-wrap:nowrap"><span class="pastilla" style="display:grid;place-items:center">@</span><input id="rtt" name="redTt" maxlength="30" pattern="[A-Za-z0-9._]{1,30}" autocapitalize="off" value="${esc(u.redes?.tiktok || '')}" data-orig="${esc(u.redes?.tiktok || '')}"></div></div>
         <div><span class="campo">Publicaciones destacadas <span class="mini gris">(enlaces de Instagram o TikTok)</span></span><div class="pila" style="gap:6px">${[0, 1, 2].map(i => `<label class="oculto" for="rd${i}">Destacada ${i + 1}</label><input id="rd${i}" name="dest${i}" type="url" placeholder="https://www.instagram.com/p/…" value="${esc(u.redes?.destacadas?.[i] || '')}" data-orig="${esc(u.redes?.destacadas?.[i] || '')}">`).join('')}</div></div></div>`)}
@@ -79,12 +75,10 @@ FORMS.guardarPerfil = d => {
   const u = DB.yo(), nuevo = d.usuario.toLowerCase();
   if (nuevo !== u.usuario && !DB.usuarioDisponible(nuevo)) return aviso('Ese nombre de usuario ya está ocupado');
   const playlists = [0, 1, 2].map(i => ({ nombre: (d['pn' + i] || '').trim(), url: (d['pu' + i] || '').trim(), servicio: servicioDe(d['pu' + i] || '')[1] })).filter(p => p.nombre && urlSegura(p.url));
-  const archivo = d.cArchivo || u.cancion?.archivo || '', titulo = d.cTitulo.trim() || (d.cArchivo ? (UI.audioNombre || 'Mi canción') : '');
-  const portada = d.cArchivo ? (UI.audioPortada || null) : (u.cancion?.portada || null); UI.audioPortada = null;
-  const cancion = titulo || d.cEnlace.trim() ? { titulo: titulo || 'Mi canción', artista: d.cArtista.trim(), enlace: urlSegura(d.cEnlace.trim()) || '', archivo, portada: archivo ? portada : null } : null;
+  if (d.foto === 'quitar') u.foto = null; else if (d.foto) u.foto = d.foto;
   if (d.foto === 'quitar') u.foto = null; else if (d.foto) u.foto = d.foto;
   u.redes = { instagram: (d.redIg || '').trim().replace(/^@/, '').slice(0, 30), tiktok: (d.redTt || '').trim().replace(/^@/, '').slice(0, 30), destacadas: [d.dest0, d.dest1, d.dest2].map(x => (x || '').trim()).filter(x => embedRed(x)) };
-  DB.actualizarPerfil({ usuario: nuevo, nombre: d.nombre.trim(), nombreVis: d.nombreVis, nombreElegidos: (d.nombreElegidos || '').split(/[,\s]+/).map(x => DB.porUsuario(x)?.id).filter(Boolean), bio: d.bio.trim(), cancion, playlists, ocultas: u.insignias.filter(i => !d['ins_' + i]) });
+  DB.actualizarPerfil({ usuario: nuevo, nombre: d.nombre.trim(), nombreVis: d.nombreVis, nombreElegidos: (d.nombreElegidos || '').split(/[,\s]+/).map(x => DB.porUsuario(x)?.id).filter(Boolean), bio: d.bio.trim(), playlists, ocultas: u.insignias.filter(i => !d['ins_' + i]) });
   aviso('Perfil actualizado'); ir('#/perfil');
 };
 
@@ -162,7 +156,7 @@ VISTAS.ramitas = {
   titulo: 'Tus ramitas', nav: 'perfil', atras: '#/perfil',
   render() {
     const movs = DB.movimientos(DB.yo().id).slice(0, 60);
-    return `<div class="pila"><section class="tarjeta" style="text-align:center;background:var(--g-marca);color:#fff;border:0"><span class="etiqueta">Saldo</span><b style="display:block;font-family:Sora,sans-serif;font-size:48px">${numero(DB.saldo())}</b><span class="peq" style="opacity:.9">ramitas</span>${CONFIG.pagosActivos || CONFIG.pagosDemo ? '<a class="btn" style="margin-top:12px" href="#/comprar-ramitas">Comprar ramitas</a>' : ''}</section>
+    return `<div class="pila"><section class="tarjeta" style="text-align:center;background:var(--g-marca);color:#fff;border:0"><span class="etiqueta">Saldo</span><b style="display:block;font-family:Sora,sans-serif;font-size:48px">${numero(DB.saldo())}</b></section>${CONFIG.pagosActivos || CONFIG.pagosDemo ? '<a class="btn ancho" href="#/comprar-ramitas">' + icono('mas', 18) + 'Comprar más</a>' : ''}
       <section class="tarjeta"><h2 style="margin-bottom:6px">Movimientos</h2>${movs.map(m => `<div class="entre" style="padding:8px 0;border-bottom:1px solid var(--linea)"><span><span class="peq">${esc(NOMBRE_MOV[m.tipo] || m.tipo)}</span><br><span class="mini gris">${hace(m.f)}</span></span><b style="color:${m.monto >= 0 ? 'var(--okTxt)' : 'var(--malTxt)'}">${m.monto >= 0 ? '+' : MENOS}${Math.abs(m.monto)}</b></div>`).join('')}</section></div>`;
   }
 };
@@ -179,10 +173,13 @@ CAMBIOS.fotoPerfil = async el => {
 };
 ACC.quitarFoto = () => { const h = $('#formPerfil input[name=foto]'); h.value = 'quitar'; h.dispatchEvent(new Event('input', { bubbles: true })); const av = $('#formPerfil .marco .avatar'); if (av) { av.style.background = '#DCE8FB'; av.textContent = DB.yo().usuario[0].toUpperCase(); } aviso('Se quitará al guardar.'); };
 CAMBIOS.audioSubir = async el => {
-  const f = el.files[0]; if (!f) return; if (!f.type.startsWith('audio/')) return aviso('Elige un archivo de audio.'); if (f.size > 15 * 1024 * 1024) return aviso('Máximo 15 MB.');
-  try { const clave = 'cancion_' + DB.yo().id + '_' + Date.now(); await ARCHIVOS.guardar(clave, f); const h = $('#formPerfil input[name=cArchivo]'); h.value = 'idb:' + clave; h.dispatchEvent(new Event('input', { bubbles: true }));
-    UI.audioNombre = f.name.replace(/\.[^.]+$/, '').slice(0, 60); UI.audioPortada = await extraerPortada(f).catch(() => null); const t = $('#ct'); if (t && !t.value) { t.value = UI.audioNombre; t.dispatchEvent(new Event('input', { bubbles: true })); }
-    const n = $('#audioNombre'); if (n) n.textContent = f.name + ' ✓'; aviso('Canción lista. Dale Guardar.'); }
+  const f = el.files[0]; el.value = ''; if (!f) return; if (!/^(audio|video)\//.test(f.type)) return aviso('Elige un archivo de audio o video.'); if (f.size > 40 * 1024 * 1024) return aviso('Máximo 40 MB.');
+  const lista = DB.canciones(); if (lista.length >= 8) return aviso('Máximo 8 canciones.');
+  aviso('Subiendo…');
+  try { const clave = 'cancion_' + DB.yo().id + '_' + Date.now(); await ARCHIVOS.guardar(clave, f);
+    const portada = await extraerPortada(f).catch(() => null);
+    lista.push({ titulo: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'Mi canción', artista: '', enlace: '', archivo: 'idb:' + clave, portada });
+    DB.guardarCanciones(lista); pintarListaCanciones(); aviso(portada ? 'Canción agregada con su portada' : 'Canción agregada'); }
   catch { aviso('No pudimos guardar el archivo en este celular.'); }
 };
 
@@ -191,27 +188,44 @@ function vinilo(c) {
   const ok = c?.portada && /^data:image\/(jpeg|png|webp);base64,/.test(c.portada);
   return `<span class="vinilo${REPRO.sonando(c?.archivo) ? ' girando' : ''}" data-vinilo="${esc(c?.archivo || '')}" aria-hidden="true"><span class="etiqueta-disco" style="${ok ? `background:#4B1F7A url('${c.portada}') center/cover` : ''}"></span></span>`;
 }
-/* lee la portada incrustada en MP3 (ID3v2, APIC) o M4A (covr) */
+/* lee la portada incrustada en MP3 (ID3v2.2–2.4) o M4A/MP4 (covr); de un video toma un cuadro */
 async function extraerPortada(f) {
-  const buf = new Uint8Array(await f.slice(0, Math.min(f.size, 15 * 1024 * 1024)).arrayBuffer());
-  const txt = (i, n) => String.fromCharCode(...buf.subarray(i, i + n)), u32 = i => ((buf[i] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3]) >>> 0, sync = i => (buf[i] << 21) | (buf[i + 1] << 14) | (buf[i + 2] << 7) | buf[i + 3];
-  let img = null, mime = 'image/jpeg';
-  if (txt(0, 3) === 'ID3') {
-    const v = buf[3], fin = 10 + sync(6); let i = 10;
-    if (buf[5] & 0x40) i += v === 4 ? sync(10) : u32(10) + 4;
-    while (i + 10 < fin && !img) {
-      const id = txt(i, 4), tam = v === 4 ? sync(i + 4) : u32(i + 4); if (!/^[A-Z0-9]{4}$/.test(id) || tam <= 0) break;
-      if (id === 'APIC') { let j = i + 10; const enc = buf[j++]; let k = j; while (buf[k]) k++; mime = txt(j, k - j) || mime; j = k + 1; j++;
-        if (enc === 1 || enc === 2) { while (!(buf[j] === 0 && buf[j + 1] === 0)) j += 2; j += 2; } else { while (buf[j]) j++; j++; }
-        img = buf.subarray(j, i + 10 + tam); }
-      i += 10 + tam;
+  if (/^video\//.test(f.type) || /\.(mp4|mov|webm|m4v)$/i.test(f.name || '')) { const v = await cuadroDeVideo(f).catch(() => null); if (v) return v; }
+  const buf = new Uint8Array(await f.slice(0, Math.min(f.size, 40 * 1024 * 1024)).arrayBuffer());
+  const txt = (b, i, n) => String.fromCharCode(...b.subarray(i, i + n)), u32 = (b, i) => ((b[i] << 24) | (b[i + 1] << 16) | (b[i + 2] << 8) | b[i + 3]) >>> 0, sync = (b, i) => (b[i] << 21) | (b[i + 1] << 14) | (b[i + 2] << 7) | b[i + 3];
+  let img = null, mime = '';
+  if (txt(buf, 0, 3) === 'ID3') {
+    const v = buf[3], fl = buf[5], fin = Math.min(buf.length, 10 + sync(buf, 6));
+    let tag = buf.subarray(10, fin);
+    if (fl & 0x80 && v < 4) { const out = []; for (let k = 0; k < tag.length; k++) { out.push(tag[k]); if (tag[k] === 0xFF && tag[k + 1] === 0) k++; } tag = new Uint8Array(out); }
+    let i = 0; if (fl & 0x40) i += v === 4 ? sync(tag, 0) : u32(tag, 0) + 4;
+    const largoId = v === 2 ? 3 : 4, cab = v === 2 ? 6 : 10;
+    while (i + cab < tag.length && !img) {
+      const id = txt(tag, i, largoId); const tam = v === 2 ? (tag[i + 3] << 16) | (tag[i + 4] << 8) | tag[i + 5] : v === 4 ? sync(tag, i + 4) : u32(tag, i + 4);
+      if (!/^[A-Z0-9]{3,4}$/.test(id) || tam <= 0 || i + cab + tam > tag.length) break;
+      if (id === 'APIC' || id === 'PIC') {
+        let j = i + cab; const enc = tag[j++];
+        if (id === 'PIC') { mime = txt(tag, j, 3).toLowerCase() === 'png' ? 'image/png' : 'image/jpeg'; j += 3; } else { let k = j; while (tag[k]) k++; mime = txt(tag, j, k - j); j = k + 1; }
+        j++;
+        if (enc === 1 || enc === 2) { while (j < i + cab + tam && !(tag[j] === 0 && tag[j + 1] === 0)) j += 2; j += 2; } else { while (j < i + cab + tam && tag[j]) j++; j++; }
+        img = tag.subarray(j, i + cab + tam);
+      }
+      i += cab + tam;
     }
-  } else {
-    for (let i = 0; i < buf.length - 8 && !img; i++) if (buf[i] === 0x63 && txt(i, 4) === 'covr' && txt(i + 8, 4) === 'data') { const tam = u32(i + 4) - 8 - 16; const tipo = u32(i + 12); mime = tipo === 14 ? 'image/png' : 'image/jpeg'; img = buf.subarray(i + 20, i + 20 + tam); }
   }
+  if (!img) for (let i = 0; i < buf.length - 24 && !img; i++) if (buf[i] === 0x63 && buf[i + 1] === 0x6F && txt(buf, i, 4) === 'covr' && txt(buf, i + 8, 4) === 'data') { const tam = u32(buf, i + 4) - 8 - 16; mime = u32(buf, i + 12) === 14 ? 'image/png' : 'image/jpeg'; img = buf.subarray(i + 20, i + 20 + tam); }
   if (!img || img.length < 100) return null;
   if (!/^image\//.test(mime)) mime = img[0] === 0x89 ? 'image/png' : 'image/jpeg';
   return reducirImagen(new Blob([img], { type: mime }), 256);
+}
+/* toma un cuadro del video (al segundo 1) como portada */
+function cuadroDeVideo(f) {
+  return new Promise((ok, mal) => { const v = document.createElement('video'), url = URL.createObjectURL(f); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+    const fin = r => { URL.revokeObjectURL(url); r(); };
+    const t = setTimeout(() => fin(() => mal(new Error('tiempo'))), 8000);
+    v.addEventListener('loadedmetadata', () => { if (!v.videoWidth) { clearTimeout(t); fin(() => ok(null)); return; } v.currentTime = Math.min(1, (v.duration || 2) / 2); });
+    v.addEventListener('seeked', () => { clearTimeout(t); const c = document.createElement('canvas'), lado = 256, m = Math.min(v.videoWidth, v.videoHeight); c.width = c.height = lado; c.getContext('2d').drawImage(v, (v.videoWidth - m) / 2, (v.videoHeight - m) / 2, m, m, 0, 0, lado, lado); const d = c.toDataURL('image/jpeg', 0.85); fin(() => ok(d)); });
+    v.addEventListener('error', () => { clearTimeout(t); fin(() => mal(new Error('video'))); }); });
 }
 
 /* redes vinculadas: se ven dentro de la app con el reproductor oficial de cada red */
@@ -230,3 +244,37 @@ VISTAS.redes = {
         || `<p class="vacio">${DB.yo().usuario === u.usuario ? 'Agrega publicaciones destacadas desde Editar perfil para que se vean aquí.' : 'Todavía no tiene publicaciones destacadas.'}</p>`}</div>`;
   }
 };
+
+/* ---------- Canciones del perfil ---------- */
+function embedMusica(url) {
+  const u = String(url || '');
+  let m = /open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|playlist|album|episode)\/([A-Za-z0-9]+)/.exec(u); if (m) return { servicio: 'Spotify', src: `https://open.spotify.com/embed/${m[1]}/${m[2]}`, alto: m[1] === 'track' ? 80 : 352 };
+  m = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/|music\.youtube\.com\/watch\?(?:.*&)?v=)([A-Za-z0-9_-]{11})/.exec(u); if (m) return { servicio: 'YouTube', src: `https://www.youtube-nocookie.com/embed/${m[1]}?loop=1&playlist=${m[1]}`, alto: 200 };
+  m = /^https:\/\/music\.apple\.com\/(.+)$/.exec(u); if (m) return { servicio: 'Apple Music', src: `https://embed.music.apple.com/${m[1]}`, alto: /[?&]i=/.test(u) ? 175 : 450 };
+  return null;
+}
+function seccionCanciones(u, mio) {
+  const lista = DB.canciones(u); if (!lista.length) return '';
+  return `<section class="tarjeta" style="background:#1B1530;color:#fff;border:0;display:flex;flex-direction:column;gap:12px"><span class="etiqueta" style="color:var(--amarillo)">${lista.length > 1 ? 'Canciones' : 'Canción'} del perfil</span>
+    ${lista.map((c, i) => { const em = !c.archivo && embedMusica(c.enlace), abierto = UI.embedAbierto === u.id + ':' + i;
+      return `<div><div class="fila" style="flex-wrap:nowrap">${c.archivo ? vinilo(c) : `<span class="vinilo" style="width:60px;height:60px" aria-hidden="true"><span class="etiqueta-disco" style="background:${em?.servicio === 'Spotify' ? '#1DB954' : em?.servicio === 'YouTube' ? '#FF3B30' : '#FC3C44'}"></span></span>`}
+        <span style="flex:1;min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.titulo)}</b><span class="mini" style="color:#C9C2DA">${esc(c.artista || (em ? em.servicio : 'Archivo'))}</span></span>
+        ${c.archivo ? `<button class="icono-btn" style="background:#FFC93C;color:#1B1530;border-radius:50%;width:48px;height:48px" data-a="playPerfil" data-src="${esc(c.archivo)}" data-u="${u.id}" data-i="${i}" aria-label="Reproducir o pausar ${esc(c.titulo)}" data-repro="${esc(c.archivo)}">${icono(REPRO.sonando(c.archivo) ? 'pausa' : 'play', 20)}</button>`
+          : em ? `<button class="icono-btn" style="background:#FFC93C;color:#1B1530;border-radius:50%;width:48px;height:48px" data-a="abrirEmbed" data-k="${u.id}:${i}" aria-label="${abierto ? 'Ocultar' : 'Escuchar'} ${esc(c.titulo)}">${icono(abierto ? 'cerrar' : 'play', 20)}</button>`
+          : urlSegura(c.enlace) ? `<a class="icono-btn" style="background:#FFC93C;color:#1B1530;border-radius:50%;width:48px;height:48px" href="${esc(c.enlace)}" target="_blank" rel="noopener noreferrer" aria-label="Abrir ${esc(c.titulo)}">${icono('play', 20)}</a>` : ''}</div>
+        ${abierto && em ? `<iframe title="${esc(c.titulo)} en ${em.servicio}" src="${em.src}" width="100%" height="${em.alto}" style="border:0;border-radius:12px;margin-top:10px" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>` : ''}</div>`; }).join('')}</section>`;
+}
+ACC.abrirEmbed = b => { UI.embedAbierto = UI.embedAbierto === b.dataset.k ? null : b.dataset.k; refrescar(); };
+function listaCancionesEdit() {
+  const l = DB.canciones(); if (!l.length) return '<p class="peq gris" style="margin:0">Todavía no tienes canciones.</p>';
+  return l.map((c, i) => `<div class="fila" style="flex-wrap:nowrap;padding:6px 0;border-bottom:1px solid var(--linea)">${c.archivo ? vinilo(c).replace('class="vinilo', 'style="width:40px;height:40px" class="vinilo') : `<span class="pastilla" style="display:grid;place-items:center;min-width:40px;padding:0">${icono('musica', 16)}</span>`}
+    <label class="oculto" for="cn${i}">Nombre de la canción ${i + 1}</label><input id="cn${i}" style="flex:1;min-width:0" value="${esc(c.titulo)}" maxlength="60" data-cambio="tituloCancion" data-i="${i}">
+    ${i ? `<button type="button" class="icono-btn" data-a="subirCancion" data-i="${i}" aria-label="Poner primero">${icono('atras', 18, 'style="transform:rotate(90deg)"')}</button>` : ''}<button type="button" class="icono-btn" style="color:var(--malTxt)" data-a="quitarCancion" data-i="${i}" aria-label="Quitar">${icono('basura', 18)}</button></div>`).join('');
+}
+function pintarListaCanciones() { const el = $('#listaCanciones'); if (el) el.innerHTML = listaCancionesEdit(); }
+CAMBIOS.tituloCancion = el => { const l = DB.canciones(), c = l[+el.dataset.i]; if (!c) return; c.titulo = el.value.trim().slice(0, 60) || c.titulo; DB.guardarCanciones(l); };
+ACC.quitarCancion = b => { const l = DB.canciones(); const c = l.splice(+b.dataset.i, 1)[0]; if (REPRO.src && REPRO.src === c?.archivo) REPRO.parar(); DB.guardarCanciones(l); pintarListaCanciones(); };
+ACC.subirCancion = b => { const l = DB.canciones(), i = +b.dataset.i; l.unshift(l.splice(i, 1)[0]); DB.guardarCanciones(l); pintarListaCanciones(); };
+ACC.cancionEnlace = () => abrirHoja(`<form class="pila" data-form="cancionEnlace"><h2>Agregar canción por enlace</h2><div><label class="campo" for="ce">Enlace</label><input id="ce" name="enlace" type="url" required placeholder="https://open.spotify.com/track/… · youtube.com/watch?v=… · music.apple.com/…"></div><div><label class="campo" for="cet">Nombre</label><input id="cet" name="titulo" maxlength="60" placeholder="Opcional"></div><div><label class="campo" for="cea">Artista</label><input id="cea" name="artista" maxlength="60" placeholder="Opcional"></div><button class="btn ancho">Agregar</button></form>`);
+FORMS.cancionEnlace = d => { const url = urlSegura(d.enlace.trim()); if (!url) return aviso('Ese enlace no es válido.'); const l = DB.canciones(); if (l.length >= 8) return aviso('Máximo 8 canciones.'); const em = embedMusica(url);
+  l.push({ titulo: d.titulo.trim() || (em ? 'Canción de ' + em.servicio : 'Mi canción'), artista: d.artista.trim(), enlace: url, archivo: '', portada: null }); DB.guardarCanciones(l); cerrarHoja(); pintarListaCanciones(); aviso(em ? `Agregada. Se escucha con el reproductor de ${em.servicio}.` : 'Agregada como enlace.'); };

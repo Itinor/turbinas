@@ -97,6 +97,7 @@ const RUTAS = {
   tiktok: 'M14 4v10a4 4 0 1 1-4-4M14 4c1 3 3 4 6 4',
   descargar: 'M12 4v11M7 10l5 5 5-5M5 20h14',
   archivo: 'M6 2h9l5 5v15H6zM15 2v5h5',
+  menu: 'M4 7h16M4 12h16M4 17h16',
   basura: 'M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3'
 };
 function icono(n, t = 22, extra = '') { return `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}><path d="${RUTAS[n] || ''}"/></svg>`; }

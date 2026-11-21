@@ -25,7 +25,7 @@ function pintar() {
   const activo = v.nav || nombre, sinLeer = DB.sinLeerNotifs();
   const lado = NAV_LADO.concat(DB.esAdmin() ? [['admin', 'Administración', '#/admin']] : []);
   app.innerHTML = `<div class="shell">
-    <aside class="lado${UI.ladoContraido ? ' contraido' : ''}"><div class="marca"><a href="#/inicio" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0">${castor(36)}<span class="txt">Cosas de la uni</span></a><button class="icono-btn plegar" data-a="plegarLado" aria-label="${UI.ladoContraido ? 'Expandir' : 'Contraer'} menú" title="${UI.ladoContraido ? 'Expandir' : 'Contraer'} menú">${icono(UI.ladoContraido ? 'mas' : 'atras', 18)}</button></div>
+    <aside class="lado${UI.ladoContraido ? ' contraido' : ''}"><div class="marca"><a href="#/inicio" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0">${castor(36)}<span class="txt">Cosas de la uni</span></a><button class="icono-btn plegar" data-a="plegarLado" aria-label="${UI.ladoContraido ? 'Expandir' : 'Contraer'} menú" title="${UI.ladoContraido ? 'Expandir' : 'Contraer'} menú">${icono('menu', 22)}</button></div>
       <nav aria-label="Secciones">${lado.map(([k, t, h]) => `<a href="${h}" class="${k === activo ? 'activo' : ''}" ${k === activo ? 'aria-current="page"' : ''} title="${t}">${icono(k === 'tienda' ? 'tienda' : k)}<span class="txt">${t}</span></a>`).join('')}</nav></aside>
     <div class="principal">
       <header class="barra">
@@ -93,7 +93,8 @@ const REPRO = {
   async alternar(cancion, dueno, auto) {
     if (this.audio && this.src === cancion.archivo) { if (this.audio.paused) this.audio.play().catch(() => {}); else this.audio.pause(); return; }
     let real = cancion.archivo;
-    if (real.startsWith('idb:')) { const blob = await ARCHIVOS.leer(real.slice(4)).catch(() => null); if (!blob) { if (!auto) aviso('Esta canción solo está guardada en el celular de quien la subió.'); return; } real = URL.createObjectURL(blob); }
+    if (real.startsWith('idb:')) { const blob = await ARCHIVOS.leer(real.slice(4)).catch(() => null); if (!blob) { if (!auto) aviso('Esta canción solo está guardada en el celular de quien la subió.'); return; } real = URL.createObjectURL(blob);
+      if (!cancion.portada && typeof extraerPortada === 'function') extraerPortada(blob).then(p => { if (!p) return; cancion.portada = p; DB.guardar(); $$('[data-vinilo]').forEach(v => { if (v.dataset.vinilo === cancion.archivo) { const e = v.querySelector('.etiqueta-disco'); if (e) e.style.background = `#4B1F7A url('${p}') center/cover`; } }); }).catch(() => {}); }
     this.parar(true);
     const a = new Audio(real); a.loop = true; this.audio = a; this.src = cancion.archivo; this.cancion = cancion; this.dueno = dueno;
     a.addEventListener('play', () => this.marcar()); a.addEventListener('pause', () => this.marcar());

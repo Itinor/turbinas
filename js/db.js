@@ -2,13 +2,13 @@
    Hoy guarda todo en el navegador (localStorage). Para pasar a un servidor (Supabase, Firebase…)
    solo hay que reescribir este archivo: las pantallas llaman a DB.* y no tocan el almacenamiento. */
 'use strict';
-const CLAVE = 'cosasdelauni_v6';
+const CLAVE = 'cosasdelauni_v7';
 let E = null;
 
 const DB = {
   cargar() {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
-    if (!E || E.version !== 6) { E = datosIniciales(); E.version = 6; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); this.guardar(); }
+    if (!E || E.version !== 7) { E = datosIniciales(); E.version = 7; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); this.guardar(); }
     E.bitacora = E.bitacora || []; asegurarEquipo();
     E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || []; E.tablones = E.tablones || []; E.tablonItems = E.tablonItems || []; asegurarTablones();
     return E;
@@ -45,7 +45,7 @@ const DB = {
   },
   alEntrar() { this.revisarArbitrajes();
     const u = this.yo(); if (!u) return;
-    if (u.diarios.regalo !== fechaLocal()) { u.diarios.regalo = fechaLocal(); mover(u.id, REGLAS.regaloDiario, 'diario', 'regalo del día'); notificar(u.id, `Te llegaron ${REGLAS.regaloDiario} ramitas por entrar hoy`, '#/perfil'); }
+    if (u.diarios.regalo !== fechaLocal()) { u.diarios.regalo = fechaLocal(); mover(u.id, REGLAS.regaloDiario, 'diario', 'regalo del día'); }
     this.miAgenda().forEach(a => { const d = diasHasta(a.fecha); if ([7, 3, 1, 0].includes(d) && !(a.hechoPor || {})[u.id]) { a.avisos = a.avisos || {}; const k = u.id + ':' + d; if (!a.avisos[k]) { a.avisos[k] = true; notificar(u.id, d === 0 ? `Hoy: ${a.titulo}` : `Faltan ${d} ${d === 1 ? 'día' : 'días'}: ${a.titulo}`, '#/agenda'); } } });
     this.guardar();
     if (u.ajustes.oscuro) document.documentElement.dataset.tema = 'oscuro'; else delete document.documentElement.dataset.tema;
@@ -75,6 +75,9 @@ const DB = {
   bloquear(id) { const yo = this.yo(); if (!yo.bloqueados.includes(id)) yo.bloqueados.push(id); yo.amigos = yo.amigos.filter(x => x !== id); E.usuarios[id].amigos = E.usuarios[id].amigos.filter(x => x !== yo.id); this.guardar(); },
   desbloquear(id) { const yo = this.yo(); yo.bloqueados = yo.bloqueados.filter(x => x !== id); this.guardar(); },
   silenciar(id) { const yo = this.yo(); if (!yo.silenciados.includes(id)) yo.silenciados.push(id); this.guardar(); },
+  /* varias canciones por perfil; la primera también queda como u.cancion */
+  canciones(u = this.yo()) { if (!u) return []; if (!u.canciones) u.canciones = u.cancion ? [u.cancion] : []; return u.canciones; },
+  guardarCanciones(lista) { const u = this.yo(); u.canciones = lista.slice(0, 8); u.cancion = u.canciones[0] || null; this.guardar(); },
   actualizarPerfil(cambios) { Object.assign(this.yo(), cambios); this.guardar(); },
 
   /* ---------- Publicaciones ---------- */
