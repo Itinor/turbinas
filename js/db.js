@@ -204,12 +204,15 @@ const DB = {
   conRamitas(id) { const p = E.propuestas.find(x => x.id === id); return !!(p && p.tipo === 'prediccion' && p.apuestas.length); },
   puedeEliminar(tipo, id) { if (tipo === 'propuesta' && this.conRamitas(id)) return false; return this.esAdmin() || (this.autorDe(tipo, id) && this.autorDe(tipo, id) === E.sesion); },
   eliminar(tipo, id, extra) {
+    if ((tipo === 'profe' || tipo === 'opinion') && !this.esAdmin()) return false;
     if (!this.puedeEliminar(tipo, id) && !(tipo === 'comentario' && E.posts.find(p => p.id === id)?.comentarios[+extra]?.autor === E.sesion)) return false;
     const quita = k => { E[k] = E[k].filter(x => x.id !== id); };
     if (tipo === 'post') quita('posts');
     else if (tipo === 'comentario') E.posts.find(p => p.id === id)?.comentarios.splice(+extra, 1);
     else if (tipo === 'propuesta') quita('propuestas');
     else if (tipo === 'ranking') quita('rankings');
+    else if (tipo === 'profe') quita('profes');
+    else if (tipo === 'opinion') E.profes.find(p => p.id === id)?.opiniones.splice(+extra, 1);
     else if (tipo === 'venta') quita('ventas');
     else if (tipo === 'nivel') quita('niveles');
     else if (tipo === 'evento') quita('eventos');
@@ -218,6 +221,7 @@ const DB = {
     this.guardar(); return true;
   },
   suspender(id, on) { if (!this.esAdmin() || id === E.sesion) return; E.usuarios[id].suspendido = on; if (on) notificar(id, 'Tu cuenta fue suspendida por el equipo', '#/inicio'); this.guardar(); },
+  crearProfe(d) { E.profes.push({ id: uid('p'), nombre: d.nombre.trim().slice(0, 60), area: d.area, materias: d.materias.split(',').map(m => m.trim()).filter(Boolean).slice(0, 6), opiniones: [] }); this.guardar(); },
   crearEvento(d) { E.eventos.push({ id: uid('ev'), titulo: d.titulo.trim().slice(0, 100), fecha: d.fecha, hora: d.hora || '', lugar: d.lugar.trim().slice(0, 60), interesados: 0 }); this.guardar(); },
 
   /* ---------- Eventos ---------- */

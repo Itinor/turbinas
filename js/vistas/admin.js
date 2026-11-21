@@ -76,7 +76,7 @@ ACC.moderarLugar = b => { DB.moderarLugar(b.dataset.id, b.dataset.ok === '1'); r
 UI.admCont = 'post';
 function admContenido() {
   const S = DB.estado, t = UI.admCont;
-  const tipos = [['post', 'Publicaciones', S.posts.filter(p => !p.oculto)], ['propuesta', 'Propuestas', S.propuestas], ['ranking', 'Rankings', S.rankings], ['venta', 'Compraventa', S.ventas], ['nivel', 'Niveles', S.niveles], ['evento', 'Eventos', S.eventos], ['lugar', 'Mapa', DB.lugares()], ['usuario', 'Usuarios', Object.values(S.usuarios)]];
+  const tipos = [['post', 'Publicaciones', S.posts.filter(p => !p.oculto)], ['propuesta', 'Propuestas', S.propuestas], ['ranking', 'Rankings', S.rankings], ['profe', 'Profesores', S.profes], ['venta', 'Compraventa', S.ventas], ['nivel', 'Niveles', S.niveles], ['evento', 'Eventos', S.eventos], ['lugar', 'Mapa', DB.lugares()], ['usuario', 'Usuarios', Object.values(S.usuarios)]];
   const [, , lista] = tipos.find(x => x[0] === t);
   const fila = (titulo, sub, acciones) => `<div class="entre" style="padding:10px 0;border-bottom:1px solid var(--linea);align-items:flex-start"><span style="min-width:0"><b class="peq" style="overflow-wrap:anywhere">${titulo}</b><br><span class="mini gris">${sub}</span></span><span class="fila" style="flex:none">${acciones}</span></div>`;
   const quitar = id => `<button class="btn-peligro" style="min-height:38px;padding:0 12px" data-a="eliminar" data-tipo="${t}" data-id="${esc(id)}">Eliminar</button>`;
@@ -84,6 +84,7 @@ function admContenido() {
     if (t === 'post') return fila(esc(x.texto.slice(0, 90)), `${esc(nombreVisible(x.autor))} · ${hace(x.fecha)} · ${x.comentarios.length} comentarios`, quitar(x.id));
     if (t === 'propuesta') return fila(esc(x.titulo), `${x.tipo} · ${x.estado} · ${esc(nombreVisible(x.autor))}${x.apuestas.length ? ' · pozo ' + DB.pozo(x) : ''}`, DB.conRamitas(x.id) ? '<span class="insignia i-amarillo">Con ramitas: protegida</span>' : quitar(x.id));
     if (t === 'ranking') return fila(esc(x.titulo), `${x.estado} · ${Object.keys(x.votos).length} votos · ${esc(nombreVisible(x.autor))}`, quitar(x.id));
+    if (t === 'profe') return fila(esc(x.nombre), `${esc(x.area)} · ${x.opiniones.length} opiniones · ${DB.calificacion(x)?.toFixed(1) || '—'}`, `<a class="btn3" style="min-height:38px;padding:0 12px" href="#/profe/${x.id}">Ver</a>` + quitar(x.id));
     if (t === 'venta') return fila(esc(x.titulo), `${x.tipo} · ${esc(nombreVisible(x.autor))} · ${hace(x.fecha)}`, quitar(x.id));
     if (t === 'nivel') return fila(esc(x.nombre), `${x.oficial ? 'oficial' : 'comunidad'} · ${x.likes} me gusta · ${esc(nombreVisible(x.autor))}`, quitar(x.id));
     if (t === 'evento') return fila(esc(x.titulo), `${fechaBonita(x.fecha)} · ${esc(x.lugar)}`, quitar(x.id));
