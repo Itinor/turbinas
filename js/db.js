@@ -10,7 +10,7 @@ const DB = {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
     if (!E || E.version !== 6) { E = datosIniciales(); E.version = 6; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); this.guardar(); }
     E.bitacora = E.bitacora || []; asegurarEquipo();
-    E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || [];
+    E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || []; E.tablones = E.tablones || [{ id: 'tb_general', nombre: 'General', chat: null, autor: 'u_diego', fecha: new Date().toISOString() }]; E.tablonItems = E.tablonItems || [];
     return E;
   },
   guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
@@ -288,7 +288,7 @@ const DB = {
   moderarLugar(id, ok) { const i = E.lugaresPend.findIndex(l => l.id === id); if (i < 0) return; const l = E.lugaresPend.splice(i, 1)[0]; if (ok) { E.lugares.push(l); const u = E.usuarios[l.por]; if (u) { u.reputacion += 1; mover(u.id, 10, 'premio', 'lugar en el mapa'); } } notificar(l.por, ok ? `"${l.nombre}" ya está en el mapa. +10 ramitas` : `"${l.nombre}" no se agregó al mapa`, '#/explorar/mapa'); this.guardar(); },
 
   /* ---------- Eliminar contenido (admin o autor) ---------- */
-  autorDe(tipo, id) { const L = { post: E.posts, propuesta: E.propuestas, ranking: E.rankings, venta: E.ventas, nivel: E.niveles }[tipo]; return L?.find(x => x.id === id)?.autor; },
+  autorDe(tipo, id) { const L = { post: E.posts, propuesta: E.propuestas, ranking: E.rankings, venta: E.ventas, nivel: E.niveles, tablonItem: E.tablonItems, tablon: E.tablones }[tipo]; return L?.find(x => x.id === id)?.autor; },
   /* Las predicciones con ramitas apostadas nunca se eliminan (ni el admin): así queda constancia de quién apostó y quién ganó */
   conRamitas(id) { const p = E.propuestas.find(x => x.id === id); return !!(p && p.tipo === 'prediccion' && p.apuestas.length); },
   /* con dinero real nadie borra predicciones con ramitas; mientras no, solo el admin (devolviendo lo apostado) */
@@ -303,6 +303,8 @@ const DB = {
     else if (tipo === 'propuesta') { const p = E.propuestas.find(x => x.id === id); if (p && p.apuestas.length && ['abierta', 'congelada', 'disputa'].includes(p.estado)) this.anular(id, 'El admin quitó la predicción y te devolvió tus ramitas'); if (p) this.bitacora('eliminó', p); quita('propuestas'); }
     else if (tipo === 'ranking') quita('rankings');
     else if (tipo === 'profe') quita('profes');
+    else if (tipo === 'tablonItem') quita('tablonItems');
+    else if (tipo === 'tablon') { if (id === 'tb_general') return false; quita('tablones'); E.tablonItems = E.tablonItems.filter(x => x.tablon !== id); }
     else if (tipo === 'opinion') E.profes.find(p => p.id === id)?.opiniones.splice(+extra, 1);
     else if (tipo === 'venta') quita('ventas');
     else if (tipo === 'nivel') quita('niveles');
@@ -316,6 +318,22 @@ const DB = {
   agregarArea(nombre) { nombre = String(nombre || '').trim().replace(/\s+/g, ' ').slice(0, 40); if (nombre.length < 3) return { error: 'Escribe el nombre del área.' };
     const ya = this.areas().find(a => this.claveNombre(a) === this.claveNombre(nombre)); if (ya) return { ok: ya, ya: true }; this.areas().push(nombre); this.guardar(); return { ok: nombre }; },
   quitarArea(nombre) { if (!this.esAdmin() || E.profes.some(p => p.area === nombre)) return false; E.areas = this.areas().filter(a => a !== nombre); this.guardar(); return true; },
+  /* ---------- Tablón ---------- */
+  tablonVisible(t) { if (!t) return false; if (!t.chat) return true; const c = E.chats.find(x => x.id === t.chat); return !!c && (c.miembros.includes(E.sesion) || this.esAdmin()); },
+  misTablones() { return E.tablones.filter(t => this.tablonVisible(t)); },
+  crearTablon(nombre, chat = null) { nombre = String(nombre || '').trim().slice(0, 50); if (nombre.length < 2) return { error: 'Ponle nombre.' }; const t = { id: uid('tb'), nombre, chat, autor: E.sesion, fecha: new Date().toISOString() }; E.tablones.push(t); this.guardar(); return { ok: t }; },
+  tablonDeChat(chatId) { const c = E.chats.find(x => x.id === chatId); if (!c) return null; return E.tablones.find(t => t.chat === chatId) || this.crearTablon(c.nombre, chatId).ok; },
+  itemsTablon(id) { return E.tablonItems.filter(x => x.tablon === id && !E.usuarios[x.autor]?.suspendido).sort((a, b) => (b.fijado - a.fijado) || b.fecha.localeCompare(a.fecha)); },
+  fijarEnTablon(d) {
+    const t = E.tablones.find(x => x.id === d.tablon); if (!this.tablonVisible(t)) return { error: 'No tienes acceso a este tablón.' };
+    const it = { id: d.id || uid('ti'), tablon: t.id, autor: E.sesion, tipo: d.tipo, titulo: String(d.titulo || '').trim().slice(0, 80), texto: String(d.texto || '').trim().slice(0, 400), color: d.color || 'amarillo', archivo: d.archivo || null, fijado: false, fecha: new Date().toISOString() };
+    if (it.tipo === 'nota' && !it.texto) return { error: 'Escribe la nota.' };
+    if (it.tipo !== 'nota' && !it.archivo) return { error: 'Elige un archivo.' };
+    E.tablonItems.push(it);
+    if (t.chat) { const c = E.chats.find(x => x.id === t.chat); c?.miembros.filter(m => m !== E.sesion).forEach(m => notificar(m, `@${this.yo().usuario} fijó algo en el tablón de ${t.nombre}`, '#/tablon/' + t.id)); }
+    this.guardar(); return { ok: it };
+  },
+  fijarArriba(id) { const it = E.tablonItems.find(x => x.id === id); if (!it || (it.autor !== E.sesion && !this.esAdmin())) return; it.fijado = !it.fijado; this.guardar(); },
   claveNombre(n) { return String(n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\b(dr|dra|mtro|mtra|maestro|maestra|ing|lic|prof|profa|profe|m\.?\s?c|mc)\b\.?/g, ' ').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim(); },
   profeParecido(nombre) { const k = this.claveNombre(nombre); if (!k) return null; return E.profes.find(p => this.claveNombre(p.nombre) === k) || null; },
   proponerProfe(d) {

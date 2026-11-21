@@ -43,11 +43,13 @@ FORMS.crearGrupo = d => {
 };
 ACC.menuChat = b => { const c = DB.estado.chats.find(x => x.id === b.dataset.id), otro = c.miembros.find(m => m !== DB.yo().id);
   abrirHoja(`<h2>${esc(tituloChat(c))}</h2><div class="pila">
+    ${c.tipo === 'grupo' ? `<button class="btn2 ancho" data-a="chatAccion" data-que="tablon" data-id="${c.id}">${icono('tablon', 18)}Tablón del grupo</button>` : ''}
     <button class="btn3 ancho" data-a="chatAccion" data-que="vaciar" data-id="${c.id}">Vaciar chat</button>
     ${c.tipo === 'grupo' ? `<button class="btn-peligro ancho" data-a="chatAccion" data-que="salir" data-id="${c.id}">Salir del grupo</button>` : `<button class="btn-peligro ancho" data-a="chatAccion" data-que="quitar" data-id="${c.id}">Eliminar chat</button>`}
     <p class="mini gris" style="margin:0">${c.tipo === 'grupo' ? 'Vaciar solo borra los mensajes para ti. Al salir ya no recibes mensajes del grupo.' : 'Solo se borra para ti. Si te vuelve a escribir, la conversación reaparece desde cero.'}</p>
     <button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`); };
 ACC.chatAccion = b => { const id = b.dataset.id, q = b.dataset.que; cerrarHoja();
+  if (q === 'tablon') { const t = DB.tablonDeChat(id); return ir('#/tablon/' + t.id); }
   if (q === 'vaciar') { DB.vaciarChat(id); aviso('Chat vaciado'); return refrescar(); }
   if (q === 'quitar') DB.quitarChat(id); else DB.salirGrupo(id);
   aviso(q === 'quitar' ? 'Chat eliminado' : 'Saliste del grupo'); ir('#/chat'); };

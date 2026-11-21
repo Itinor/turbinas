@@ -10,7 +10,7 @@ VISTAS.inicio = {
       <span style="width:52px;height:52px;border-radius:14px;background:var(--g-accion);color:#1B1530;display:grid;place-items:center;text-align:center;flex:none;line-height:1"><b style="font-size:20px">${diasHasta(prox.fecha)}</b><span class="mini" style="font-weight:700">${diasHasta(prox.fecha) === 1 ? 'día' : 'días'}</span></span>
       <span style="flex:1"><b>${esc(prox.titulo)}</b><br><span class="peq" style="color:var(--avisoTxt)">${fechaBonita(prox.fecha)}${prox.hora ? ' · ' + esc(prox.hora) : ''}${prox.lugar ? ' · ' + esc(prox.lugar) : ''}</span></span>
       <span class="peq" style="font-weight:800;color:var(--avisoTxt)">Agenda</span></a>` : '';
-    const accesos = [['profe', 'Profesores', '#/explorar/profesores', '#4B1F7A'], ['mapa', 'Mapa', '#/explorar/mapa', '#1D5FD1'], ['agenda', 'Eventos', '#/explorar/eventos', '#B45309'], ['tienda', 'Compraventa', '#/compraventa', '#4B1F7A']];
+    const accesos = [['profe', 'Profesores', '#/explorar/profesores', '#4B1F7A'], ['mapa', 'Mapa', '#/explorar/mapa', '#1D5FD1'], ['agenda', 'Eventos', '#/explorar/eventos', '#B45309'], ['tienda', 'Compraventa', '#/compraventa', '#4B1F7A'], ['tablon', 'Tablón', '#/tablon', '#B45309']];
     return `<div class="pila">
       ${recordatorio}
       <form class="tarjeta pila" data-form="publicar" style="gap:10px">

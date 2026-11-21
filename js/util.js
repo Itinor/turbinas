@@ -92,6 +92,11 @@ const RUTAS = {
   tienda2: 'M4 7h16l-1 13H5zM8 7a4 4 0 0 1 8 0',
   luna: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
   lapiz: 'M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4',
+  tablon: 'M12 17v5M8 3h8l-1 6 3 4H6l3-4z',
+  instagram: 'M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM12 8a4 4 0 1 0 0 8a4 4 0 0 0 0-8zM17.5 6.5h.01',
+  tiktok: 'M14 4v10a4 4 0 1 1-4-4M14 4c1 3 3 4 6 4',
+  descargar: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  archivo: 'M6 2h9l5 5v15H6zM15 2v5h5',
   basura: 'M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3'
 };
 function icono(n, t = 22, extra = '') { return `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}><path d="${RUTAS[n] || ''}"/></svg>`; }
