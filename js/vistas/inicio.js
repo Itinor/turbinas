@@ -31,7 +31,7 @@ VISTAS.inicio = {
 function tarjetaPrediccionMini(p) {
   const t = DB.pozo(p) || 1, pct = p.opciones.map((_, i) => Math.round(DB.pozoOpcion(p, i) / t * 100));
   return `<a href="#/propuestas" class="tarjeta" style="display:block;text-decoration:none;color:inherit;border:2px solid var(--amarillo)">
-    <div class="entre"><span class="etiqueta" style="color:#8A5A00">Predicción abierta</span><span class="mini gris">Cierra ${diasHasta(p.cierre) <= 0 ? 'hoy' : 'en ' + diasHasta(p.cierre) + ' d'}</span></div>
+    <div class="entre"><span class="etiqueta" style="color:#8A5A00">Predicción abierta</span><span class="mini gris">${faltaTexto(p.cierre) ? 'Cierra en ' + faltaTexto(p.cierre) : 'Cerrada'}</span></div>
     <b style="display:block;font-family:Sora,sans-serif;margin:6px 0 10px">${esc(p.titulo)}</b>
     <div style="display:flex;height:10px;border-radius:999px;overflow:hidden">${pct.map((v, i) => `<span style="width:${v}%;background:${i % 2 ? '#1D5FD1' : '#4B1F7A'}"></span>`).join('')}</div>
     <div class="entre mini gris" style="margin-top:6px">${p.opciones.map((o, i) => `<span>${esc(o)} ${pct[i]}%</span>`).join('')}</div></a>`;

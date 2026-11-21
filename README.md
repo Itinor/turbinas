@@ -85,3 +85,10 @@ herramientas/metodos.html  métodos numéricos con el lector seguro
 3. **Verificación real.** El código del correo hoy se muestra en pantalla (es de prueba). En producción se envía por correo, y la lectura del horario necesita OCR o revisión manual.
 4. **Juegos con ramitas.** La ruleta y la tragamonedas ya usan ramitas; Runner y Space War todavía no dan premios. A Space War le faltan algunos sprites (nave_idle, boss_asteroid, etc.).
 5. **App de celular.** Con Capacitor se empaqueta esta misma carpeta como app de Android e iOS.
+
+## Modo prueba (para compartir con amigos)
+- En la bienvenida cada quien entra solo con un **@usuario** (sin correo) y queda verificado.
+- El admin entra con **"Soy admin"** y la clave de `CONFIG.claveAdmin` en `js/datos.js`.
+- Las propuestas arrancan en cero (`CONFIG.propuestasDemo: false`).
+- Mientras `CONFIG.dineroReal` sea `false`, el admin puede borrar predicciones con ramitas (se devuelve lo apostado).
+- Importante: sin base de datos, cada navegador guarda su propia copia. Para que se vean entre sí (chat, feed, propuestas) falta conectar Supabase.

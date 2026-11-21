@@ -23,7 +23,7 @@ function admPredicciones() {
     const horas = Array(24).fill(0), fin = Math.max(...p.apuestas.map(a => new Date(a.f).getTime()), Date.now() - 864e5);
     p.apuestas.forEach(a => { const h = 23 - Math.floor((fin - new Date(a.f).getTime()) / 36e5); if (h >= 0 && h < 24) horas[h] += a.monto; });
     const mx = Math.max(1, ...horas), media = horas.reduce((s, v) => s + v, 0) / 24;
-    return `<section class="tarjeta"><div class="entre"><span class="insignia ${p.estado === 'abierta' ? 'i-verde' : p.estado === 'congelada' || p.estado === 'disputa' ? 'i-naranja' : 'i-morado'}">${p.estado}</span><span class="mini gris">cierra ${fechaBonita(p.cierre)}</span></div>
+    return `<section class="tarjeta"><div class="entre"><span class="insignia ${p.estado === 'abierta' ? 'i-verde' : p.estado === 'congelada' || p.estado === 'disputa' ? 'i-naranja' : 'i-morado'}">${p.estado}</span><span class="mini gris">${DB.esGrande(p) ? '<span class="insignia i-amarillo">Grande</span> ' : ''}cierra ${cierreBonito(p.cierre)}</span></div>
       <h2 style="margin:8px 0">${esc(p.titulo)}</h2>
       <div class="rejilla4"><div style="background:var(--suave);border-radius:12px;padding:10px"><span class="mini gris">Pozo</span><br><b>${numero(total)}</b></div>${p.opciones.map((o, i) => `<div style="background:var(--suave);border-radius:12px;padding:10px"><span class="mini gris">${esc(o)}</span><br><b>${numero(DB.pozoOpcion(p, i))}</b> <span class="mini gris">· ${personas(i)} pers.</span></div>`).join('')}<div style="background:var(--avisoBg);border-radius:12px;padding:10px"><span class="mini" style="color:var(--avisoTxt)">Fondo (${REGLAS.comisionFondo * 100}%)</span><br><b>${Math.round(total * REGLAS.comisionFondo)}</b></div></div>
       <p class="mini gris" style="margin:12px 0 4px">Ramitas apostadas por hora (últimas 24 h con actividad) · naranja = fuera de lo normal</p>
@@ -55,7 +55,9 @@ function admEconomia() {
 }
 function admRegistro() {
   const l = DB.estado.libro.slice().reverse().slice(0, 150), sosp = new Set(Object.values(DB.estado.usuarios).filter(u => Object.values(DB.estado.usuarios).filter(v => v.dispositivo === u.dispositivo).length >= 3).map(u => u.id));
-  return `<section class="tarjeta"><div class="entre"><h2>Registro de movimientos</h2><span class="mini gris">Solo se agregan; nunca se editan ni borran</span></div>
+  const bit = (DB.estado.bitacora || []).slice().reverse().slice(0, 200);
+  const seccionBit = `<section class="tarjeta"><h2>Bitácora de propuestas</h2><p class="mini gris" style="margin:2px 0 8px">Quién creó, editó, reportó, confirmó, disputó, resolvió, anuló o eliminó cada propuesta.</p>${bit.map(b => `<div style="padding:6px 0;border-bottom:1px solid var(--linea)" class="peq"><b>@${esc(DB.usuario(b.u)?.usuario || 'sistema')}</b> ${esc(b.accion)} <i>${esc(b.titulo)}</i>${b.extra ? ` <span class="gris">· ${esc(b.extra)}</span>` : ''}<br><span class="mini gris">${new Date(b.f).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span></div>`).join('') || '<p class="peq gris">Sin movimientos todavía.</p>'}</section>`;
+  return seccionBit + `<section class="tarjeta"><div class="entre"><h2>Registro de movimientos</h2><span class="mini gris">Solo se agregan; nunca se editan ni borran</span></div>
     <div class="tabla" style="margin-top:8px"><table><thead><tr><th>Cuándo</th><th>Cuenta</th><th>Tipo</th><th class="num">Ramitas</th><th>Referencia</th><th>Dispositivo</th></tr></thead><tbody>${l.map(m => `<tr style="${sosp.has(m.u) && m.tipo === 'apuesta' ? 'background:var(--avisoBg)' : ''}"><td class="mini">${hace(m.f)}</td><td>${m.u === 'FONDO' ? 'Fondo' : '@' + esc(DB.usuario(m.u)?.usuario || m.u)}</td><td>${esc(NOMBRE_MOV[m.tipo] || m.tipo)}</td><td class="num" style="color:${m.monto >= 0 ? 'var(--okTxt)' : 'var(--malTxt)'}">${m.monto}</td><td class="mini">${esc(DB.estado.propuestas.find(p => p.id === m.ref)?.titulo?.slice(0, 40) || m.ref)}</td><td class="mini gris">${esc(m.disp)}</td></tr>`).join('')}</tbody></table></div>
     <button class="btn3" style="margin-top:10px" data-a="copiarRegistro">Copiar registro (CSV)</button></section>`;
 }
@@ -84,7 +86,7 @@ function admContenido() {
   const quitar = id => `<button class="btn-peligro" style="min-height:38px;padding:0 12px" data-a="eliminar" data-tipo="${t}" data-id="${esc(id)}">Eliminar</button>`;
   const filas = lista.slice().reverse().map(x => {
     if (t === 'post') return fila(esc(x.texto.slice(0, 90)), `${esc(nombreVisible(x.autor))} · ${hace(x.fecha)} · ${x.comentarios.length} comentarios`, quitar(x.id));
-    if (t === 'propuesta') return fila(esc(x.titulo), `${x.tipo} · ${x.estado} · ${esc(nombreVisible(x.autor))}${x.apuestas.length ? ' · pozo ' + DB.pozo(x) : ''}`, DB.conRamitas(x.id) ? '<span class="insignia i-amarillo">Con ramitas: protegida</span>' : quitar(x.id));
+    if (t === 'propuesta') return fila(esc(x.titulo), `${x.tipo} · ${x.estado} · ${esc(nombreVisible(x.autor))}${x.apuestas.length ? ' · pozo ' + DB.pozo(x) : ''}`, DB.protegida(x.id) ? '<span class="insignia i-amarillo">Con ramitas: protegida</span>' : quitar(x.id));
     if (t === 'ranking') return fila(esc(x.titulo), `${x.estado} · ${Object.keys(x.votos).length} votos · ${esc(nombreVisible(x.autor))}`, quitar(x.id));
     if (t === 'profe') return fila(esc(x.nombre), `${esc(x.area)} · ${x.opiniones.length} opiniones · ${DB.calificacion(x)?.toFixed(1) || '—'}`, `<a class="btn3" style="min-height:38px;padding:0 12px" href="#/profe/${x.id}">Ver</a>` + quitar(x.id));
     if (t === 'venta') return fila(esc(x.titulo), `${x.tipo} · ${esc(nombreVisible(x.autor))} · ${hace(x.fecha)}`, quitar(x.id));

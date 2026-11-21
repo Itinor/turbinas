@@ -7,7 +7,7 @@ VISTAS.propuestas = {
     if (params[0] === 'nueva') return formNuevaPropuesta();
     if (params[0] === 'editar') return formEditarPropuesta(params[1]);
     DB.revisarArbitrajes();
-    const t = UI.propTab, lista = DB.estado.propuestas.filter(p => (p.estado === 'abierta' || p.estado === 'congelada' || p.estado === 'disputa' || ((p.estado === 'resuelta' || p.estado === 'anulada') && diasHasta(p.cierre) > -4)) && (t === 'todas' || p.tipo === t))
+    const t = UI.propTab, lista = DB.estado.propuestas.filter(p => (p.estado === 'abierta' || p.estado === 'congelada' || p.estado === 'disputa' || ((p.estado === 'resuelta' || p.estado === 'anulada') && Date.now() - cierreMs(p.cierre) < 3 * 864e5)) && (t === 'todas' || p.tipo === t))
       .filter(p => !DB.bloqueo(p.autor, DB.yo().id)).sort((a, b) => b.fecha.localeCompare(a.fecha));
     const tabs = [['todas', 'Todas'], ['prediccion', 'Predicciones'], ['votacion', 'Votaciones'], ['actividad', 'Actividades']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="propTab" data-t="${k}">${n}</button>`).join('');
     return `<div class="pila"><div class="pestanas">${tabs}<a class="pastilla" style="display:inline-grid;place-items:center;text-decoration:none;color:inherit" href="#/rankings">Rankings</a></div>
@@ -16,17 +16,17 @@ VISTAS.propuestas = {
   }
 };
 function tarjetaPropuesta(p) {
-  const yo = DB.yo(), autor = nombreVisible(p.autor), cierra = diasHasta(p.cierre);
-  const cab = (tag, color) => `<div class="entre"><span class="etiqueta" style="color:${color}">${tag}</span><span class="mini gris">${p.estado === 'resuelta' ? (p.resueltaPor === 'comunidad' ? 'Resuelta por la comunidad' : 'Resuelta') : p.estado === 'anulada' ? 'Anulada · se devolvió todo' : p.estado === 'disputa' ? 'En disputa' : p.estado === 'congelada' ? 'En revisión' : cierra < 0 ? (p.tipo === 'prediccion' ? 'Cerrada · por resolver' : 'Cerrada') : cierra === 0 ? 'Cierra hoy' : 'Cierra en ' + cierra + ' d'}</span></div>
+  const yo = DB.yo(), autor = nombreVisible(p.autor), falta = faltaTexto(p.cierre), cerro = !falta;
+  const cab = (tag, color) => `<div class="entre"><span class="etiqueta" style="color:${color}">${tag}</span><span class="mini gris">${p.estado === 'resuelta' ? (p.resueltaPor === 'comunidad' ? 'Resuelta por la comunidad' : 'Resuelta') : p.estado === 'anulada' ? 'Anulada · se devolvió todo' : p.estado === 'disputa' ? 'En disputa' : p.estado === 'congelada' ? 'En revisión' : cerro ? (p.tipo === 'prediccion' ? 'Cerrada · por resolver' : 'Cerrada') : (p.tipo === 'actividad' ? 'Es en ' : 'Cierra en ') + falta}</span></div>
     <div class="entre" style="align-items:flex-start"><h2 style="margin:6px 0 2px">${esc(p.titulo)}</h2><span class="fila" style="flex-wrap:nowrap;gap:0">${(p.autor === yo.id || DB.esAdmin()) && (p.estado === 'abierta' || p.estado === 'congelada') ? `<button class="icono-btn" data-a="editarProp" data-id="${p.id}" aria-label="Editar">${icono('lapiz', 18)}</button>` : ''}${botonEliminar('propuesta', p.id)}</span></div><div class="mini gris">Propuesta por ${esc(autor)}${p.editada ? ' · editada' : ''}</div>${(p.aclaraciones || []).map(a => `<div class="peq" style="margin-top:8px;background:var(--avisoBg);border-radius:12px;padding:8px 10px"><b>Aclaración</b> · <span class="mini gris">${hace(a.f)}</span><br>${esc(a.t)}</div>`).join('')}`;
   if (p.tipo === 'prediccion') {
     const total = DB.pozo(p), mio = DB.apostado(p), miOp = p.apuestas.find(a => a.u === yo.id)?.op, sel = UI.apuesta[p.id] || { op: miOp ?? 0, monto: 25 };
-    const abierta = p.estado === 'abierta' && cierra >= 0;
+    const abierta = p.estado === 'abierta' && !cerro;
     const ops = p.opciones.map((o, i) => { const m = DB.multiplicador(p, i), pct = total ? Math.round(DB.pozoOpcion(p, i) / total * 100) : 0, on = abierta && sel.op === i, gano = p.estado === 'resuelta' && p.ganadora === i;
       return `<button class="tarjeta entre" style="padding:10px 12px;text-align:left;border:2px solid ${gano ? '#15803D' : on ? 'var(--morado)' : 'var(--linea)'};background:${on ? 'var(--suave)' : 'var(--tarjeta)'};box-shadow:none" ${abierta ? `data-a="elegirOp" data-id="${p.id}" data-op="${i}"` : 'disabled'}>
         <span><b>${esc(o)}</b>${gano ? ' <span class="insignia i-verde">Ganó</span>' : ''}<br><span class="mini gris">${pct}% del pozo</span></span><b style="font-family:Sora,sans-serif;font-size:20px;color:${i % 2 ? 'var(--azulTxt)' : 'var(--moradoTxt)'}">${m ? '×' + m.toFixed(2) : '—'}</b></button>`; }).join('');
     const mm = DB.multiplicador({ ...p, apuestas: p.apuestas.concat([{ op: sel.op, monto: sel.monto }]) }, sel.op) || 0;
-    return `<article class="tarjeta" style="border:2px solid var(--amarillo)">${cab('Predicción', '#8A5A00')}
+    return `<article class="tarjeta" style="border:2px solid var(--amarillo)">${cab(DB.esGrande(p) ? 'Predicción grande' : 'Predicción', '#8A5A00')}${DB.esGrande(p) ? `<p class="mini" style="margin:6px 0 0;color:var(--avisoTxt)">Pozo de ${REGLAS.pozoGrande}+ ramitas: el resultado lo verifica el equipo antes de repartir.</p>` : ''}
       <div class="pila" style="gap:8px;margin-top:12px">${ops}</div>
       ${abierta ? `<div style="margin-top:12px" class="peq"><b>¿Cuántas ramitas pones?</b></div><div class="rejilla3" style="margin-top:6px">${[10, 25, 50].map(n => `<button class="pastilla${sel.monto === n ? ' on' : ''}" data-a="elegirMonto" data-id="${p.id}" data-n="${n}">${n}</button>`).join('')}</div>
         <div class="entre" style="margin-top:10px;background:var(--suave);border-radius:14px;padding:10px 12px"><span class="peq">Si aciertas recibes</span><b style="font-family:Sora,sans-serif;font-size:20px;color:var(--moradoTxt)">${Math.floor(sel.monto * mm)} ramitas</b></div>
@@ -53,7 +53,7 @@ function formNuevaPropuesta() {
     <div><label class="campo" for="pt">${t === 'actividad' ? '¿Qué quieres organizar?' : 'La pregunta'}</label><input id="pt" name="titulo" required maxlength="140" placeholder="${t === 'actividad' ? 'Fut 7 el viernes después de clases' : '¿Quién gana el torneo de…?'}"></div>
     ${t !== 'actividad' ? `<div><span class="campo">Opciones</span><div class="pila" style="gap:6px">${[0, 1, 2, 3].map(i => `<label class="oculto" for="op${i}">Opción ${i + 1}</label><input id="op${i}" name="op${i}" maxlength="60" placeholder="Opción ${i + 1}${i > 1 ? ' (opcional)' : ''}" ${i < 2 ? 'required' : ''}>`).join('')}</div></div>`
       : `<div><label class="campo" for="cu">¿Cuántas personas?</label><input id="cu" name="cupo" type="number" min="2" max="100" value="10"></div>`}
-    <div><label class="campo" for="ci">${t === 'actividad' ? 'Fecha' : 'Cierra el'}</label><input id="ci" name="cierre" type="date" required min="${fechaLocal()}" value="${sumarDias(fechaLocal(), 3)}"></div>
+    ${campoDuracion(t, null)}
     <button class="btn ancho">Publicar</button><a class="btn3 ancho" href="#/propuestas">Cancelar</a></form>`;
 }
 ACC.propTab = b => { UI.propTab = b.dataset.t; refrescar(); };
@@ -64,7 +64,7 @@ ACC.apostar = b => { const id = b.dataset.id, s = UI.apuesta[id] || { op: 0, mon
 ACC.votar = b => { const r = DB.votar(b.dataset.id, +b.dataset.op); if (r.error === 'verificar') return pedirVerificacion(); refrescar(); };
 ACC.apuntarse = b => { DB.apuntarse(b.dataset.id); refrescar(); };
 FORMS.nuevaPropuesta = d => {
-  const r = DB.crearPropuesta({ tipo: UI.nuevaTipo || 'prediccion', titulo: d.titulo, opciones: [d.op0, d.op1, d.op2, d.op3], cierre: d.cierre, cupo: d.cupo });
+  const r = DB.crearPropuesta({ tipo: UI.nuevaTipo || 'prediccion', titulo: d.titulo, opciones: [d.op0, d.op1, d.op2, d.op3], ...leerDuracion(d), cupo: d.cupo });
   if (r.error) return aviso(r.error);
   aviso(r.nota || 'Publicado'); UI.propTab = 'todas'; ir('#/propuestas');
 };
@@ -104,7 +104,24 @@ function formEditarPropuesta(id) {
     <div><label class="campo" for="ept">La pregunta</label><input id="ept" name="titulo" required maxlength="140" value="${esc(p.titulo)}"></div>
     ${p.tipo !== 'actividad' ? `<div><span class="campo">Opciones</span><div class="pila" style="gap:6px">${[0, 1, 2, 3].map(i => `<label class="oculto" for="eop${i}">Opción ${i + 1}</label><input id="eop${i}" name="op${i}" maxlength="60" value="${esc(p.opciones[i] || '')}" placeholder="Opción ${i + 1}${i > 1 ? ' (opcional)' : ''}" ${i < 2 ? 'required' : ''}>`).join('')}</div></div>`
       : `<div><label class="campo" for="ecu">¿Cuántas personas?</label><input id="ecu" name="cupo" type="number" min="2" max="100" value="${p.cupo}"></div>`}
-    <div><label class="campo" for="eci">${p.tipo === 'actividad' ? 'Fecha' : 'Cierra el'}</label><input id="eci" name="cierre" type="date" min="${fechaLocal()}" value="${p.cierre}"></div>
+    <p class="peq gris" style="margin:0">Ahora cierra: ${cierreBonito(p.cierre)}</p>${campoDuracion(p.tipo, p)}
     <button class="btn ancho">Guardar cambios</button><a class="btn3 ancho" href="#/propuestas">Cancelar</a></form>`;
 }
-FORMS.editarProp = d => { const r = DB.editarPropuesta(d.id, d); if (r.error) return aviso(r.error); aviso('Cambios guardados'); ir('#/propuestas'); };
+FORMS.editarProp = d => { const r = DB.editarPropuesta(d.id, { ...d, ...leerDuracion(d) }); if (r.error) return aviso(r.error); aviso('Cambios guardados'); ir('#/propuestas'); };
+
+const DURACIONES = [[5, '5 min'], [15, '15 min'], [30, '30 min'], [60, '1 hora'], [120, '2 horas'], [180, '3 horas'], [360, '6 horas'], [720, '12 horas'], [1440, '1 día'], [4320, '3 días'], [10080, '1 semana']];
+function campoDuracion(tipo, p) {
+  const sel = UI.duracion ?? (p ? 'igual' : 4320), otra = sel === 'otra';
+  const local = new Date(Date.now() + 864e5 - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16), minimo = new Date(Date.now() + REGLAS.duracionMin * 6e4 - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+  return `<div><label class="campo" for="dur">${tipo === 'actividad' ? '¿Cuándo es?' : '¿Cuánto dura?'}</label><select id="dur" name="minutos" data-cambio="duracion">
+    ${p ? `<option value="igual" ${sel === 'igual' ? 'selected' : ''}>Dejar como está</option>` : ''}${DURACIONES.map(([m, n]) => `<option value="${m}" ${String(sel) === String(m) ? 'selected' : ''}>${tipo === 'actividad' ? 'En ' + n : n}</option>`).join('')}<option value="otra" ${otra ? 'selected' : ''}>Elegir fecha y hora…</option></select>
+    ${otra ? `<input style="margin-top:8px" name="cierreExacto" type="datetime-local" required min="${minimo}" value="${local}" aria-label="Fecha y hora">` : ''}
+    <p class="mini gris" style="margin:4px 0 0">Mínimo ${REGLAS.duracionMin} minutos. ${tipo === 'prediccion' ? 'Ej.: “¿Llega a tiempo a clase?” puede durar 15 min.' : ''}</p></div>`;
+}
+function leerDuracion(d) {
+  UI.duracion = null;
+  if (d.minutos === 'otra') return { cierre: d.cierreExacto ? new Date(d.cierreExacto).toISOString() : null };
+  if (d.minutos === 'igual' || !d.minutos) return {};
+  return { minutos: +d.minutos };
+}
+CAMBIOS.duracion = el => { UI.duracion = el.value; const f = el.form, datos = Object.fromEntries(new FormData(f)); refrescar(); const g = $('form[data-form]'); if (g) Object.entries(datos).forEach(([k, v]) => { const i = g.elements[k]; if (i && k !== 'minutos' && k !== 'cierreExacto' && i.type !== 'hidden') i.value = v; }); };

@@ -2,13 +2,14 @@
    Hoy guarda todo en el navegador (localStorage). Para pasar a un servidor (Supabase, Firebase…)
    solo hay que reescribir este archivo: las pantallas llaman a DB.* y no tocan el almacenamiento. */
 'use strict';
-const CLAVE = 'cosasdelauni_v3';
+const CLAVE = 'cosasdelauni_v4';
 let E = null;
 
 const DB = {
   cargar() {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
-    if (!E || E.version !== 3) { E = datosIniciales(); sembrarLibro(); this.guardar(); }
+    if (!E || E.version !== 4) { E = datosIniciales(); E.version = 4; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); this.guardar(); }
+    E.bitacora = E.bitacora || [];
     E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || [];
     return E;
   },
@@ -91,7 +92,9 @@ const DB = {
   limites() { const u = this.yo(); if (u.limites.fecha !== fechaLocal()) u.limites = { fecha: fechaLocal(), propuestas: 0, encuestas: 0, apostado: 0, retos: 0 }; return u.limites; },
 
   /* ---------- Propuestas: predicciones, votaciones y actividades ---------- */
-  crearPropuesta({ tipo, titulo, opciones, cierre, cupo }) {
+  crearPropuesta({ tipo, titulo, opciones, cierre, minutos, cupo }) {
+    if (minutos) { minutos = Math.round(Number(minutos)); if (!(minutos >= REGLAS.duracionMin)) return { error: `La duración mínima es de ${REGLAS.duracionMin} minutos.` }; minutos = Math.min(minutos, REGLAS.duracionMax); cierre = new Date(Date.now() + minutos * 6e4).toISOString(); }
+    else if (cierre && cierreMs(cierre) - Date.now() < REGLAS.duracionMin * 6e4) return { error: `Tiene que cerrar al menos en ${REGLAS.duracionMin} minutos.` };
     const L = this.limites();
     if (L.propuestas >= REGLAS.limitePropuestasDia) return { error: `Ya propusiste ${REGLAS.limitePropuestasDia} hoy. Mañana puedes más.` };
     titulo = titulo.trim().slice(0, 140); opciones = (opciones || []).map(o => String(o || '').trim()).filter(Boolean).slice(0, 6);
@@ -100,7 +103,7 @@ const DB = {
     if (tipo === 'prediccion' && TEMAS_PRIVILEGIADOS.test(titulo)) { tipo = 'votacion'; nota = 'Como trata de algo que alguien de dentro podría saber, la publicamos como votación (sin ramitas).'; }
     if ((tipo === 'prediccion' || tipo === 'votacion') && opciones.length < 2) return { error: 'Pon al menos dos opciones.' };
     const p = { id: uid('pr'), tipo, titulo, autor: E.sesion, fecha: new Date().toISOString(), cierre: cierre || sumarDias(fechaLocal(), 3), opciones, apuestas: [], votos: {}, apuntados: tipo === 'actividad' ? [E.sesion] : [], cupo: tipo === 'actividad' ? Math.max(2, Number(cupo) || 10) : 0, estado: 'abierta' };
-    E.propuestas.push(p); L.propuestas++; this.guardar(); return { ok: p, nota };
+    E.propuestas.push(p); L.propuestas++; this.bitacora('creó', p); this.guardar(); return { ok: p, nota };
   },
   pozo(p) { return p.apuestas.reduce((s, a) => s + a.monto, 0); },
   pozoOpcion(p, i) { return p.apuestas.filter(a => a.op === i).reduce((s, a) => s + a.monto, 0); },
@@ -110,7 +113,7 @@ const DB = {
     const p = E.propuestas.find(x => x.id === id), u = this.yo(), L = this.limites();
     monto = Math.floor(Number(monto));
     if (u.verificado !== 'si') return { error: 'verificar' };
-    if (p.estado !== 'abierta' || diasHasta(p.cierre) < 0) return { error: 'Esta predicción ya cerró.' };
+    if (p.estado !== 'abierta' || yaCerro(p)) return { error: 'Esta predicción ya cerró.' };
     if (!(monto > 0)) return { error: 'Elige cuántas ramitas.' };
     const ya = p.apuestas.find(a => a.u === u.id); if (ya && ya.op !== op) return { error: 'Ya apostaste por la otra opción.' };
     if (this.apostado(p) + monto > REGLAS.maxPorPrediccion) return { error: `En esta predicción puedes poner hasta ${REGLAS.maxPorPrediccion - this.apostado(p)} más.` };
@@ -119,11 +122,11 @@ const DB = {
     p.apuestas.push({ u: u.id, op, monto, f: new Date().toISOString() }); L.apostado += monto;
     mover(u.id, -monto, 'apuesta', p.id); this.guardar(); return { ok: true };
   },
-  votar(id, op) { const p = E.propuestas.find(x => x.id === id); if (this.yo().verificado !== 'si') return { error: 'verificar' }; p.votos[E.sesion] = op; this.guardar(); return { ok: true }; },
+  votar(id, op) { const p = E.propuestas.find(x => x.id === id); if (this.yo().verificado !== 'si') return { error: 'verificar' }; if (yaCerro(p)) return { error: 'Esta votación ya cerró.' }; p.votos[E.sesion] = op; this.guardar(); return { ok: true }; },
   apuntarse(id) { const p = E.propuestas.find(x => x.id === id); const i = p.apuntados.indexOf(E.sesion); if (i >= 0) p.apuntados.splice(i, 1); else if (p.apuntados.length < p.cupo) { p.apuntados.push(E.sesion); if (p.apuntados.length === p.cupo) notificar(p.autor, `"${p.titulo}" ya llenó el cupo`, '#/propuestas'); } this.guardar(); },
   resolver(id, ganadora, como = 'admin') {
     const p = E.propuestas.find(x => x.id === id); if (!p || p.estado === 'resuelta' || p.estado === 'anulada') return;
-    p.ganadora = ganadora; p.resueltaPor = como; this.premiarArbitros(p);
+    p.ganadora = ganadora; p.resueltaPor = como; this.premiarArbitros(p); this.bitacora(como === 'comunidad' ? 'se resolvió por la comunidad' : 'resolvió', p, p.opciones[ganadora]);
     const total = this.pozo(p), ganadores = p.apuestas.filter(a => a.op === ganadora), base = this.pozoOpcion(p, ganadora);
     if (!ganadores.length) { this.anular(id, 'Nadie acertó: se devolvieron las ramitas'); return; }
     const reparto = Math.floor(total * (1 - REGLAS.comisionFondo)); let pagado = 0;
@@ -136,17 +139,19 @@ const DB = {
     const p = E.propuestas.find(x => x.id === id); const porU = {};
     p.apuestas.forEach(a => porU[a.u] = (porU[a.u] || 0) + a.monto);
     Object.entries(porU).forEach(([u, m]) => { mover(u, m, 'devolucion', p.id); notificar(u, `${motivo}: "${p.titulo}"`, '#/propuestas'); });
-    p.estado = 'anulada'; p.resueltaPor = p.resueltaPor || 'admin'; this.guardar();
+    p.estado = 'anulada'; p.resueltaPor = p.resueltaPor || 'admin'; this.bitacora('anuló', p, motivo); this.guardar();
   },
   /* ---------- Arbitraje ---------- */
-  porArbitrar(p) { return p.tipo === 'prediccion' && p.estado === 'abierta' && diasHasta(p.cierre) < 0; },
+  porArbitrar(p) { return p.tipo === 'prediccion' && p.estado === 'abierta' && yaCerro(p); },
+  esGrande(p) { return p.tipo === 'prediccion' && this.pozo(p) >= REGLAS.pozoGrande; },
+  bitacora(accion, p, extra = '') { (E.bitacora = E.bitacora || []).push({ f: new Date().toISOString(), u: E.sesion, accion, ref: p.id, titulo: p.titulo, extra: String(extra).slice(0, 200) }); if (E.bitacora.length > 2000) E.bitacora.splice(0, E.bitacora.length - 2000); },
   aposto(p, u = E.sesion) { return p.apuestas.some(a => a.u === u); },
   reportarResultado(id, op, evidencia) {
     const p = E.propuestas.find(x => x.id === id), u = this.yo();
     if (u.verificado !== 'si') return { error: 'verificar' };
     if (!this.porArbitrar(p) || p.arbitraje) return { error: 'Ya no se puede reportar.' };
     evidencia = String(evidencia || '').trim().slice(0, 300); if (evidencia.length < 8) return { error: 'Cuenta cómo lo sabes o pon un link de prueba.' };
-    p.arbitraje = { op: +op, por: u.id, evidencia, fecha: new Date().toISOString(), confirman: [], disputan: [] };
+    p.arbitraje = { op: +op, por: u.id, evidencia, fecha: new Date().toISOString(), confirman: [], disputan: [] }; this.bitacora('reportó resultado', p, p.opciones[op]);
     new Set(p.apuestas.map(a => a.u)).forEach(x => x !== u.id && notificar(x, `Reportaron que en "${p.titulo}" ganó "${p.opciones[op]}". Tienes ${REGLAS.horasDisputa} h para disputarlo.`, '#/propuestas'));
     this.guardar(); return { ok: true };
   },
@@ -157,7 +162,7 @@ const DB = {
     if (A.por === u) return { error: 'Tú lo reportaste.' };
     if (this.aposto(p)) return { error: 'Como apostaste, solo puedes disputar. Confirman quienes no apostaron.' };
     if (A.confirman.includes(u) || A.disputan.some(d => d.u === u)) return { error: 'Ya diste tu opinión.' };
-    A.confirman.push(u); this.guardar(); this.revisarArbitrajes(); return { ok: true };
+    A.confirman.push(u); this.bitacora('confirmó resultado', p); this.guardar(); this.revisarArbitrajes(); return { ok: true };
   },
   disputarResultado(id, motivo, op) {
     const p = E.propuestas.find(x => x.id === id), A = p?.arbitraje, u = E.sesion;
@@ -166,7 +171,7 @@ const DB = {
     motivo = String(motivo || '').trim().slice(0, 300); if (motivo.length < 8) return { error: 'Explica por qué no es correcto.' };
     if (A.por === u || A.confirman.includes(u) || A.disputan.some(d => d.u === u)) return { error: 'Ya diste tu opinión.' };
     A.disputan.push({ u, motivo, op: op === '' || op == null ? null : +op, f: new Date().toISOString() });
-    p.estado = 'disputa';
+    p.estado = 'disputa'; this.bitacora('disputó', p, motivo);
     Object.values(E.usuarios).filter(x => x.rol === 'admin').forEach(x => notificar(x.id, `Disputa en "${p.titulo}": revisa la prueba`, '#/admin'));
     this.guardar(); return { ok: true };
   },
@@ -176,7 +181,8 @@ const DB = {
     E.propuestas.forEach(p => {
       const A = p.arbitraje; if (!A || p.estado !== 'abierta' || A.disputan.length) return;
       if (Date.now() < this.finArbitraje(p).getTime()) return;
-      if (A.confirman.length >= REGLAS.confirmacionesMin) { this.resolver(p.id, A.op, 'comunidad'); cambio = true; }
+      if (A.confirman.length >= REGLAS.confirmacionesMin && !this.esGrande(p)) { this.resolver(p.id, A.op, 'comunidad'); cambio = true; }
+      else if (A.confirman.length >= REGLAS.confirmacionesMin && !A.aviso) { A.aviso = true; Object.values(E.usuarios).filter(x => x.rol === 'admin').forEach(x => notificar(x.id, `Predicción grande lista para verificar: "${p.titulo}"`, '#/admin')); cambio = true; }
       else if (!A.aviso) { A.aviso = true; Object.values(E.usuarios).filter(x => x.rol === 'admin').forEach(x => notificar(x.id, `"${p.titulo}" no juntó confirmaciones: decide tú`, '#/admin')); cambio = true; }
     });
     if (cambio) this.guardar();
@@ -196,12 +202,14 @@ const DB = {
     if (p.tipo === 'prediccion' && TEMAS_PRIVILEGIADOS.test(titulo)) return { error: 'Ese tema es de información privilegiada: publícalo como votación.' };
     if (p.tipo !== 'actividad') { const ops = [d.op0, d.op1, d.op2, d.op3].map(o => String(o || '').trim()).filter(Boolean).slice(0, 6); if (ops.length < 2) return { error: 'Pon al menos dos opciones.' }; p.opciones = ops; }
     else p.cupo = Math.max(2, Number(d.cupo) || p.cupo);
-    p.titulo = titulo; if (d.cierre && d.cierre >= fechaLocal()) p.cierre = d.cierre; p.editada = new Date().toISOString(); this.guardar(); return { ok: true };
+    if (d.minutos) { const m = Math.round(Number(d.minutos)); if (!(m >= REGLAS.duracionMin)) return { error: `La duración mínima es de ${REGLAS.duracionMin} minutos.` }; p.cierre = new Date(Date.now() + Math.min(m, REGLAS.duracionMax) * 6e4).toISOString(); }
+    else if (d.cierre && cierreMs(d.cierre) - Date.now() >= REGLAS.duracionMin * 6e4) p.cierre = d.cierre;
+    p.titulo = titulo; p.editada = new Date().toISOString(); this.bitacora('editó', p); this.guardar(); return { ok: true };
   },
   aclarar(id, texto) {
     const p = E.propuestas.find(x => x.id === id); if (!p || (p.autor !== E.sesion && !this.esAdmin())) return { error: 'No puedes.' };
     texto = String(texto || '').trim().slice(0, 300); if (texto.length < 4) return { error: 'Escribe la aclaración.' };
-    (p.aclaraciones = p.aclaraciones || []).push({ t: texto, u: E.sesion, f: new Date().toISOString() });
+    (p.aclaraciones = p.aclaraciones || []).push({ t: texto, u: E.sesion, f: new Date().toISOString() }); this.bitacora('aclaró', p, texto);
     new Set([...p.apuestas.map(a => a.u), ...Object.keys(p.votos), ...p.apuntados]).forEach(u => u !== E.sesion && notificar(u, `Aclaración en "${p.titulo}"`, '#/propuestas'));
     this.guardar(); return { ok: true };
   },
@@ -275,14 +283,16 @@ const DB = {
   autorDe(tipo, id) { const L = { post: E.posts, propuesta: E.propuestas, ranking: E.rankings, venta: E.ventas, nivel: E.niveles }[tipo]; return L?.find(x => x.id === id)?.autor; },
   /* Las predicciones con ramitas apostadas nunca se eliminan (ni el admin): así queda constancia de quién apostó y quién ganó */
   conRamitas(id) { const p = E.propuestas.find(x => x.id === id); return !!(p && p.tipo === 'prediccion' && p.apuestas.length); },
-  puedeEliminar(tipo, id) { if (tipo === 'propuesta' && this.conRamitas(id)) return false; return this.esAdmin() || (this.autorDe(tipo, id) && this.autorDe(tipo, id) === E.sesion); },
+  /* con dinero real nadie borra predicciones con ramitas; mientras no, solo el admin (devolviendo lo apostado) */
+  protegida(id) { return this.conRamitas(id) && (CONFIG.dineroReal || !this.esAdmin()); },
+  puedeEliminar(tipo, id) { if (tipo === 'propuesta' && this.protegida(id)) return false; return this.esAdmin() || (this.autorDe(tipo, id) && this.autorDe(tipo, id) === E.sesion); },
   eliminar(tipo, id, extra) {
     if ((tipo === 'profe' || tipo === 'opinion') && !this.esAdmin()) return false;
     if (!this.puedeEliminar(tipo, id) && !(tipo === 'comentario' && E.posts.find(p => p.id === id)?.comentarios[+extra]?.autor === E.sesion)) return false;
     const quita = k => { E[k] = E[k].filter(x => x.id !== id); };
     if (tipo === 'post') quita('posts');
     else if (tipo === 'comentario') E.posts.find(p => p.id === id)?.comentarios.splice(+extra, 1);
-    else if (tipo === 'propuesta') quita('propuestas');
+    else if (tipo === 'propuesta') { const p = E.propuestas.find(x => x.id === id); if (p && p.apuestas.length && ['abierta', 'congelada', 'disputa'].includes(p.estado)) this.anular(id, 'El admin quitó la predicción y te devolvió tus ramitas'); if (p) this.bitacora('eliminó', p); quita('propuestas'); }
     else if (tipo === 'ranking') quita('rankings');
     else if (tipo === 'profe') quita('profes');
     else if (tipo === 'opinion') E.profes.find(p => p.id === id)?.opiniones.splice(+extra, 1);
@@ -433,3 +443,10 @@ function sembrarLibro() {
   ap('pr_badminton', 'u_jorge', 1, 50, 18); ap('pr_badminton', 'u_luis', 1, 50, 14); ap('pr_badminton', 'u_ana', 1, 50, 9);
 }
 window.DB = DB; // para que los juegos dentro de la red (iframe) puedan usar las ramitas
+
+function limpiarPropuestas() {
+  const ids = new Set(E.propuestas.map(p => p.id));
+  E.libro = E.libro.filter(l => !ids.has(l.ref));
+  E.propuestas = []; E.bitacora = []; E.posts.forEach(p => { if (p.propuesta) delete p.propuesta; });
+  E.notifs = E.notifs.filter(n => !/predicci|propuest/i.test(n.texto));
+}

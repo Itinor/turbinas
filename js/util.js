@@ -17,6 +17,16 @@ function hace(iso) {
   if (s < 86400) return 'hace ' + Math.floor(s / 3600) + ' h'; if (s < 172800) return 'ayer';
   return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
+/* cierre: puede ser 'AAAA-MM-DD' (cierra al terminar ese día) o fecha y hora completas */
+function cierreMs(c) { return !c ? Infinity : String(c).length === 10 ? new Date(c + 'T23:59:59').getTime() : new Date(c).getTime(); }
+function yaCerro(p) { return Date.now() >= cierreMs(p.cierre); }
+function faltaTexto(c) {
+  const ms = cierreMs(c) - Date.now(); if (ms <= 0) return null;
+  const min = Math.ceil(ms / 6e4); if (min < 60) return min + ' min';
+  const h = Math.floor(min / 60); if (h < 24) return h + ' h' + (min % 60 && h < 3 ? ' ' + (min % 60) + ' min' : '');
+  return Math.round(h / 24) + ' d';
+}
+function cierreBonito(c) { return String(c).length === 10 ? fechaBonita(c) : new Date(c).toLocaleString('es-MX', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); }
 function fechaBonita(f) { return new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }); }
 function inicioSemana(d = new Date()) { const x = new Date(d); const dia = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dia); x.setHours(0, 0, 0, 0); return x; }
 const numero = n => new Intl.NumberFormat('es-MX').format(n);

@@ -18,8 +18,12 @@ VISTAS.bienvenida = {
         <div><label class="campo" for="rp">Contraseña</label><input id="rp" name="clave" type="password" required minlength="8" placeholder="Mínimo 8 caracteres"></div>
         <button class="btn ancho">Continuar</button>
       </form>
-      <div class="tarjeta pila" style="gap:8px"><b>¿Solo quieres probar?</b><span class="peq gris">Entra con una cuenta de ejemplo.</span>
-        <div class="fila"><button class="btn2" data-a="regDemo" data-u="u_diego">Diego (admin)</button><button class="btn3" data-a="regDemo" data-u="u_valeria">Valeria</button><button class="btn3" data-a="regDemo" data-u="u_jorge">Jorge</button></div></div>
+      ${CONFIG.modoPrueba ? `<form class="tarjeta pila" style="gap:8px;border:2px solid var(--amarillo)" data-form="regRapido"><b>Modo prueba: entra solo con un @usuario</b><span class="peq gris">Sin correo ni contraseña. Si ya tienes usuario en este celular, escribe el mismo y entras.</span>
+        <div class="fila" style="flex-wrap:nowrap"><span class="pastilla" style="display:grid;place-items:center">@</span><label class="oculto" for="rr">Usuario</label><input id="rr" name="usuario" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9._]+" placeholder="tu.usuario" autocomplete="off" autocapitalize="off"></div>
+        <label class="oculto" for="rrc">Carrera</label><select id="rrc" name="carrera"><option value="">Carrera (opcional)</option>${CARRERAS.map(c => `<option>${esc(c.nombre || c)}</option>`).join('')}</select>
+        <button class="btn2 ancho">Entrar a probar</button><button type="button" class="btn3" style="align-self:center;min-height:36px" data-a="soyAdmin">Soy admin</button></form>`
+      : `<div class="tarjeta pila" style="gap:8px"><b>¿Solo quieres probar?</b><span class="peq gris">Entra con una cuenta de ejemplo.</span>
+        <div class="fila"><button class="btn3" data-a="regDemo" data-u="u_valeria">Valeria</button><button class="btn3" data-a="regDemo" data-u="u_jorge">Jorge</button><button class="btn3" data-a="soyAdmin">Soy admin</button></div></div>`}
     </div>`;
     if (r.paso === 1) return top + `<div class="pila">
       <div class="entre"><h1>Sube tu horario</h1><span class="insignia i-morado">Opcional</span></div>
@@ -82,3 +86,14 @@ document.addEventListener('change', e => {
   CAMBIOS[k]?.(e.target);
 });
 const CAMBIOS = {};
+
+FORMS.regRapido = d => {
+  const nombre = d.usuario.trim().replace(/^@/, '').toLowerCase();
+  if (!/^[a-z0-9._]{3,20}$/.test(nombre)) return aviso('Usa de 3 a 20 letras, números, punto o guion bajo.');
+  const ya = DB.porUsuario(nombre);
+  if (ya) { if (ya.rol === 'admin') return aviso('Ese usuario está reservado.'); DB.entrar(ya.id); return ir('#/inicio'); }
+  const u = DB.registrar({ usuario: nombre, nombre, nombreVis: 'nadie', carrera: d.carrera || 'Sin carrera', contacto: 'modo prueba' });
+  u.verificado = 'si'; DB.guardar(); aviso(`¡Bienvenido, @${nombre}! Te regalamos ${REGLAS.regaloBienvenida} ramitas.`); ir('#/inicio');
+};
+ACC.soyAdmin = () => abrirHoja(`<form class="pila" data-form="entrarAdmin"><h2>Entrar como admin</h2><label class="oculto" for="cla">Clave</label><input id="cla" name="clave" type="password" required placeholder="Clave de admin" autocomplete="off"><button class="btn ancho">Entrar</button></form>`);
+FORMS.entrarAdmin = d => { if (d.clave !== CONFIG.claveAdmin) return aviso('Clave incorrecta'); const a = Object.values(DB.estado.usuarios).find(u => u.rol === 'admin'); cerrarHoja(); DB.entrar(a.id); ir('#/inicio'); };

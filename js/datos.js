@@ -2,11 +2,19 @@
    Los nombres de personas y profesores son inventados. */
 'use strict';
 /* Configuración rápida.
-   entrarDirecto: pon aquí el id de una cuenta (por ejemplo 'u_diego', que es admin) para que la app
-   entre directo sin pantalla de registro. Útil para que tus amigos prueben sin crear cuenta.
-   Déjalo en null para mostrar la bienvenida (registro + botones de cuentas de ejemplo). */
+   entrarDirecto: id de una cuenta para entrar sin pantalla de registro (null = mostrar la bienvenida).
+   modoPrueba: true = en la bienvenida cualquiera entra solo con un @usuario (sin correo) y queda verificado.
+   claveAdmin: la clave para entrar como admin desde "Soy admin" en la bienvenida. Cámbiala aquí.
+     (Ojo: el código es público en GitHub; esto es solo para pruebas, el admin real irá en la base de datos.)
+   dineroReal: mientras sea false las ramitas no valen dinero y el admin puede borrar predicciones con ramitas
+     (se devuelve lo apostado). Cuando haya dinero de por medio, ponlo en true y quedan protegidas.
+   propuestasDemo: false = las propuestas arrancan en cero (sin las de ejemplo). */
 const CONFIG = {
-  entrarDirecto: 'u_diego',
+  entrarDirecto: null,
+  modoPrueba: true,
+  claveAdmin: 'castor-admin',
+  dineroReal: false,
+  propuestasDemo: false,
   /* Croquis: pon aquí la ruta de una imagen (por ejemplo 'img/croquis.png', de preferencia 1150 × 970 px)
      para usarla de fondo del mapa en lugar del dibujo aproximado. Los pines se acomodan encima. */
   imagenCroquis: null,
@@ -37,7 +45,11 @@ const REGLAS = {
   creditosPorRamita: 100, maxCasinoDia: 100,
   /* arbitraje de predicciones: alguien reporta el resultado con prueba, hay una ventana para disputar
      y, si nadie disputa y suficientes personas que NO apostaron lo confirman, se reparte solo. */
-  horasDisputa: 24, confirmacionesMin: 3, premioReportar: 5, premioConfirmar: 2
+  horasDisputa: 24, confirmacionesMin: 3, premioReportar: 5, premioConfirmar: 2,
+  /* duración de propuestas, en minutos */
+  duracionMin: 5, duracionMax: 60 * 24 * 30,
+  /* predicción grande: a partir de este pozo, el resultado siempre lo verifica el admin antes de repartir */
+  pozoGrande: 300
 };
 /* Temas que no pueden ser predicciones con ramitas (alguien de dentro podría saber el resultado) */
 const TEMAS_PRIVILEGIADOS = /(examen|parcial|calificaci|reprob|aprob|profe|maestr|tarea|falta|asistencia|baja\b|kardex|kárdex|promedio|embaraz|novi[oa]|cortar|terminar con|despid)/i;
