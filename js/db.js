@@ -176,13 +176,18 @@ const DB = {
   publicarVenta(d) { const ids = (d.elegidos || []).map(n => this.porUsuario(n)?.id).filter(Boolean); E.ventas.push({ id: uid('v'), autor: E.sesion, titulo: d.titulo.trim().slice(0, 100), tipo: d.tipo, precio: Number(d.precio) || 0, vis: d.vis, elegidos: ids, fecha: new Date().toISOString() }); this.guardar(); },
 
   /* ---------- Chat ---------- */
-  misChats() { return E.chats.filter(c => c.miembros.includes(E.sesion) && !(c.tipo === 'dm' && this.bloqueo(...c.miembros))).sort((a, b) => (b.mensajes.at(-1)?.f || '').localeCompare(a.mensajes.at(-1)?.f || '')); },
+  misChats() { return E.chats.filter(c => c.miembros.includes(E.sesion) && !(c.tipo === 'dm' && this.bloqueo(...c.miembros)) && !(c.quitado?.[E.sesion] && (c.mensajes.at(-1)?.f || '') <= c.quitado[E.sesion])).sort((a, b) => (b.mensajes.at(-1)?.f || '').localeCompare(a.mensajes.at(-1)?.f || '')); },
   chatCon(id) {
     let c = E.chats.find(x => x.tipo === 'dm' && x.miembros.includes(id) && x.miembros.includes(E.sesion));
     if (!c) { if (!this.puedeEscribir(id)) return null; c = { id: uid('ch'), tipo: 'dm', nombre: '', miembros: [E.sesion, id], mensajes: [], fijado: null }; E.chats.push(c); this.guardar(); }
     return c;
   },
   enviar(chatId, texto) { texto = texto.trim().slice(0, 1000); if (!texto) return; const c = E.chats.find(x => x.id === chatId); c.mensajes.push({ u: E.sesion, t: texto, f: new Date().toISOString() }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
+  visibles(c) { const desde = c.vaciado?.[E.sesion] || 0; return c.mensajes.map((m, i) => ({ ...m, i })).slice(desde); },
+  vaciarChat(id) { const c = E.chats.find(x => x.id === id); if (!c) return; c.vaciado = c.vaciado || {}; c.vaciado[E.sesion] = c.mensajes.length; this.marcarLeido(id); },
+  quitarChat(id) { const c = E.chats.find(x => x.id === id); if (!c) return; this.vaciarChat(id); c.quitado = c.quitado || {}; c.quitado[E.sesion] = new Date().toISOString(); this.guardar(); },
+  salirGrupo(id) { const c = E.chats.find(x => x.id === id); if (!c || c.tipo !== 'grupo') return; c.miembros = c.miembros.filter(m => m !== E.sesion); c.mensajes.push({ u: E.sesion, t: 'salió del grupo', f: new Date().toISOString(), sistema: true }); if (!c.miembros.length) E.chats = E.chats.filter(x => x !== c); this.guardar(); },
+  borrarMensaje(id, i) { const c = E.chats.find(x => x.id === id), m = c?.mensajes[i]; if (!m || (m.u !== E.sesion && !this.esAdmin())) return false; m.t = ''; m.borrado = true; this.guardar(); return true; },
   marcarLeido(chatId) { const c = E.chats.find(x => x.id === chatId); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
   sinLeer(c) { return Math.max(0, c.mensajes.length - ((c.leido || {})[E.sesion] ?? c.mensajes.length - (c.id === 'ch_calc' ? 2 : 0))); },
 
