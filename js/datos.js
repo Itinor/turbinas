@@ -37,7 +37,9 @@ const CONFIG = {
      para usarla de fondo del mapa en lugar del dibujo aproximado. Los pines se acomodan encima. */
   imagenCroquis: null,
   /* pagos: el módulo está en js/pagos.js pero apagado. Cámbialo a true solo cuando haya procesador de pagos real. */
-  pagosActivos: false
+  pagosActivos: false,
+  /* pagosDemo: muestra la compra de ramitas con la validación de pago, pero NO cobra nada (no hay procesador). */
+  pagosDemo: true
 };
 const CARRERAS = [
   { nombre: 'Ing. en Sistemas', facultad: 'Ingeniería' }, { nombre: 'Mecatrónica', facultad: 'Ingeniería' },
@@ -60,7 +62,7 @@ const REGLAS = {
   topeRetosDia: 200, segundosPorPregunta: 60,
   umbralRanking: { amigos: 15, salon: 50, generacion: 150 },
   minOpinionesProfe: 15,
-  creditosPorRamita: 100, maxCasinoDia: 100,
+  creditosPorRamita: 100, maxCasinoDia: 100, maxCompraDia: 2000,
   /* arbitraje de predicciones: alguien reporta el resultado con prueba, hay una ventana para disputar
      y, si nadie disputa y suficientes personas que NO apostaron lo confirman, se reparte solo. */
   horasDisputa: 24, confirmacionesMin: 3, premioReportar: 5, premioConfirmar: 2,

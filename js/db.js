@@ -418,7 +418,7 @@ const DB = {
     return { n, g, neto, mismos };
   },
   economia() {
-    const emitidas = ['regalo', 'diario', 'reto', 'juego', 'racha', 'premio'], desde7 = Date.now() - 7 * 864e5;
+    const emitidas = ['regalo', 'diario', 'reto', 'juego', 'racha', 'premio', 'compra'], desde7 = Date.now() - 7 * 864e5;
     let entraron = 0, salieron = 0; const dias = {};
     E.libro.forEach(m => { const t = new Date(m.f).getTime(); if (t < desde7) return; const k = m.f.slice(0, 10); dias[k] = dias[k] || { e: 0, s: 0 };
       if (emitidas.includes(m.tipo) && m.u !== 'FONDO') { entraron += m.monto; dias[k].e += m.monto; }

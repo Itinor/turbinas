@@ -191,3 +191,11 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .vinilo.girando{animation:girar 2.2s linear infinite}
 @keyframes girar{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.vinilo.girando{animation-duration:8s}}
+
+/* mini reproductor que sigue sonando en toda la app */
+.mini-repro{position:fixed;left:8px;right:8px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:29;display:flex;align-items:center;gap:10px;background:#1B1530;color:#fff;border-radius:16px;padding:8px 8px 8px 10px;box-shadow:0 8px 24px rgba(27,21,48,.3)}
+.mini-repro .icono-btn{color:#fff}
+.mini-repro .mini-btn{background:#FFC93C;color:#1B1530;border-radius:50%}
+.vinilo.chico{width:40px;height:40px}.vinilo.chico .etiqueta-disco{width:16px;height:16px}
+.principal:has(.mini-repro){padding-bottom:150px}
+@media (min-width:900px){.mini-repro{left:auto;right:20px;bottom:20px;width:340px}.principal:has(.mini-repro){padding-bottom:90px}}

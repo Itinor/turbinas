@@ -36,6 +36,7 @@ function pintar() {
       </header>
       <main id="vista">${v.render(params)}</main>
     </div>
+    ${miniReproductor()}
     <nav class="abajo" aria-label="Navegación principal">${NAV_MOVIL.map(([k, t, h]) => `<a href="${h}" class="${k === activo ? 'activo' : ''}" ${k === activo ? 'aria-current="page"' : ''}>${icono(k)}${t}</a>`).join('')}</nav>
   </div>`;
   v.montar?.(params);
@@ -84,3 +85,36 @@ function botonEliminar(tipo, id, extra = '') { return DB.puedeEliminar(tipo, id)
 
 try { UI.ladoContraido = localStorage.getItem('cdu_lado') === '1'; } catch {}
 ACC.plegarLado = () => { UI.ladoContraido = !UI.ladoContraido; try { localStorage.setItem('cdu_lado', UI.ladoContraido ? '1' : '0'); } catch {} pintar(); };
+
+/* ---------- Reproductor global: la canción sigue sonando al cambiar de pantalla ---------- */
+const REPRO = {
+  audio: null, src: null, cancion: null, dueno: null,
+  sonando(src) { return !!(this.audio && !this.audio.paused && (!src || this.src === src)); },
+  async alternar(cancion, dueno, auto) {
+    if (this.audio && this.src === cancion.archivo) { if (this.audio.paused) this.audio.play().catch(() => {}); else this.audio.pause(); return; }
+    let real = cancion.archivo;
+    if (real.startsWith('idb:')) { const blob = await ARCHIVOS.leer(real.slice(4)).catch(() => null); if (!blob) { if (!auto) aviso('Esta canción solo está guardada en el celular de quien la subió.'); return; } real = URL.createObjectURL(blob); }
+    this.parar(true);
+    const a = new Audio(real); a.loop = true; this.audio = a; this.src = cancion.archivo; this.cancion = cancion; this.dueno = dueno;
+    a.addEventListener('play', () => this.marcar()); a.addEventListener('pause', () => this.marcar());
+    this.ajustarVolumen();
+    a.play().then(() => this.pintarMini()).catch(() => { if (!auto) aviso('No se pudo reproducir la canción'); });
+  },
+  parar(silencioso) { if (this.audio) { this.audio.pause(); if (this.audio.src.startsWith('blob:')) URL.revokeObjectURL(this.audio.src); } this.audio = null; this.src = null; this.cancion = null; this.dueno = null; if (!silencioso) { this.marcar(); this.pintarMini(); } },
+  /* volumen normal en el perfil del dueño; más bajito en el resto de la app */
+  ajustarVolumen() { if (!this.audio) return; const u = DB.usuario(this.dueno), r = ruta(); const enSuPerfil = r.nombre === 'perfil' && ((r.params[0] && u && r.params[0] === u.usuario) || (!r.params[0] && this.dueno === DB.yo()?.id)); this.audio.volume = enSuPerfil ? 1 : 0.35; },
+  marcar() { const on = this.sonando(); $$('[data-vinilo]').forEach(v => v.classList.toggle('girando', on && v.dataset.vinilo === this.src)); $$('[data-repro]').forEach(b => b.innerHTML = icono(on && b.dataset.repro === this.src ? 'pausa' : 'play', b.classList.contains('mini-btn') ? 18 : 20)); const m = $('#miniRepro'); if (m) m.classList.toggle('pausado', !on); },
+  pintarMini() { const m = $('#miniRepro'), html = miniReproductor(); if (m) m.outerHTML = html; else if (html) $('.principal')?.insertAdjacentHTML('beforeend', html); }
+};
+function miniReproductor() {
+  const R = REPRO; if (!R.audio || !R.cancion) return '';
+  const c = R.cancion, ok = c.portada && /^data:image\/(jpeg|png|webp);base64,/.test(c.portada), u = DB.usuario(R.dueno);
+  return `<div id="miniRepro" class="mini-repro${R.sonando() ? '' : ' pausado'}" role="region" aria-label="Reproductor">
+    <span class="vinilo chico${R.sonando() ? ' girando' : ''}" data-vinilo="${esc(R.src)}" aria-hidden="true"><span class="etiqueta-disco" style="${ok ? `background:#4B1F7A url('${c.portada}') center/cover` : ''}"></span></span>
+    <a href="${u ? '#/perfil/' + esc(u.usuario) : '#/perfil'}" style="flex:1;min-width:0;text-decoration:none;color:inherit"><b class="peq" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.titulo || 'Canción')}</b><span class="mini" style="opacity:.75">${u ? '@' + esc(u.usuario) : ''}${c.artista ? ' · ' + esc(c.artista) : ''}</span></a>
+    <button class="icono-btn mini-btn" data-repro="${esc(R.src)}" data-a="miniPlay" aria-label="Reproducir o pausar">${icono(R.sonando() ? 'pausa' : 'play', 18)}</button>
+    <button class="icono-btn" data-a="miniCerrar" aria-label="Cerrar reproductor">${icono('cerrar', 18)}</button></div>`;
+}
+ACC.miniPlay = () => { if (REPRO.audio) REPRO.audio.paused ? REPRO.audio.play().catch(() => {}) : REPRO.audio.pause(); };
+ACC.miniCerrar = () => REPRO.parar();
+window.addEventListener('hashchange', () => setTimeout(() => REPRO.ajustarVolumen(), 0));

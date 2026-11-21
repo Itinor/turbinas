@@ -57,6 +57,17 @@ const PAGOS = {
   },
   /* paquetes de ramitas pensados para cuando se active (precios de ejemplo) */
   paquetes: [{ ramitas: 100, mxn: 10 }, { ramitas: 550, mxn: 50 }, { ramitas: 1200, mxn: 100 }],
+  compradoHoy(u = DB.yo()) { const hoy = fechaLocal(); return DB.movimientos(u.id).filter(m => m.tipo === 'compra' && fechaLocal(new Date(m.f)) === hoy).reduce((s, m) => s + m.monto, 0); },
+  /* compra de prueba: valida los datos como si fuera real, pero no cobra nada */
+  comprarDemo(i, d) {
+    if (!CONFIG.pagosDemo) return { error: 'Las compras no están disponibles.' };
+    const p = this.paquetes[i]; if (!p) return { error: 'Elige un paquete.' };
+    if (this.compradoHoy() + p.ramitas > REGLAS.maxCompraDia) return { error: `Por hoy puedes comprar hasta ${REGLAS.maxCompraDia - this.compradoHoy()} ramitas más.` };
+    if (d.metodo === 'guardado') { if (!(DB.yo().metodosPago || []).some(m => m.id === d.guardado)) return { error: 'Elige un método guardado.' }; }
+    else if (d.metodo !== 'prueba') { const err = this.validar(d); if (err) return { error: err }; if (d.guardar) DB.yo().metodosPago = (DB.yo().metodosPago || []).concat(this.resumen(d)).slice(-3); }
+    mover(DB.yo().id, p.ramitas, 'compra', `paquete ${p.ramitas} · $${p.mxn} MXN (prueba, sin cobro)`);
+    DB.guardar(); return { ok: p };
+  },
   guardarMetodo(d) {
     const err = this.validar(d); if (err) return { error: err };
     const u = DB.yo(); u.metodosPago = (u.metodosPago || []).concat(this.resumen(d)).slice(-3); DB.guardar(); return { ok: true };
@@ -94,4 +105,30 @@ if (typeof VISTAS !== 'undefined') {
   ACC.quitarMetodo = b => { PAGOS.quitarMetodo(b.dataset.id); refrescar(); };
   ENTRADAS.formatoTarjeta = el => { const n = PAGOS.soloDigitos(el.value).slice(0, 19); el.value = n.replace(/(\d{4})(?=\d)/g, '$1 '); const t = $('#tMarca'); if (t) t.textContent = n.length >= 2 ? PAGOS.marca(n) + (n.length >= 13 ? (PAGOS.luhn(n) ? ' · número válido' : ' · revisa el número') : '') : ''; };
   FORMS.guardarMetodo = (d, f) => { const r = PAGOS.guardarMetodo(d); if (r.error) return aviso(r.error); f.reset(); aviso('Método guardado'); refrescar(); };
+}
+
+if (typeof VISTAS !== 'undefined') {
+  UI.compra = { paquete: 1, metodo: 'prueba' };
+  VISTAS['comprar-ramitas'] = {
+    titulo: 'Comprar ramitas', nav: 'perfil', atras: '#/ramitas',
+    render() {
+      if (!CONFIG.pagosDemo && !CONFIG.pagosActivos) return '<p class="vacio">Las compras no están disponibles.</p>';
+      const C = UI.compra, g = DB.yo().metodosPago || [], m = C.metodo;
+      return `<div class="pila">${CONFIG.pagosActivos ? '' : '<p class="insignia i-naranja" style="align-self:flex-start">Modo prueba · no se cobra nada</p>'}
+        <section class="tarjeta"><h2 style="margin-bottom:8px">Paquete</h2><div class="pila" style="gap:8px">${PAGOS.paquetes.map((p, i) => `<button class="tarjeta entre" style="box-shadow:none;padding:12px 14px;border:2px solid ${C.paquete === i ? 'var(--morado)' : 'var(--linea)'}" data-a="compraPaquete" data-i="${i}" aria-pressed="${C.paquete === i}"><b style="font-family:Sora,sans-serif;font-size:20px">${numero(p.ramitas)} ${icono('rayo', 16)}</b><span>$${p.mxn} MXN</span></button>`).join('')}</div></section>
+        <form class="tarjeta pila" data-form="pagarRamitas" autocomplete="off"><h2>Pago</h2>
+          <div class="pestanas">${[...(g.length ? [['guardado', 'Guardado']] : []), ['tarjeta', 'Tarjeta'], ['paypal', 'PayPal'], ['transferencia', 'Transferencia'], ['prueba', 'Sin datos (prueba)']].map(([k, n]) => `<button type="button" class="pastilla${m === k ? ' on' : ''}" data-a="compraMetodo" data-m="${k}">${n}</button>`).join('')}</div>
+          ${m === 'guardado' ? `<div class="pila" style="gap:6px">${g.map((x, i) => `<label class="tarjeta fila" style="box-shadow:none;padding:10px 12px;border:1.5px solid var(--linea)"><input type="radio" name="guardado" value="${x.id}" ${i === 0 ? 'checked' : ''}> ${x.metodo === 'tarjeta' ? `${esc(x.marca)} •••• ${x.ultimos}` : x.metodo === 'paypal' ? 'PayPal ' + esc(x.correo) : 'Transferencia •••• ' + x.ultimos}</label>`).join('')}</div>`
+          : m === 'tarjeta' ? `<div><label class="campo" for="tn">Número de tarjeta</label><input id="tn" name="numero" inputmode="numeric" maxlength="23" placeholder="1234 5678 9012 3456" data-entrada="formatoTarjeta" required><p class="mini gris" id="tMarca" style="margin:4px 0 0"></p></div>
+            <div class="rejilla2"><div><label class="campo" for="tv">Vence</label><input id="tv" name="vence" inputmode="numeric" maxlength="7" placeholder="MM/AA" required></div><div><label class="campo" for="tc">CVV</label><input id="tc" name="cvv" type="password" inputmode="numeric" maxlength="4" required></div></div>
+            <div><label class="campo" for="tt">Titular</label><input id="tt" name="titular" maxlength="60" required></div><label class="fila peq"><input type="checkbox" name="guardar"> Guardar tarjeta (solo marca y últimos 4)</label>`
+          : m === 'paypal' ? `<div><label class="campo" for="pc">Correo de PayPal</label><input id="pc" name="correo" type="email" required></div><label class="fila peq"><input type="checkbox" name="guardar"> Guardar</label>`
+          : m === 'transferencia' ? `<div><label class="campo" for="cl">CLABE</label><input id="cl" name="clabe" inputmode="numeric" maxlength="22" placeholder="18 dígitos" required></div><label class="fila peq"><input type="checkbox" name="guardar"> Guardar</label>`
+          : '<p class="peq gris" style="margin:0">Se te agregan las ramitas sin pedir datos.</p>'}
+          <input type="hidden" name="metodo" value="${m}"><button class="btn ancho">Pagar $${PAGOS.paquetes[C.paquete].mxn} MXN</button></form></div>`;
+    }
+  };
+  ACC.compraPaquete = b => { UI.compra.paquete = +b.dataset.i; refrescar(); };
+  ACC.compraMetodo = b => { UI.compra.metodo = b.dataset.m; refrescar(); };
+  FORMS.pagarRamitas = d => { const r = PAGOS.comprarDemo(UI.compra.paquete, d); if (r.error) return aviso(r.error); actualizarChip(); aviso(`+${numero(r.ok.ramitas)} ramitas.${CONFIG.pagosActivos ? '' : ' No se cobró nada.'}`); ir('#/ramitas'); };
 }
