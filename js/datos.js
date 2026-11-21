@@ -15,12 +15,15 @@ const CONFIG = {
   /* cuentas del equipo de prueba: en la bienvenida pulsan "Soy admin", ponen la clave y eligen su cuenta.
      Solo la de Diego es admin; si quieres que alguien más lo sea, ponle admin: true. */
   cuentasEquipo: [
-    { id: 'u_diego', nombre: 'Diego', admin: true },
+    { id: 'u_diego', nombre: 'Yo (admin)', admin: true },
+    { id: 'u_diego2', usuario: 'diego', nombre: 'Diego' },
     { id: 'u_fernanda', usuario: 'fernanda', nombre: 'Fernanda' },
     { id: 'u_ivana', usuario: 'ivana', nombre: 'Ivana' },
     { id: 'u_rebeca', usuario: 'rebeca', nombre: 'Rebeca' },
     { id: 'u_santiago', usuario: 'santiago', nombre: 'Santiago' },
-    { id: 'u_sasha', usuario: 'sasha', nombre: 'Sasha' }
+    { id: 'u_sasha', usuario: 'sasha', nombre: 'Sasha' },
+    { id: 'u_regina', usuario: 'regina', nombre: 'Regina' },
+    { id: 'u_alejandra', usuario: 'alejandra', nombre: 'Alejandra' }
   ],
   claveAdmin: 'castor-admin',
   dineroReal: false,

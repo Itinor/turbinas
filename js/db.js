@@ -21,16 +21,23 @@ const DB = {
   yo() { return E.sesion ? E.usuarios[E.sesion] : null; },
   usuario(id) { return E.usuarios[id]; },
   porUsuario(nombre) { return Object.values(E.usuarios).find(u => u.usuario === String(nombre).replace(/^@/, '').toLowerCase()); },
+  iniciarSesion(contacto, clave) {
+    const c = String(contacto || '').trim().toLowerCase().replace(/\s+/g, ''), u = Object.values(E.usuarios).find(x => String(x.contacto || '').toLowerCase().replace(/\s+/g, '') === c || ('@' + x.usuario) === c || x.usuario === c.replace(/^@/, ''));
+    if (!u || !u.clave || u.clave !== hashClave(clave)) return { error: 'Correo, número o contraseña incorrectos.' };
+    if (u.equipo) return { error: 'Las cuentas del equipo entran con "Soy admin".' };
+    this.entrar(u.id); return { ok: true };
+  },
   entrar(id) { E.sesion = id; this.alEntrar(); this.guardar(); },
   salir() { E.sesion = null; this.guardar(); },
   usuarioDisponible(n) { const s = String(n).toLowerCase(); return /^[a-z0-9._]{3,20}$/.test(s) && !this.porUsuario(s); },
-  registrar({ usuario, nombre, nombreVis, carrera, gen, semestre, documento, contacto }) {
+  registrar({ usuario, nombre, nombreVis, carrera, gen, semestre, documento, contacto, clave }) {
     const id = uid('u');
     const yoNuevo = { id, usuario: usuario.toLowerCase(), nombre, nombreVis, nombreElegidos: [], carrera, gen: gen || null, semestre: semestre || null,
       verificado: documento ? 'pendiente' : 'no', documento: documento || null, contacto, rol: 'estudiante', bio: '', cancion: null, playlists: [], insignias: [], ocultas: [],
       amigos: [], bloqueados: [], silenciados: [], privacidad: { escribir: 'todos', perfil: 'todos', venta: 'todos' }, ajustes: { musicaAuto: false, oscuro: false },
       horario: [], racha: { dias: 0, ultimo: null, semana: [] }, diarios: { fecha: null }, limites: { fecha: null }, reputacion: 0,
       dispositivo: dispositivoActual(), creado: new Date().toISOString() };
+    if (clave) yoNuevo.clave = hashClave(clave);
     E.usuarios[id] = yoNuevo; E.sesion = id;
     mover(id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida');
     if (documento) avisarAdmins(`@${yoNuevo.usuario} subió un documento para verificarse`, '#/admin');
@@ -258,14 +265,15 @@ const DB = {
     if (!c) { if (!this.puedeEscribir(id)) return null; c = { id: uid('ch'), tipo: 'dm', nombre: '', miembros: [E.sesion, id], mensajes: [], fijado: null }; E.chats.push(c); this.guardar(); }
     return c;
   },
-  enviar(chatId, texto) { texto = texto.trim().slice(0, 1000); if (!texto) return; const c = E.chats.find(x => x.id === chatId); c.mensajes.push({ u: E.sesion, t: texto, f: new Date().toISOString() }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
+  enviar(chatId, texto) { texto = texto.trim().slice(0, 1000); if (!texto) return; const c = E.chats.find(x => x.id === chatId); c.miembros.filter(m => m !== E.sesion && this.sinLeerDe(c, m) === 0).forEach(m => notificar(m, c.tipo === 'grupo' ? `Mensajes nuevos en ${c.nombre}` : `@${this.yo().usuario} te escribió`, '#/chat/' + c.id)); c.mensajes.push({ u: E.sesion, t: texto, f: new Date().toISOString() }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
   visibles(c) { const desde = c.vaciado?.[E.sesion] || 0; return c.mensajes.map((m, i) => ({ ...m, i })).slice(desde); },
   vaciarChat(id) { const c = E.chats.find(x => x.id === id); if (!c) return; c.vaciado = c.vaciado || {}; c.vaciado[E.sesion] = c.mensajes.length; this.marcarLeido(id); },
   quitarChat(id) { const c = E.chats.find(x => x.id === id); if (!c) return; this.vaciarChat(id); c.quitado = c.quitado || {}; c.quitado[E.sesion] = new Date().toISOString(); this.guardar(); },
   salirGrupo(id) { const c = E.chats.find(x => x.id === id); if (!c || c.tipo !== 'grupo') return; c.miembros = c.miembros.filter(m => m !== E.sesion); c.mensajes.push({ u: E.sesion, t: 'salió del grupo', f: new Date().toISOString(), sistema: true }); if (!c.miembros.length) E.chats = E.chats.filter(x => x !== c); this.guardar(); },
   borrarMensaje(id, i) { const c = E.chats.find(x => x.id === id), m = c?.mensajes[i]; if (!m || (m.u !== E.sesion && !this.esAdmin())) return false; m.t = ''; m.borrado = true; this.guardar(); return true; },
   marcarLeido(chatId) { const c = E.chats.find(x => x.id === chatId); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
-  sinLeer(c) { return Math.max(0, c.mensajes.length - ((c.leido || {})[E.sesion] ?? c.mensajes.length - (c.id === 'ch_calc' ? 2 : 0))); },
+  sinLeerDe(c, u) { const s = E.sesion; E.sesion = u; const n = this.sinLeer(c); E.sesion = s; return n; },
+  sinLeer(c) { const v = (c.leido || {})[E.sesion]; const desde = Math.max(v ?? 0, c.vaciado?.[E.sesion] || 0); return c.mensajes.slice(desde).filter(m => m.u !== E.sesion && !m.sistema).length; },
 
   /* ---------- Agenda ---------- */
   miAgenda() { return E.agenda.filter(a => a.u === E.sesion || (a.compartidoEn && E.chats.find(c => c.id === a.compartidoEn)?.miembros.includes(E.sesion))).sort((a, b) => a.fecha.localeCompare(b.fecha)); },
@@ -465,3 +473,6 @@ function asegurarEquipo() {
   });
   if (cambio) DB.guardar();
 }
+
+/* hash simple para la demo; con la base de datos real, la contraseña la maneja el servidor (Supabase Auth) */
+function hashClave(t) { let h1 = 0xdeadbeef, h2 = 0x41c6ce57; t = 'cdu:' + t; for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); } h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909); return (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16); }

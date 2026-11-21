@@ -1,11 +1,23 @@
 /* Crear cuenta / entrar */
 'use strict';
-UI.reg = { paso: 0, modo: 'correo', contacto: '', doc: null, carrera: null, gen: null, semestre: null, vis: 'amigos', usuario: '', nombre: '' };
+UI.reg = { paso: 0, entrada: 'entrar', modo: 'correo', clave: '', contacto: '', doc: null, carrera: null, gen: null, semestre: null, vis: 'amigos', usuario: '', nombre: '' };
 VISTAS.bienvenida = {
   render() {
     const r = UI.reg, barras = [0, 1, 2, 3].map(i => `<span style="height:6px;border-radius:999px;background:${i <= r.paso ? 'var(--morado)' : 'var(--linea)'}"></span>`).join('');
     const top = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:18px">${barras}</div>`;
+    if (r.paso === 0 && r.entrada === 'entrar') return `<div class="pila">
+      <div style="display:flex;justify-content:center">${castor(92)}</div>
+      <h1 style="text-align:center">Bienvenido a Cosas de la uni</h1>
+      <div class="rejilla2" style="background:var(--suave);border-radius:14px;padding:4px"><button class="pastilla on" style="border:0">Iniciar sesión</button><button class="pastilla" style="border:0" data-a="regEntrada" data-e="crear">Crear cuenta</button></div>
+      <form data-form="iniciarSesion" class="pila">
+        <div><label class="campo" for="ic">Correo, número o @usuario</label><input id="ic" name="contacto" required autocomplete="username" autocapitalize="off" placeholder="tucorreo@ejemplo.com"></div>
+        <div><label class="campo" for="icl">Contraseña</label><input id="icl" name="clave" type="password" required autocomplete="current-password"></div>
+        <button class="btn ancho">Entrar</button></form>
+      <p class="peq gris" style="text-align:center;margin:0">¿No tienes cuenta? <a href="#/bienvenida" data-a="regEntrada" data-e="crear">Créala aquí</a></p>
+      <div class="tarjeta pila" style="gap:8px"><b>¿Eres del equipo de prueba?</b><span class="peq gris">Pon la clave y elige tu cuenta.</span><button class="btn2" data-a="soyAdmin">Soy admin</button></div>
+    </div>`;
     if (r.paso === 0) return top + `<div class="pila">
+      <div class="rejilla2" style="background:var(--suave);border-radius:14px;padding:4px"><button class="pastilla" style="border:0" data-a="regEntrada" data-e="entrar">Iniciar sesión</button><button class="pastilla on" style="border:0">Crear cuenta</button></div>
       <div style="display:flex;justify-content:center">${castor(92)}</div>
       <h1 style="text-align:center">Bienvenido a Cosas de la uni</h1>
       <p class="gris" style="text-align:center;margin:0">La vida universitaria, aquí.</p>
@@ -18,12 +30,6 @@ VISTAS.bienvenida = {
         <div><label class="campo" for="rp">Contraseña</label><input id="rp" name="clave" type="password" required minlength="8" placeholder="Mínimo 8 caracteres"></div>
         <button class="btn ancho">Continuar</button>
       </form>
-      ${CONFIG.modoPrueba ? `<form class="tarjeta pila" style="gap:8px;border:2px solid var(--amarillo)" data-form="regRapido"><b>Modo prueba: entra solo con un @usuario</b><span class="peq gris">Sin correo ni contraseña. Si ya tienes usuario en este celular, escribe el mismo y entras.</span>
-        <div class="fila" style="flex-wrap:nowrap"><span class="pastilla" style="display:grid;place-items:center">@</span><label class="oculto" for="rr">Usuario</label><input id="rr" name="usuario" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9._]+" placeholder="tu.usuario" autocomplete="off" autocapitalize="off"></div>
-        <label class="oculto" for="rrc">Carrera</label><select id="rrc" name="carrera"><option value="">Carrera (opcional)</option>${CARRERAS.map(c => `<option>${esc(c.nombre || c)}</option>`).join('')}</select>
-        <button class="btn2 ancho">Entrar a probar</button><button type="button" class="btn3" style="align-self:center;min-height:36px" data-a="soyAdmin">Soy admin</button></form>`
-      : `<div class="tarjeta pila" style="gap:8px"><b>¿Eres del equipo de prueba?</b><span class="peq gris">Pon la clave y elige tu cuenta.</span>
-        <div class="fila"><button class="btn2" data-a="soyAdmin">Soy admin</button></div></div>`}
     </div>`;
     if (r.paso === 1) return top + `<div class="pila">
       <div class="entre"><h1>Sube tu horario</h1><span class="insignia i-morado">Opcional</span></div>
@@ -64,12 +70,14 @@ ACC.regModo = b => { UI.reg.modo = b.dataset.m; pintar(); };
 ACC.regDemo = b => { DB.entrar(b.dataset.u); ir('#/inicio'); };
 ACC.regCarrera = b => { UI.reg.carrera = b.dataset.c; pintar(); };
 ACC.regVis = b => { UI.reg.vis = b.dataset.v; pintar(); };
-FORMS.regPaso0 = d => { UI.reg.contacto = d.contacto; UI.reg.paso = 1; pintar(); };
+FORMS.regPaso0 = d => { const c = d.contacto.trim(); if (Object.values(DB.estado.usuarios).some(u => String(u.contacto || '').toLowerCase() === c.toLowerCase())) return aviso('Ya hay una cuenta con ese dato. Inicia sesión.'); UI.reg.contacto = c; UI.reg.clave = d.clave; UI.reg.paso = 1; pintar(); };
+FORMS.iniciarSesion = d => { const r = DB.iniciarSesion(d.contacto, d.clave); if (r.error) return aviso(r.error); ir('#/inicio'); };
+ACC.regEntrada = b => { UI.reg.entrada = b.dataset.e; UI.reg.paso = 0; pintar(); };
 FORMS.regPaso1 = d => { if (!UI.reg.carrera) return; UI.reg.gen = d.gen || null; UI.reg.semestre = d.semestre || null; UI.reg.paso = 2; pintar(); };
 FORMS.regPaso2 = d => {
   if (!DB.usuarioDisponible(d.usuario)) { aviso('Ese nombre de usuario no está disponible'); return; }
   const r = UI.reg;
-  DB.registrar({ usuario: d.usuario, nombre: d.nombre.trim(), nombreVis: r.vis, carrera: r.carrera, gen: r.gen ? Number(r.gen) : null, semestre: r.semestre ? Number(r.semestre) : null, documento: r.doc, contacto: r.contacto });
+  DB.registrar({ usuario: d.usuario, nombre: d.nombre.trim(), nombreVis: r.vis, carrera: r.carrera, gen: r.gen ? Number(r.gen) : null, semestre: r.semestre ? Number(r.semestre) : null, documento: r.doc, contacto: r.contacto, clave: r.clave }); r.clave = '';
   r.paso = 3; location.hash = '#/bienvenida'; pintar();
 };
 /* entradas en vivo */

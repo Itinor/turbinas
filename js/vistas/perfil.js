@@ -102,7 +102,7 @@ VISTAS.ajustes = {
       <section class="tarjeta"><h2>Privacidad</h2>${seg('escribir', 'Quién puede escribirme', [['todos', 'Todos'], ['amigos', 'Amigos'], ['nadie', 'Nadie']])}${seg('perfil', 'Quién ve mi perfil', [['todos', 'Todos'], ['amigos', 'Amigos'], ['nadie', 'Solo yo']])}${seg('venta', 'Mi compraventa por defecto', [['todos', 'Todos'], ['amigos', 'Amigos'], ['elegidos', 'Elegidos']])}</section>
       <section class="tarjeta"><h2>Música y apariencia</h2>${sw('musicaAuto', 'Reproducir música al abrir perfiles')}${sw('oscuro', 'Modo oscuro')}</section>
       <section class="tarjeta"><h2 style="margin-bottom:8px">Personas bloqueadas</h2>${u.bloqueados.map(i => `<div class="entre" style="padding:6px 0"><span>${esc(nombreVisible(i))}</span><button class="btn3" data-a="desbloquear" data-u="${i}">Desbloquear</button></div>`).join('') || '<p class="peq gris" style="margin:0">Nadie.</p>'}</section>
-      <section class="tarjeta pila" style="gap:8px">${DB.esAdmin() ? '<a class="btn2" href="#/admin">Panel de administración</a>' : ''}<button class="btn3" data-a="cerrarSesion">Cerrar sesión</button><button class="btn-peligro" data-a="reiniciarDatos">Borrar datos de prueba de este navegador</button></section></div>`;
+      <section class="tarjeta pila" style="gap:8px">${DB.esAdmin() ? '<a class="btn2" href="#/admin">Panel de administración</a>' : ''}${(CONFIG.cuentasEquipo || []).some(c => c.id === DB.yo().id) ? '<button class="btn2" data-a="cambiarCuenta">Cambiar de cuenta (equipo)</button>' : ''}<button class="btn3" data-a="cerrarSesion">Cerrar sesión</button><button class="btn-peligro" data-a="reiniciarDatos">Borrar datos de prueba de este navegador</button></section></div>`;
   }
 };
 ACC.privacidad = b => { DB.yo().privacidad[b.dataset.k] = b.dataset.v; if (b.dataset.k === 'venta') UI.cvVis = b.dataset.v; DB.guardar(); refrescar(); };
@@ -164,3 +164,5 @@ VISTAS.ramitas = {
 };
 
 ACC.suspender = b => { const u = DB.usuario(b.dataset.u); DB.suspender(u.id, !u.suspendido); cerrarHoja(); aviso(u.suspendido ? 'Cuenta suspendida: ya no puede entrar y sus publicaciones se ocultan' : 'Cuenta reactivada'); refrescar(); };
+
+ACC.cambiarCuenta = () => FORMS.entrarAdmin({ clave: CONFIG.claveAdmin });
