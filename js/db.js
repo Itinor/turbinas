@@ -10,7 +10,7 @@ const DB = {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
     if (!E || E.version !== 6) { E = datosIniciales(); E.version = 6; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); this.guardar(); }
     E.bitacora = E.bitacora || []; asegurarEquipo();
-    E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || []; E.tablones = E.tablones || [{ id: 'tb_general', nombre: 'General', chat: null, autor: 'u_diego', fecha: new Date().toISOString() }]; E.tablonItems = E.tablonItems || [];
+    E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || []; E.tablones = E.tablones || []; E.tablonItems = E.tablonItems || []; asegurarTablones();
     return E;
   },
   guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
@@ -304,7 +304,7 @@ const DB = {
     else if (tipo === 'ranking') quita('rankings');
     else if (tipo === 'profe') quita('profes');
     else if (tipo === 'tablonItem') quita('tablonItems');
-    else if (tipo === 'tablon') { if (id === 'tb_general') return false; quita('tablones'); E.tablonItems = E.tablonItems.filter(x => x.tablon !== id); }
+    else if (tipo === 'tablon') { if (['tb_general', 'tb_uni', 'tb_eventos'].includes(id)) return false; quita('tablones'); E.tablonItems = E.tablonItems.filter(x => x.tablon !== id); }
     else if (tipo === 'opinion') E.profes.find(p => p.id === id)?.opiniones.splice(+extra, 1);
     else if (tipo === 'venta') quita('ventas');
     else if (tipo === 'nivel') quita('niveles');
@@ -319,16 +319,19 @@ const DB = {
     const ya = this.areas().find(a => this.claveNombre(a) === this.claveNombre(nombre)); if (ya) return { ok: ya, ya: true }; this.areas().push(nombre); this.guardar(); return { ok: nombre }; },
   quitarArea(nombre) { if (!this.esAdmin() || E.profes.some(p => p.area === nombre)) return false; E.areas = this.areas().filter(a => a !== nombre); this.guardar(); return true; },
   /* ---------- Tablón ---------- */
+  puedeFijar(t) { return this.tablonVisible(t) && (!t.oficial || this.esAdmin()); },
+  apuntarseTablon(id) { const it = E.tablonItems.find(x => x.id === id); if (!it) return; it.apuntados = it.apuntados || []; const i = it.apuntados.indexOf(E.sesion); if (i >= 0) it.apuntados.splice(i, 1); else { it.apuntados.push(E.sesion); if (it.autor !== E.sesion) notificar(it.autor, `@${this.yo().usuario} se apuntó a "${it.titulo}"`, '#/tablon/' + it.tablon); } this.guardar(); },
   tablonVisible(t) { if (!t) return false; if (!t.chat) return true; const c = E.chats.find(x => x.id === t.chat); return !!c && (c.miembros.includes(E.sesion) || this.esAdmin()); },
   misTablones() { return E.tablones.filter(t => this.tablonVisible(t)); },
   crearTablon(nombre, chat = null) { nombre = String(nombre || '').trim().slice(0, 50); if (nombre.length < 2) return { error: 'Ponle nombre.' }; const t = { id: uid('tb'), nombre, chat, autor: E.sesion, fecha: new Date().toISOString() }; E.tablones.push(t); this.guardar(); return { ok: t }; },
   tablonDeChat(chatId) { const c = E.chats.find(x => x.id === chatId); if (!c) return null; return E.tablones.find(t => t.chat === chatId) || this.crearTablon(c.nombre, chatId).ok; },
   itemsTablon(id) { return E.tablonItems.filter(x => x.tablon === id && !E.usuarios[x.autor]?.suspendido).sort((a, b) => (b.fijado - a.fijado) || b.fecha.localeCompare(a.fecha)); },
   fijarEnTablon(d) {
-    const t = E.tablones.find(x => x.id === d.tablon); if (!this.tablonVisible(t)) return { error: 'No tienes acceso a este tablón.' };
-    const it = { id: d.id || uid('ti'), tablon: t.id, autor: E.sesion, tipo: d.tipo, titulo: String(d.titulo || '').trim().slice(0, 80), texto: String(d.texto || '').trim().slice(0, 400), color: d.color || 'amarillo', archivo: d.archivo || null, fijado: false, fecha: new Date().toISOString() };
+    const t = E.tablones.find(x => x.id === d.tablon); if (!this.tablonVisible(t)) return { error: 'No tienes acceso a este tablón.' }; if (!this.puedeFijar(t)) return { error: 'En este tablón solo publica el equipo.' };
+    const it = { id: d.id || uid('ti'), tablon: t.id, autor: E.sesion, tipo: d.tipo, titulo: String(d.titulo || '').trim().slice(0, 80), texto: String(d.texto || '').trim().slice(0, 400), color: d.color || 'amarillo', archivo: d.archivo || null, fijado: false, fecha: new Date().toISOString(), cuando: d.cuando || null, lugar: String(d.lugar || '').trim().slice(0, 80), apuntados: [] };
+    if (it.tipo === 'evento' && (it.titulo.length < 3 || !it.cuando)) return { error: 'Pon qué es y cuándo.' };
     if (it.tipo === 'nota' && !it.texto) return { error: 'Escribe la nota.' };
-    if (it.tipo !== 'nota' && !it.archivo) return { error: 'Elige un archivo.' };
+    if ((it.tipo === 'archivo' || it.tipo === 'foto') && !it.archivo) return { error: 'Elige un archivo.' };
     E.tablonItems.push(it);
     if (t.chat) { const c = E.chats.find(x => x.id === t.chat); c?.miembros.filter(m => m !== E.sesion).forEach(m => notificar(m, `@${this.yo().usuario} fijó algo en el tablón de ${t.nombre}`, '#/tablon/' + t.id)); }
     this.guardar(); return { ok: it };
@@ -511,4 +514,10 @@ function vaciarDemo() {
   Object.assign(E, { posts: [], propuestas: [], rankings: [], eventos: [], ventas: [], chats: [], agenda: [], profes: [], profesPend: [], notifs: [], reportes: [], libro: [], bitacora: [], interesEventos: {}, alertasCerradas: {}, lugaresPend: [] });
   E.niveles = E.niveles.filter(n => n.oficial).map(n => ({ ...n, likes: 0, likers: [], jugadas: 0, mejores: [] }));
   Object.keys(E.usuarios).forEach(id => mover(id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida'));
+}
+
+/* tablones fijos: Universidad (solo el equipo publica), Eventos de alumnos y General */
+function asegurarTablones() {
+  const base = [{ id: 'tb_uni', nombre: 'Universidad', oficial: true, desc: 'Conferencias, avisos y eventos de la universidad' }, { id: 'tb_eventos', nombre: 'Eventos de alumnos', desc: 'Organiza algo y ve quién se apunta', tipoDefecto: 'evento' }, { id: 'tb_general', nombre: 'General', desc: 'Trabajos, apuntes y lo que sea' }];
+  base.forEach((b, i) => { const t = E.tablones.find(x => x.id === b.id); if (t) Object.assign(t, { oficial: !!b.oficial, desc: b.desc, tipoDefecto: b.tipoDefecto || null }); else E.tablones.splice(i, 0, { ...b, chat: null, autor: 'u_diego', fecha: new Date().toISOString() }); });
 }
