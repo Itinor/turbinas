@@ -72,7 +72,7 @@ const DB = {
   /* ---------- Publicaciones ---------- */
   feed() {
     const yo = this.yo();
-    return E.posts.filter(p => !p.oculto && !this.bloqueo(p.autor, yo.id) && !yo.silenciados.includes(p.autor)).sort((a, b) => b.fecha.localeCompare(a.fecha));
+    return E.posts.filter(p => !p.oculto && !E.usuarios[p.autor]?.suspendido && !this.bloqueo(p.autor, yo.id) && !yo.silenciados.includes(p.autor)).sort((a, b) => b.fecha.localeCompare(a.fecha));
   },
   publicar(texto) { texto = texto.trim().slice(0, 1000); if (!texto) return; E.posts.push({ id: uid('post'), autor: E.sesion, texto, fecha: new Date().toISOString(), likes: [], comentarios: [] }); this.guardar(); },
   meGusta(id) { const p = E.posts.find(x => x.id === id); const i = p.likes.indexOf(E.sesion); if (i >= 0) p.likes.splice(i, 1); else { p.likes.push(E.sesion); if (p.autor !== E.sesion) notificar(p.autor, `A @${this.yo().usuario} le interesa tu publicación`, '#/inicio'); } this.guardar(); },
@@ -194,9 +194,29 @@ const DB = {
   borrarRecordatorio(id) { E.agenda = E.agenda.filter(a => !(a.id === id && a.u === E.sesion)); this.guardar(); },
 
   /* ---------- Croquis del campus ---------- */
-  lugares() { return LUGARES.concat(E.lugares); },
+  lugares() { const oc = E.lugaresOcultos || []; return LUGARES.filter(l => !oc.includes(l.id)).concat(E.lugares); },
   proponerLugar(d) { E.lugaresPend.push({ id: uid('lg'), nombre: d.nombre.trim().slice(0, 60), como: d.como.trim().slice(0, 200), x: Math.round(d.x), y: Math.round(d.y), tipo: 'salon', zona: d.zona || '', por: E.sesion, fecha: new Date().toISOString() }); avisarAdmins('Lugar propuesto para el mapa: ' + d.nombre, '#/admin'); this.guardar(); },
   moderarLugar(id, ok) { const i = E.lugaresPend.findIndex(l => l.id === id); if (i < 0) return; const l = E.lugaresPend.splice(i, 1)[0]; if (ok) { E.lugares.push(l); const u = E.usuarios[l.por]; if (u) { u.reputacion += 1; mover(u.id, 10, 'premio', 'lugar en el mapa'); } } notificar(l.por, ok ? `"${l.nombre}" ya está en el mapa. +10 ramitas` : `"${l.nombre}" no se agregó al mapa`, '#/explorar/mapa'); this.guardar(); },
+
+  /* ---------- Eliminar contenido (admin o autor) ---------- */
+  autorDe(tipo, id) { const L = { post: E.posts, propuesta: E.propuestas, ranking: E.rankings, venta: E.ventas, nivel: E.niveles }[tipo]; return L?.find(x => x.id === id)?.autor; },
+  puedeEliminar(tipo, id) { return this.esAdmin() || (this.autorDe(tipo, id) && this.autorDe(tipo, id) === E.sesion); },
+  eliminar(tipo, id, extra) {
+    if (!this.puedeEliminar(tipo, id) && !(tipo === 'comentario' && E.posts.find(p => p.id === id)?.comentarios[+extra]?.autor === E.sesion)) return false;
+    const quita = k => { E[k] = E[k].filter(x => x.id !== id); };
+    if (tipo === 'post') quita('posts');
+    else if (tipo === 'comentario') E.posts.find(p => p.id === id)?.comentarios.splice(+extra, 1);
+    else if (tipo === 'propuesta') { const p = E.propuestas.find(x => x.id === id); if (p && p.apuestas.length && (p.estado === 'abierta' || p.estado === 'congelada')) this.anular(id, 'Se eliminó la predicción y se devolvieron tus ramitas'); quita('propuestas'); }
+    else if (tipo === 'ranking') quita('rankings');
+    else if (tipo === 'venta') quita('ventas');
+    else if (tipo === 'nivel') quita('niveles');
+    else if (tipo === 'evento') quita('eventos');
+    else if (tipo === 'lugar') { if (E.lugares.some(l => l.id === id)) quita('lugares'); else (E.lugaresOcultos = E.lugaresOcultos || []).push(id); }
+    else return false;
+    this.guardar(); return true;
+  },
+  suspender(id, on) { if (!this.esAdmin() || id === E.sesion) return; E.usuarios[id].suspendido = on; if (on) notificar(id, 'Tu cuenta fue suspendida por el equipo', '#/inicio'); this.guardar(); },
+  crearEvento(d) { E.eventos.push({ id: uid('ev'), titulo: d.titulo.trim().slice(0, 100), fecha: d.fecha, hora: d.hora || '', lugar: d.lugar.trim().slice(0, 60), interesados: 0 }); this.guardar(); },
 
   /* ---------- Eventos ---------- */
   interesEvento(id) { const k = E.sesion + ':' + id; E.interesEventos[k] = !E.interesEventos[k]; const ev = E.eventos.find(x => x.id === id); ev.interesados += E.interesEventos[k] ? 1 : -1; this.guardar(); },

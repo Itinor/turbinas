@@ -17,9 +17,9 @@ VISTAS.explorar = {
         <a class="btn3" href="#/rankings">Ver rankings de profesores</a>
         <div class="pila" style="gap:10px" id="listaProfes">${lista.map(p => { const c = DB.calificacion(p); return `<a href="#/profe/${p.id}" class="tarjeta fila" style="flex-wrap:nowrap;text-decoration:none;color:inherit"><span class="avatar" style="background:var(--suave);color:var(--moradoTxt)">${esc(p.nombre.split(' ').pop()[0])}</span><span style="flex:1"><b>${esc(p.nombre)}</b><br><span class="mini gris">${esc(p.materias.join(' · '))}</span></span><span style="text-align:right"><b style="font-family:Sora,sans-serif;font-size:18px">${c ? c.toFixed(1) : '—'}</b><br><span class="mini gris">${p.opiniones.length} opiniones</span></span></a>`; }).join('') || '<p class="vacio">No encontramos a nadie con ese nombre.</p>'}</div>`;
     } else {
-      cuerpo = DB.estado.eventos.slice().sort((a, b) => a.fecha.localeCompare(b.fecha)).map(e => { const on = DB.estado.interesEventos[DB.yo().id + ':' + e.id]; const d = new Date(e.fecha + 'T12:00:00'); return `<article class="tarjeta fila" style="flex-wrap:nowrap;align-items:flex-start">
+      cuerpo = (DB.esAdmin() ? '<button class="btn ancho" data-a="nuevoEvento">' + icono('mas', 18) + 'Agregar evento</button>' : '') + DB.estado.eventos.slice().sort((a, b) => a.fecha.localeCompare(b.fecha)).map(e => { const on = DB.estado.interesEventos[DB.yo().id + ':' + e.id]; const d = new Date(e.fecha + 'T12:00:00'); return `<article class="tarjeta fila" style="flex-wrap:nowrap;align-items:flex-start">
         <span style="width:58px;border-radius:14px;background:var(--avisoBg);color:var(--avisoTxt);text-align:center;padding:8px 0;flex:none"><span class="mini" style="font-weight:800;text-transform:uppercase">${d.toLocaleDateString('es-MX', { month: 'short' })}</span><br><b style="font-family:Sora,sans-serif;font-size:22px">${d.getDate()}</b></span>
-        <span style="flex:1"><b>${esc(e.titulo)}</b><br><span class="mini gris">${esc(e.lugar)} · ${esc(e.hora)}</span><br>
+        <span style="flex:1"><span class="entre" style="align-items:flex-start"><b>${esc(e.titulo)}</b>${botonEliminar('evento', e.id)}</span><br><span class="mini gris">${esc(e.lugar)} · ${esc(e.hora)}</span><br>
         <span class="fila" style="margin-top:8px"><button class="reaccion${on ? ' on' : ''}" data-a="interesEvento" data-id="${e.id}" aria-pressed="${!!on}">Me interesa · ${e.interesados}</button><button class="reaccion" data-a="eventoAgenda" data-id="${e.id}">Agregar a mi agenda</button></span></span></article>`; }).join('');
     }
     return `<div class="pila"><div class="pestanas">${tabs}</div>${cuerpo}</div>`;
@@ -70,11 +70,11 @@ function svgCampus() {
   }).join('');
   const temporal = M.proponer && M.punto ? `<circle cx="${M.punto.x}" cy="${M.punto.y}" r="14" fill="#15803D" stroke="#fff" stroke-width="4"/>` : '';
   return `<svg viewBox="0 0 1150 970" width="100%" style="display:block;min-width:720px;${M.proponer ? 'cursor:crosshair' : ''}" ${M.proponer ? 'data-a="mapaToque"' : ''} role="img" aria-label="Croquis del Campus II de la UACH">
-    <rect width="1150" height="970" fill="#E3F0CF"/>
+    ${CONFIG.imagenCroquis ? `<image href="${esc(CONFIG.imagenCroquis)}" width="1150" height="970" preserveAspectRatio="xMidYMid slice"/>` : `    <rect width="1150" height="970" fill="#E3F0CF"/>
     <path d="M0,330 C30,60 300,0 640,0 L705,330 C900,300 1110,380 1150,640 L1150,790 L860,760 L640,790 C420,820 160,780 0,700 Z" fill="#DCD3EC"/>
     <path d="M0,705 C200,790 430,820 640,792 L860,762 L1150,795" fill="none" stroke="#C9BEDF" stroke-width="44" stroke-linecap="round"/>
     <text x="300" y="806" font-family="Inter,sans-serif" font-size="20" font-weight="700" fill="#5E5873" transform="rotate(5 300 806)">Circuito Universitario</text>
-    ${zonas}${etiquetas}${marcas}${temporal}</svg>`;
+    ${zonas}${etiquetas}`}${marcas}${temporal}</svg>`;
 }
 function vistaMapa(selParam) {
   const M = UI.mapa; if (selParam && DB.lugares().some(l => l.id === selParam)) M.sel = selParam;
@@ -86,7 +86,7 @@ function vistaMapa(selParam) {
     <div class="mapa" id="mapaCampus">${svgCampus()}</div><p class="mini gris lado-movil-txt" style="margin:-6px 0 0;text-align:center">Desliza el mapa de lado para ver todo el campus</p>
     ${l && !M.proponer ? `<section class="tarjeta"><div class="entre"><span class="etiqueta" style="color:${zona?.borde || 'var(--moradoTxt)'}">${esc(zona?.nombre || 'Campus II')}</span>${l.n ? `<span class="insignia i-naranja">Punto ${l.n}</span>` : l.tipo === 'salon' ? '<span class="insignia i-verde">Agregado por la comunidad</span>' : ''}</div>
       <h2 style="margin:6px 0">${esc(l.nombre)}</h2><p style="margin:0">${esc(l.como)}</p>
-      <div class="fila" style="margin-top:12px"><a class="btn3" href="${gmaps}" target="_blank" rel="noopener">Abrir en Google Maps</a></div></section>` : ''}
+      <div class="entre" style="margin-top:12px"><a class="btn3" href="${gmaps}" target="_blank" rel="noopener">Abrir en Google Maps</a>${DB.esAdmin() ? botonEliminar('lugar', l.id) : ''}</div></section>` : ''}
     <button class="btn ancho" data-a="proponerLugar" ${M.proponer ? 'disabled' : ''}>${icono('mas', 18)}Agregar un salón o lugar al mapa</button>
     <p class="mini gris" style="margin:0">Croquis aproximado basado en el mapa oficial "¡Ubícate! con el mapa UACH Campus II". Los salones los va agregando la comunidad y los revisa el equipo.</p>`;
 }
@@ -106,3 +106,5 @@ ACC.mapaToque = (svg, e) => {
 FORMS.enviarLugar = d => { const P = UI.mapa.punto; if (!P) return; DB.proponerLugar({ ...d, x: P.x, y: P.y }); UI.mapa.proponer = false; UI.mapa.punto = null; cerrarHoja(); aviso('¡Gracias! Si lo aprueban, te llegan 10 ramitas.'); refrescar(); };
 document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('g[role=button][data-a]')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); } });
 function zonaDe(x, y) { for (const z of ZONAS_CAMPUS) { const P = z.puntos.split(' ').map(q => q.split(',').map(Number)); let dentro = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) dentro = !dentro; } if (dentro) return z.id; } return 'fing'; }
+ACC.nuevoEvento = () => abrirHoja(`<form class="pila" data-form="crearEvento"><h2>Nuevo evento</h2><div><label class="campo" for="et">Nombre</label><input id="et" name="titulo" required maxlength="100"></div><div class="rejilla2"><div><label class="campo" for="ef">Fecha</label><input id="ef" name="fecha" type="date" required min="${fechaLocal()}"></div><div><label class="campo" for="eh">Hora</label><input id="eh" name="hora" type="time"></div></div><div><label class="campo" for="el">Lugar</label><input id="el" name="lugar" required maxlength="60" list="lugaresCampusEv"><datalist id="lugaresCampusEv">${DB.lugares().map(x => `<option value="${esc(x.nombre)}">`).join('')}</datalist></div><button class="btn ancho">Publicar evento</button></form>`);
+FORMS.crearEvento = d => { DB.crearEvento(d); cerrarHoja(); aviso('Evento publicado'); refrescar(); };

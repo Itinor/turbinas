@@ -4,8 +4,8 @@ UI.admTab = 'moderacion'; UI.admUsuario = null;
 VISTAS.admin = {
   titulo: 'Administración', nav: 'admin', soloAdmin: true,
   render() {
-    const t = UI.admTab, tabs = [['moderacion', 'Moderación'], ['predicciones', 'Predicciones'], ['alertas', 'Alertas'], ['economia', 'Ramitas'], ['registro', 'Registro']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admTab" data-t="${k}">${n}${k === 'alertas' && DB.alertas().length ? ` · ${DB.alertas().length}` : ''}</button>`).join('');
-    return `<div class="pila"><div class="pestanas">${tabs}</div>${({ moderacion: admModeracion, predicciones: admPredicciones, alertas: admAlertas, economia: admEconomia, registro: admRegistro })[t]()}</div>`;
+    const t = UI.admTab, tabs = [['moderacion', 'Moderación'], ['contenido', 'Contenido'], ['predicciones', 'Predicciones'], ['alertas', 'Alertas'], ['economia', 'Ramitas'], ['registro', 'Registro']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admTab" data-t="${k}">${n}${k === 'alertas' && DB.alertas().length ? ` · ${DB.alertas().length}` : ''}</button>`).join('');
+    return `<div class="pila"><div class="pestanas">${tabs}</div>${({ contenido: admContenido, moderacion: admModeracion, predicciones: admPredicciones, alertas: admAlertas, economia: admEconomia, registro: admRegistro })[t]()}</div>`;
   }
 };
 function admModeracion() {
@@ -72,3 +72,24 @@ ACC.verUsuarioAdmTab = b => { UI.admTab = 'predicciones'; UI.admUsuario = b.data
 ACC.copiarRegistro = () => { const csv = 'fecha,cuenta,tipo,monto,referencia,dispositivo\n' + DB.estado.libro.map(m => [m.f, m.u, m.tipo, m.monto, m.ref, m.disp].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n'); navigator.clipboard?.writeText(csv).then(() => aviso('Registro copiado'), () => aviso('No se pudo copiar')); };
 
 ACC.moderarLugar = b => { DB.moderarLugar(b.dataset.id, b.dataset.ok === '1'); refrescar(); };
+
+UI.admCont = 'post';
+function admContenido() {
+  const S = DB.estado, t = UI.admCont;
+  const tipos = [['post', 'Publicaciones', S.posts.filter(p => !p.oculto)], ['propuesta', 'Propuestas', S.propuestas], ['ranking', 'Rankings', S.rankings], ['venta', 'Compraventa', S.ventas], ['nivel', 'Niveles', S.niveles], ['evento', 'Eventos', S.eventos], ['lugar', 'Mapa', DB.lugares()], ['usuario', 'Usuarios', Object.values(S.usuarios)]];
+  const [, , lista] = tipos.find(x => x[0] === t);
+  const fila = (titulo, sub, acciones) => `<div class="entre" style="padding:10px 0;border-bottom:1px solid var(--linea);align-items:flex-start"><span style="min-width:0"><b class="peq" style="overflow-wrap:anywhere">${titulo}</b><br><span class="mini gris">${sub}</span></span><span class="fila" style="flex:none">${acciones}</span></div>`;
+  const quitar = id => `<button class="btn-peligro" style="min-height:38px;padding:0 12px" data-a="eliminar" data-tipo="${t}" data-id="${esc(id)}">Eliminar</button>`;
+  const filas = lista.slice().reverse().map(x => {
+    if (t === 'post') return fila(esc(x.texto.slice(0, 90)), `${esc(nombreVisible(x.autor))} · ${hace(x.fecha)} · ${x.comentarios.length} comentarios`, quitar(x.id));
+    if (t === 'propuesta') return fila(esc(x.titulo), `${x.tipo} · ${x.estado} · ${esc(nombreVisible(x.autor))}${x.apuestas.length ? ' · pozo ' + DB.pozo(x) : ''}`, quitar(x.id));
+    if (t === 'ranking') return fila(esc(x.titulo), `${x.estado} · ${Object.keys(x.votos).length} votos · ${esc(nombreVisible(x.autor))}`, quitar(x.id));
+    if (t === 'venta') return fila(esc(x.titulo), `${x.tipo} · ${esc(nombreVisible(x.autor))} · ${hace(x.fecha)}`, quitar(x.id));
+    if (t === 'nivel') return fila(esc(x.nombre), `${x.oficial ? 'oficial' : 'comunidad'} · ${x.likes} me gusta · ${esc(nombreVisible(x.autor))}`, quitar(x.id));
+    if (t === 'evento') return fila(esc(x.titulo), `${fechaBonita(x.fecha)} · ${esc(x.lugar)}`, quitar(x.id));
+    if (t === 'lugar') return fila(esc(x.nombre), x.por ? 'agregado por ' + esc(nombreVisible(x.por)) : 'del croquis oficial', quitar(x.id));
+    return fila('@' + esc(x.usuario) + (x.suspendido ? ' · <span style="color:var(--malTxt)">suspendido</span>' : ''), `${esc(x.nombre)} · ${esc(x.carrera)} · ${x.rol}`, x.id === DB.yo().id ? '<span class="mini gris">Tú</span>' : `<a class="btn3" style="min-height:38px;padding:0 12px" href="#/perfil/${esc(x.usuario)}">Ver</a><button class="${x.suspendido ? 'btn2' : 'btn-peligro'}" style="min-height:38px;padding:0 12px" data-a="suspender" data-u="${x.id}">${x.suspendido ? 'Reactivar' : 'Suspender'}</button>`);
+  }).join('');
+  return `<div class="pestanas">${tipos.map(([k, n, l]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admCont" data-t="${k}">${n} · ${l.length}</button>`).join('')}</div><section class="tarjeta">${filas || '<p class="vacio">No hay nada aquí.</p>'}</section>`;
+}
+ACC.admCont = b => { UI.admCont = b.dataset.t; refrescar(); };

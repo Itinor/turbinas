@@ -11,7 +11,7 @@ VISTAS.compraventa = {
       <div class="rejilla2">${lista.map(v => { const [ic, t] = VIS[v.vis]; const mio = v.autor === DB.yo().id;
         return `<article class="tarjeta pila" style="gap:6px;padding:12px"><b style="line-height:1.25">${esc(v.titulo)}</b>
           <b style="font-family:Sora,sans-serif;font-size:18px;color:${v.tipo === 'venta' ? 'inherit' : 'var(--moradoTxt)'}">${v.tipo === 'venta' ? '$' + numero(v.precio) : v.tipo === 'intercambio' ? 'Intercambio' : 'Regalo'}</b>
-          <span class="mini gris" style="display:flex;align-items:center;gap:4px">${icono(ic, 13)}${t} · ${esc(nombreVisible(v.autor))}</span>
+          <span class="entre"><span class="mini gris" style="display:flex;align-items:center;gap:4px">${icono(ic, 13)}${t} · ${esc(nombreVisible(v.autor))}</span>${botonEliminar('venta', v.id)}</span>
           ${mio ? `<button class="btn3" data-a="cvVendido" data-id="${v.id}">${v.estado === 'vendido' ? 'Volver a publicar' : 'Ya se entregó'}</button>` : `<button class="btn2" data-a="escribirA" data-u="${v.autor}">Me interesa</button>`}</article>`; }).join('') || '<p class="vacio" style="grid-column:1/-1">No hay nada aquí todavía.</p>'}</div></div>`;
   }
 };

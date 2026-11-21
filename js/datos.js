@@ -5,7 +5,12 @@
    entrarDirecto: pon aquí el id de una cuenta (por ejemplo 'u_diego', que es admin) para que la app
    entre directo sin pantalla de registro. Útil para que tus amigos prueben sin crear cuenta.
    Déjalo en null para mostrar la bienvenida (registro + botones de cuentas de ejemplo). */
-const CONFIG = { entrarDirecto: 'u_diego' };
+const CONFIG = {
+  entrarDirecto: 'u_diego',
+  /* Croquis: pon aquí la ruta de una imagen (por ejemplo 'img/croquis.png', de preferencia 1150 × 970 px)
+     para usarla de fondo del mapa en lugar del dibujo aproximado. Los pines se acomodan encima. */
+  imagenCroquis: null
+};
 const CARRERAS = [
   { nombre: 'Ing. en Sistemas', facultad: 'Ingeniería' }, { nombre: 'Mecatrónica', facultad: 'Ingeniería' },
   { nombre: 'Ing. Industrial', facultad: 'Ingeniería' }, { nombre: 'Ing. Civil', facultad: 'Ingeniería' },

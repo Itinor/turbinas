@@ -45,7 +45,7 @@ function tarjetaPost(p) {
     <p class="texto">${esc(p.texto)}</p>
     <div class="acciones"><button class="reaccion${le ? ' on' : ''}" data-a="meGusta" data-id="${p.id}" aria-pressed="${le}">Me interesa · ${p.likes.length}</button>
       <button class="reaccion" data-a="verComentarios" data-id="${p.id}" aria-expanded="${!!abiertos}">${p.comentarios.length} comentarios</button></div>
-    ${abiertos ? `<div style="margin-top:10px">${p.comentarios.map(c => `<div class="coment">${avatar(c.autor)}<div><b class="peq">${esc(nombreVisible(c.autor))}</b> <span class="mini gris">${hace(c.fecha)}</span><br>${esc(c.texto)}</div></div>`).join('')}
+    ${abiertos ? `<div style="margin-top:10px">${p.comentarios.map((c, ci) => `<div class="coment">${avatar(c.autor)}<div style="flex:1"><b class="peq">${esc(nombreVisible(c.autor))}</b> <span class="mini gris">${hace(c.fecha)}</span><br>${esc(c.texto)}</div>${DB.esAdmin() || c.autor === yo.id ? `<button class="icono-btn" style="color:var(--malTxt);width:36px;height:36px" data-a="eliminar" data-tipo="comentario" data-id="${p.id}" data-extra="${ci}" aria-label="Eliminar comentario">${icono('basura', 16)}</button>` : ''}</div>`).join('')}
       <form class="fila" data-form="comentar" style="flex-wrap:nowrap;margin-top:8px"><input type="hidden" name="id" value="${p.id}"><label class="oculto" for="c_${p.id}">Comentario</label><input id="c_${p.id}" name="texto" required maxlength="500" placeholder="Escribe un comentario"><button class="btn2" aria-label="Enviar">${icono('enviar', 18)}</button></form></div>` : ''}
   </article>`;
 }
@@ -55,7 +55,7 @@ ACC.meGusta = b => { DB.meGusta(b.dataset.id); refrescar(); };
 ACC.verComentarios = b => { UI.comentarios[b.dataset.id] = !UI.comentarios[b.dataset.id]; refrescar(); };
 ACC.menuPost = b => {
   const p = DB.estado.posts.find(x => x.id === b.dataset.id), mio = p.autor === DB.yo().id, n = nombreVisible(p.autor);
-  abrirHoja(`<div class="pila" style="gap:8px">${mio || DB.esAdmin() ? `<button class="btn-peligro ancho" data-a="borrarPost" data-id="${p.id}">${icono('basura', 18)}Borrar publicación</button>` : ''}
+  abrirHoja(`<div class="pila" style="gap:8px">${mio || DB.esAdmin() ? `<button class="btn-peligro ancho" data-a="eliminar" data-tipo="post" data-id="${p.id}">${icono('basura', 18)}${mio ? 'Borrar publicación' : 'Eliminar publicación (admin)'}</button>` : ''}
     ${mio ? '' : `<button class="btn3 ancho" style="color:var(--malTxt)" data-a="abrirReporte" data-tipo="post" data-ref="${p.id}" data-quien="${p.autor}">${icono('bandera', 18)}Reportar publicación</button>
     <button class="btn3 ancho" data-a="bloquear" data-u="${p.autor}">${icono('bloquear', 18)}Bloquear a ${esc(n)}</button>
     <button class="btn3 ancho" data-a="silenciar" data-u="${p.autor}">${icono('silencio', 18)}Silenciar a ${esc(n)}</button>`}

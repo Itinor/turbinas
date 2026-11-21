@@ -51,7 +51,7 @@ function reproducir(src, auto) {
 window.addEventListener('hashchange', () => audioPerfil?.pause());
 ACC.playPerfil = b => reproducir(b.dataset.src);
 ACC.amigo = b => { DB.alternarAmigo(b.dataset.u); refrescar(); };
-ACC.menuPerfil = b => abrirHoja(`<div class="pila" style="gap:8px"><button class="btn3 ancho" style="color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${b.dataset.u}" data-quien="${b.dataset.u}">${icono('bandera', 18)}Reportar perfil</button><button class="btn3 ancho" data-a="bloquear" data-u="${b.dataset.u}">${icono('bloquear', 18)}Bloquear</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
+ACC.menuPerfil = b => abrirHoja(`<div class="pila" style="gap:8px">${DB.esAdmin() ? `<button class="btn-peligro ancho" data-a="suspender" data-u="${b.dataset.u}">${DB.usuario(b.dataset.u).suspendido ? 'Reactivar cuenta' : 'Suspender cuenta (admin)'}</button>` : ''}<button class="btn3 ancho" style="color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${b.dataset.u}" data-quien="${b.dataset.u}">${icono('bandera', 18)}Reportar perfil</button><button class="btn3 ancho" data-a="bloquear" data-u="${b.dataset.u}">${icono('bloquear', 18)}Bloquear</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
 
 /* ---------- Editar perfil (los cambios se marcan en amarillo) ---------- */
 VISTAS['editar-perfil'] = {
@@ -162,3 +162,5 @@ VISTAS.ramitas = {
       <section class="tarjeta"><h2 style="margin-bottom:6px">Movimientos</h2>${movs.map(m => `<div class="entre" style="padding:8px 0;border-bottom:1px solid var(--linea)"><span><span class="peq">${esc(NOMBRE_MOV[m.tipo] || m.tipo)}</span><br><span class="mini gris">${hace(m.f)}</span></span><b style="color:${m.monto >= 0 ? 'var(--okTxt)' : 'var(--malTxt)'}">${m.monto >= 0 ? '+' : MENOS}${Math.abs(m.monto)}</b></div>`).join('')}</section></div>`;
   }
 };
+
+ACC.suspender = b => { const u = DB.usuario(b.dataset.u); DB.suspender(u.id, !u.suspendido); cerrarHoja(); aviso(u.suspendido ? 'Cuenta suspendida: ya no puede entrar y sus publicaciones se ocultan' : 'Cuenta reactivada'); refrescar(); };

@@ -35,6 +35,20 @@ canvas{position:absolute;inset:0;width:100%;height:100%;background:#050816;outli
 .panel{background:#fbfaf5;border-left:8px solid #111;padding:18px 8px 18px 18px;text-align:left;min-height:260px}.panel h2{font-size:28px;font-weight:400;margin-bottom:12px}.panel p{font-size:16px;line-height:1.25;margin:6px 0}.footer-copyright{grid-column:1/-1;text-align:center;font-size:12px;color:#555;margin-top:8px}
 @media(max-width:900px){body{align-items:flex-start}.shell{grid-template-columns:1fr}.panel{border-top:8px solid #111;border-left:0}.settings-menu{padding:28px}.settings-title{font-size:34px}.settings-inner{width:94%}.lu-card{width:150px;min-height:180px}.lu-icon{font-size:34px}.menu-title{font-size:38px}}
 </style>
+
+<style>
+#tactil{display:none;position:relative;height:150px;margin-top:10px;user-select:none;-webkit-user-select:none;touch-action:none}
+.es-tactil #tactil{display:block}
+.es-tactil .shell>aside,.es-tactil .side-panel{display:none!important}
+#palanca{position:absolute;left:8px;bottom:8px;width:132px;height:132px;border-radius:50%;background:rgba(75,31,122,.12);border:3px solid #4B1F7A;touch-action:none}
+#perilla{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:linear-gradient(135deg,#4B1F7A,#1D5FD1);box-shadow:0 6px 14px rgba(0,0,0,.25)}
+#botonesT{position:absolute;right:6px;bottom:8px;display:grid;grid-template-columns:repeat(2,64px);grid-template-rows:repeat(2,64px);gap:8px}
+#botonesT button{border:3px solid #201f1b;border-radius:18px;font:900 13px "Trebuchet MS",Arial,sans-serif;color:#1B1530;background:#fff;touch-action:none}
+#tFuego{background:linear-gradient(135deg,#FFC93C,#FF9F1C)!important;grid-row:1/3;grid-column:2;border-radius:24px!important;font-size:15px!important}
+#tDash{grid-row:2;grid-column:1}#tBomba{grid-row:1;grid-column:1;font-size:11px!important}
+#tPausa{position:absolute;left:-74px;top:-2px;width:52px;height:52px;border-radius:50%!important}
+#botonesT button.on{transform:scale(.9);filter:brightness(.9)}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -95,6 +109,10 @@ canvas{position:absolute;inset:0;width:100%;height:100%;background:#050816;outli
       </div>
     </section>
   </main>
+<div id="tactil" aria-label="Controles táctiles">
+  <div id="palanca" aria-label="Palanca de movimiento"><div id="perilla"></div></div>
+  <div id="botonesT"><button id="tPausa" aria-label="Pausa">II</button><button id="tBomba">BOMBA</button><button id="tDash">DASH</button><button id="tFuego">FUEGO</button></div>
+</div>
 
   <aside class="panel" id="controles">
     <h2>Controles</h2>
@@ -217,7 +235,7 @@ function resetGame(){
   lair=null;arena=null;trail=[];trailT=0;worldSeed=Math.floor(rand(1,90000));obsCache.clear();deadObs.clear();chunkCache.clear();nearObs=[];mouse.down=false;lair=makeLair();
   rushNext=rand(35,50);rushWarn=0;rushT=0;rushSide=0;rushBeep=0;rushSpawnAcc=0;
   for(let i=0;i<8;i++)spawnEnemy('normal');
-  showMsg((autoAim?'Flechas = mover · ':'Flechas = mover, mantén Z = dispara solo al más cercano · ')+'Sigue la flecha roja hasta la guarida de '+lair.def.name,5);
+  showMsg((matchMedia('(pointer:coarse)').matches?'Palanca = mover · FUEGO = disparar · ':autoAim?'Flechas = mover · ':'Flechas = mover, mantén Z = dispara solo al más cercano · ')+'Sigue la flecha roja hasta la guarida de '+lair.def.name,5);
   gameState='playing';
 }
 function showMsg(t,time=3.5){msg=t;msgTimer=time}
@@ -883,6 +901,27 @@ $('autoAimChk').checked=autoAim;$('autoAimChk').onchange=e=>{autoAim=e.target.ch
 let lastTime=0;
 function loop(t){const dt=Math.min(.033,(t-lastTime)/1000||0);lastTime=t;update(dt);draw();requestAnimationFrame(loop)}
 syncScreens();requestAnimationFrame(loop);
+</script>
+
+<script>
+/* Controles táctiles (solo en pantallas táctiles) */
+(function(){
+  const tactil=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;if(!tactil)return;
+  document.documentElement.classList.add('es-tactil');
+  try{if(localStorage.getItem('msw7_autoaim')===null){autoAim=true;const c=document.getElementById('autoAimChk');if(c)c.checked=true}}catch(e){}
+  const pal=document.getElementById('palanca'),per=document.getElementById('perilla');let id=null;
+  const soltar=()=>{id=null;per.style.transform='';keys.arrowup=keys.arrowdown=keys.arrowleft=keys.arrowright=false};
+  const mover=e=>{const r=pal.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const m=Math.hypot(dx,dy),max=r.width/2-20;if(m>max){dx=dx/m*max;dy=dy/m*max}per.style.transform=`translate(${dx}px,${dy}px)`;const nx=dx/max,ny=dy/max,z=.32;keys.arrowleft=nx<-z;keys.arrowright=nx>z;keys.arrowup=ny<-z;keys.arrowdown=ny>z};
+  pal.addEventListener('pointerdown',e=>{e.preventDefault();id=e.pointerId;pal.setPointerCapture(id);mover(e)});
+  pal.addEventListener('pointermove',e=>{if(e.pointerId===id)mover(e)});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>pal.addEventListener(t,soltar));
+  const boton=(bid,abajo,arriba)=>{const b=document.getElementById(bid);b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('on');abajo()});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>{b.classList.remove('on');arriba&&arriba()}))};
+  boton('tFuego',()=>{keys.z=true},()=>{keys.z=false});
+  boton('tDash',()=>dash());
+  boton('tBomba',()=>useBomb());
+  boton('tPausa',()=>{if(gameState==='playing')pauseGame();else if(gameState==='pause')resumeGame()});
+  setInterval(()=>{document.getElementById('tactil').style.visibility=(gameState==='playing'||gameState==='pause')?'visible':'hidden';if(gameState!=='playing')soltar()},250);
+})();
 </script>
 </body>
 </html>

@@ -16,7 +16,7 @@ VISTAS.propuestas = {
 function tarjetaPropuesta(p) {
   const yo = DB.yo(), autor = nombreVisible(p.autor), cierra = diasHasta(p.cierre);
   const cab = (tag, color) => `<div class="entre"><span class="etiqueta" style="color:${color}">${tag}</span><span class="mini gris">${p.estado === 'resuelta' ? 'Resuelta' : p.estado === 'congelada' ? 'En revisión' : cierra < 0 ? 'Cerrada' : cierra === 0 ? 'Cierra hoy' : 'Cierra en ' + cierra + ' d'}</span></div>
-    <h2 style="margin:6px 0 2px">${esc(p.titulo)}</h2><div class="mini gris">Propuesta por ${esc(autor)}</div>`;
+    <div class="entre" style="align-items:flex-start"><h2 style="margin:6px 0 2px">${esc(p.titulo)}</h2>${botonEliminar('propuesta', p.id)}</div><div class="mini gris">Propuesta por ${esc(autor)}</div>`;
   if (p.tipo === 'prediccion') {
     const total = DB.pozo(p), mio = DB.apostado(p), miOp = p.apuestas.find(a => a.u === yo.id)?.op, sel = UI.apuesta[p.id] || { op: miOp ?? 0, monto: 25 };
     const abierta = p.estado === 'abierta' && cierra >= 0;

@@ -16,6 +16,7 @@ function pintar() {
   const yo = DB.yo(); let { nombre, params } = ruta();
   if (!yo && nombre !== 'bienvenida') { location.replace('#/bienvenida'); return; }
   if (yo && nombre === 'bienvenida' && UI.reg.paso !== 3) { location.replace('#/inicio'); return; }
+  if (yo?.suspendido) { $('#app').innerHTML = `<main id="vista" style="max-width:480px;margin:40px auto;padding:20px;text-align:center">${castor(80)}<h1 style="margin-top:12px">Tu cuenta está suspendida</h1><p class="gris">Si crees que es un error, escribe al equipo de Cosas de la uni.</p><button class="btn3" data-a="cerrarSesion">Cerrar sesión</button></main>`; return; }
   const v = VISTAS[nombre] || VISTAS.inicio;
   if (v.soloAdmin && !DB.esAdmin()) { location.replace('#/inicio'); return; }
   const app = $('#app');
@@ -75,3 +76,9 @@ document.addEventListener('DOMContentLoaded', () => { DB.cargar(); DB.alEntrar()
 
 /* actualiza solo el número de ramitas de la barra (lo usan los juegos dentro de un iframe) */
 function actualizarChip() { const c = $('.chip-ramitas'); if (c && c.firstChild) c.firstChild.nodeValue = numero(DB.saldo()); }
+
+/* Eliminar con confirmación: data-a="eliminar" data-tipo="post|propuesta|ranking|venta|nivel|evento|lugar|comentario" data-id data-extra */
+const NOMBRE_TIPO = { post: 'esta publicación', comentario: 'este comentario', propuesta: 'esta propuesta', ranking: 'este ranking', venta: 'esta publicación de compraventa', nivel: 'este nivel', evento: 'este evento', lugar: 'este lugar del mapa' };
+ACC.eliminar = b => abrirHoja(`<h2>¿Eliminar ${NOMBRE_TIPO[b.dataset.tipo] || 'esto'}?</h2><p class="gris">${b.dataset.tipo === 'propuesta' ? 'Si tiene ramitas apostadas, se devuelven a cada quien. ' : ''}No se puede deshacer.</p><div class="pila"><button class="btn-peligro ancho" data-a="confirmarEliminar" data-tipo="${b.dataset.tipo}" data-id="${b.dataset.id}" data-extra="${b.dataset.extra || ''}">Sí, eliminar</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
+ACC.confirmarEliminar = b => { const ok = DB.eliminar(b.dataset.tipo, b.dataset.id, b.dataset.extra); cerrarHoja(); aviso(ok ? 'Eliminado' : 'No tienes permiso para eliminar esto'); refrescar(); };
+function botonEliminar(tipo, id, extra = '') { return DB.puedeEliminar(tipo, id) || (tipo === 'lugar' || tipo === 'evento' || tipo === 'comentario') && DB.esAdmin() ? `<button class="icono-btn" style="color:var(--malTxt)" data-a="eliminar" data-tipo="${tipo}" data-id="${esc(id)}" data-extra="${extra}" aria-label="Eliminar">${icono('basura', 18)}</button>` : ''; }
