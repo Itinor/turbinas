@@ -2,13 +2,13 @@
    Hoy guarda todo en el navegador (localStorage). Para pasar a un servidor (Supabase, Firebase…)
    solo hay que reescribir este archivo: las pantallas llaman a DB.* y no tocan el almacenamiento. */
 'use strict';
-const CLAVE = 'cosasdelauni_v5';
+const CLAVE = 'cosasdelauni_v6';
 let E = null;
 
 const DB = {
   cargar() {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
-    if (!E || E.version !== 5) { E = datosIniciales(); E.version = 5; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); this.guardar(); }
+    if (!E || E.version !== 6) { E = datosIniciales(); E.version = 6; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); this.guardar(); }
     E.bitacora = E.bitacora || []; asegurarEquipo();
     E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || [];
     return E;
@@ -383,7 +383,8 @@ const DB = {
 
   /* ---------- Verificación ---------- */
   verificarCorreo(correo) { const u = this.yo(); u.verificado = 'si'; u.correoUni = correo; if (!u.insignias.includes('verificado')) u.insignias.push('verificado'); this.guardar(); },
-  enviarCredencial(nombreArchivo) { const u = this.yo(); u.verificado = 'pendiente'; u.documento = nombreArchivo; avisarAdmins(`@${u.usuario} envió su credencial para verificarse`, '#/admin'); this.guardar(); },
+  correoInstitucional(c) { const d = String(c || '').toLowerCase().trim().split('@')[1] || ''; return (CONFIG.dominiosUni || []).some(x => d === x || d.endsWith('.' + x)); },
+  enviarCredencial(nombreArchivo, tipo = 'documento') { const u = this.yo(); u.verificado = 'pendiente'; u.documento = nombreArchivo; u.tipoDocumento = tipo; avisarAdmins(`@${u.usuario} envió ${tipo} para verificarse`, '#/admin'); this.guardar(); },
   aprobarVerificacion(id, ok) { const u = E.usuarios[id]; u.verificado = ok ? 'si' : 'no'; u.documento = null; if (ok && !u.insignias.includes('verificado')) u.insignias.push('verificado'); notificar(id, ok ? 'Ya estás verificado como estudiante' : 'No pudimos verificar tu documento; intenta con tu correo de la uni', '#/verificar'); this.guardar(); },
 
   /* ---------- Panel de administración ---------- */
@@ -467,7 +468,7 @@ function asegurarEquipo() {
     if (u) { if (c.admin && u.rol !== 'admin') { u.rol = 'admin'; cambio = true; } if (!c.admin && u.rol === 'admin' && c.usuario) { u.rol = 'estudiante'; cambio = true; } return; }
     const base = E.usuarios.u_valeria || Object.values(E.usuarios)[0];
     E.usuarios[c.id] = { ...JSON.parse(JSON.stringify(base)), id: c.id, usuario: c.usuario, nombre: c.nombre, nombreVis: 'todos', nombreElegidos: [], carrera: 'Sin carrera', gen: null, semestre: null,
-      verificado: 'si', documento: null, contacto: 'equipo de prueba', rol: c.admin ? 'admin' : 'estudiante', bio: '', cancion: null, playlists: [], insignias: ['verificado'], ocultas: [],
+      verificado: 'no', documento: null, contacto: 'equipo de prueba', rol: c.admin ? 'admin' : 'estudiante', bio: '', cancion: null, playlists: [], insignias: [], ocultas: [],
       amigos: [], bloqueados: [], silenciados: [], horario: [], racha: { dias: 0, ultimo: null, semana: [] }, diarios: { fecha: null }, limites: { fecha: null }, reputacion: 0, creado: new Date().toISOString(), suspendido: false, equipo: true, dispositivo: 'equipo-' + c.id };
     mover(c.id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida'); cambio = true;
   });

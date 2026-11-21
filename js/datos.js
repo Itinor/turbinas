@@ -31,6 +31,8 @@ const CONFIG = {
   /* datosDemo: false = la app arranca en blanco: sin publicaciones, profes, rankings, chats, eventos,
      ventas, agenda ni personas de ejemplo. Solo quedan las cuentas del equipo y los niveles oficiales. */
   datosDemo: false,
+  /* correos institucionales aceptados para verificarse al instante */
+  dominiosUni: ['uach.mx'],
   /* Croquis: pon aquí la ruta de una imagen (por ejemplo 'img/croquis.png', de preferencia 1150 × 970 px)
      para usarla de fondo del mapa en lugar del dibujo aproximado. Los pines se acomodan encima. */
   imagenCroquis: null,

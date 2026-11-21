@@ -32,18 +32,19 @@ VISTAS.bienvenida = {
       </form>
     </div>`;
     if (r.paso === 1) return top + `<div class="pila">
-      <div class="entre"><h1>Sube tu horario</h1><span class="insignia i-morado">Opcional</span></div>
-      <p class="gris" style="margin:0">Con tu horario, tira de materias o kárdex confirmamos tu carrera y generación, y quedas verificado.</p>
+      <h1>Tu carrera</h1>
+      <p class="gris" style="margin:0">Si subes tu credencial, boleta, horario, constancia o kárdex, el equipo te verifica. También puedes hacerlo después con tu correo de la universidad.</p>
+      <span class="campo" style="margin-bottom:-6px">Documento para verificarte <span class="insignia i-morado">Opcional</span></span>
       <label class="tarjeta" style="border:2px dashed var(--linea);display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px;cursor:pointer;text-align:center">
-        ${icono('subir', 30)}<b style="color:var(--moradoTxt)">${r.doc ? 'Documento: ' + esc(r.doc) : 'Subir foto o PDF'}</b><span class="mini gris">${r.doc ? 'Lo revisamos y te confirmamos. El documento se borra después.' : 'Horario, tira de materias o kárdex'}</span>
+        ${icono('subir', 30)}<b style="color:var(--moradoTxt)">${r.doc ? 'Documento: ' + esc(r.doc) : 'Subir foto o PDF'}</b><span class="mini gris">${r.doc ? 'Lo revisamos y te confirmamos. El documento se borra después.' : 'Credencial, boleta, horario, constancia o kárdex'}</span>
         <input type="file" accept="image/*,.pdf" class="oculto" data-cambio="regDoc"></label>
       <form data-form="regPaso1" class="pila">
-        <div><label class="campo">Tu carrera</label><div class="fila">${CARRERAS.map(c => `<button type="button" class="pastilla${r.carrera === c.nombre ? ' on' : ''}" data-a="regCarrera" data-c="${esc(c.nombre)}">${esc(c.nombre)}</button>`).join('')}</div></div>
+        <div><label class="campo" for="rca">Tu carrera</label><input id="rca" name="carrera" list="listaCarreras" required minlength="3" maxlength="80" placeholder="Escribe tu carrera" value="${esc(r.carrera || '')}">${datalistCarreras()}</div>
         <div class="rejilla2">
-          <div><label class="campo" for="rg">Generación</label><select id="rg" name="gen"><option value="">Prefiero no decir</option>${[2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019].map(g => `<option ${r.gen == g ? 'selected' : ''}>${g}</option>`).join('')}</select></div>
-          <div><label class="campo" for="rs">Semestre <span class="gris mini">(opcional)</span></label><select id="rs" name="semestre"><option value="">—</option>${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => `<option ${r.semestre == s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+          <div><label class="campo" for="rg">Generación <span class="gris mini">(opcional)</span></label><input id="rg" name="gen" type="number" min="1990" max="2040" inputmode="numeric" placeholder="2024" value="${r.gen || ''}"></div>
+          <div><label class="campo" for="rs">Semestre <span class="gris mini">(opcional)</span></label><input id="rs" name="semestre" type="number" min="1" max="16" inputmode="numeric" value="${r.semestre || ''}"></div>
         </div>
-        <button class="btn ancho" ${r.carrera ? '' : 'disabled'}>Continuar</button>
+        <button class="btn ancho">Continuar</button>
       </form></div>`;
     if (r.paso === 2) {
       const prev = r.vis === 'todos' ? (r.nombre || 'Tu nombre') + ' · ' : '';
@@ -73,7 +74,7 @@ ACC.regVis = b => { UI.reg.vis = b.dataset.v; pintar(); };
 FORMS.regPaso0 = d => { const c = d.contacto.trim(); if (Object.values(DB.estado.usuarios).some(u => String(u.contacto || '').toLowerCase() === c.toLowerCase())) return aviso('Ya hay una cuenta con ese dato. Inicia sesión.'); UI.reg.contacto = c; UI.reg.clave = d.clave; UI.reg.paso = 1; pintar(); };
 FORMS.iniciarSesion = d => { const r = DB.iniciarSesion(d.contacto, d.clave); if (r.error) return aviso(r.error); ir('#/inicio'); };
 ACC.regEntrada = b => { UI.reg.entrada = b.dataset.e; UI.reg.paso = 0; pintar(); };
-FORMS.regPaso1 = d => { if (!UI.reg.carrera) return; UI.reg.gen = d.gen || null; UI.reg.semestre = d.semestre || null; UI.reg.paso = 2; pintar(); };
+FORMS.regPaso1 = d => { UI.reg.carrera = d.carrera.trim().slice(0, 80); if (UI.reg.carrera.length < 3) return aviso('Escribe tu carrera'); UI.reg.gen = d.gen || null; UI.reg.semestre = d.semestre || null; UI.reg.paso = 2; pintar(); };
 FORMS.regPaso2 = d => {
   if (!DB.usuarioDisponible(d.usuario)) { aviso('Ese nombre de usuario no está disponible'); return; }
   const r = UI.reg;
@@ -90,7 +91,7 @@ document.addEventListener('input', e => {
 const ENTRADAS = {};
 document.addEventListener('change', e => {
   const k = e.target.dataset?.cambio; if (!k) return;
-  if (k === 'regDoc') { const f = e.target.files[0]; if (f) { UI.reg.doc = f.name; pintar(); } }
+  if (k === 'regDoc') { const f = e.target.files[0]; if (f) { const g = (n) => $(`[name=${n}]`)?.value; UI.reg.carrera = g('carrera') ?? UI.reg.carrera; UI.reg.gen = g('gen') || UI.reg.gen; UI.reg.semestre = g('semestre') || UI.reg.semestre; UI.reg.doc = f.name; pintar(); } }
   CAMBIOS[k]?.(e.target);
 });
 const CAMBIOS = {};

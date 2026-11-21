@@ -27,6 +27,19 @@ function faltaTexto(c) {
   return Math.round(h / 24) + ' d';
 }
 function cierreBonito(c) { return String(c).length === 10 ? fechaBonita(c) : new Date(c).toLocaleString('es-MX', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); }
+/* archivos grandes (canciones) en IndexedDB; con la base de datos real irán a Supabase Storage */
+const ARCHIVOS = {
+  _db: null,
+  abrir() { return this._db || (this._db = new Promise((ok, mal) => { const r = indexedDB.open('cdu_archivos', 1); r.onupgradeneeded = () => r.result.createObjectStore('a'); r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error); })); },
+  async guardar(clave, blob) { const db = await this.abrir(); return new Promise((ok, mal) => { const t = db.transaction('a', 'readwrite'); t.objectStore('a').put(blob, clave); t.oncomplete = () => ok(clave); t.onerror = () => mal(t.error); }); },
+  async leer(clave) { const db = await this.abrir(); return new Promise((ok, mal) => { const r = db.transaction('a').objectStore('a').get(clave); r.onsuccess = () => ok(r.result || null); r.onerror = () => mal(r.error); }); }
+};
+/* reduce una imagen a un cuadrado de `lado` px y la devuelve como dataURL (jpg) */
+function reducirImagen(archivo, lado = 256) {
+  return new Promise((ok, mal) => { const img = new Image(), url = URL.createObjectURL(archivo);
+    img.onload = () => { const c = document.createElement('canvas'); c.width = c.height = lado; const m = Math.min(img.width, img.height); c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, lado, lado); URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.85)); };
+    img.onerror = () => { URL.revokeObjectURL(url); mal(new Error('imagen')); }; img.src = url; });
+}
 function fechaBonita(f) { return new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }); }
 function inicioSemana(d = new Date()) { const x = new Date(d); const dia = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dia); x.setHours(0, 0, 0, 0); return x; }
 const numero = n => new Intl.NumberFormat('es-MX').format(n);
