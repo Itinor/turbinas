@@ -4,8 +4,8 @@ UI.admTab = 'moderacion'; UI.admUsuario = null;
 VISTAS.admin = {
   titulo: 'Administración', nav: 'admin', soloAdmin: true,
   render() {
-    const t = UI.admTab, tabs = [['moderacion', 'Moderación'], ['contenido', 'Contenido'], ['predicciones', 'Predicciones'], ['alertas', 'Alertas'], ['economia', 'Ramitas'], ['registro', 'Registro']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admTab" data-t="${k}">${n}${k === 'alertas' && DB.alertas().length ? ` · ${DB.alertas().length}` : ''}</button>`).join('');
-    return `<div class="pila"><div class="pestanas">${tabs}</div>${({ contenido: admContenido, moderacion: admModeracion, predicciones: admPredicciones, alertas: admAlertas, economia: admEconomia, registro: admRegistro })[t]()}</div>`;
+    const t = UI.admTab, tabs = [['moderacion', 'Moderación'], ['usuarios', 'Usuarios'], ['contenido', 'Contenido'], ['predicciones', 'Predicciones'], ['alertas', 'Alertas'], ['economia', 'Ramitas'], ['registro', 'Registro']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admTab" data-t="${k}">${n}${k === 'alertas' && DB.alertas().length ? ` · ${DB.alertas().length}` : ''}</button>`).join('');
+    return `<div class="pila"><div class="pestanas">${tabs}</div>${({ usuarios: admUsuarios, contenido: admContenido, moderacion: admModeracion, predicciones: admPredicciones, alertas: admAlertas, economia: admEconomia, registro: admRegistro })[t]()}</div>`;
   }
 };
 function admModeracion() {
@@ -51,7 +51,7 @@ function admEconomia() {
     <div class="rejilla4">${[['Entraron (7 días)', e.entraron], ['Salieron (fondo y casino)', e.salieron], ['En circulación', e.circulacion], ['En juego ahora', e.enJuego + e.enCreditos]].map(([t, v]) => `<div class="tarjeta" style="padding:12px"><span class="mini gris">${t}</span><br><b style="font-family:Sora,sans-serif;font-size:22px">${numero(v)}</b></div>`).join('')}</div>
     <section class="tarjeta"><h2>Entradas y salidas por día</h2><div class="fila mini gris" style="margin:6px 0"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#4B1F7A"></span>Entraron <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#F5B700;margin-left:10px"></span>Salieron</div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:130px">${dias.map(([f, d]) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="display:flex;gap:2px;align-items:flex-end;height:108px"><span style="width:12px;height:${Math.max(2, d.e / mx * 106)}px;background:#4B1F7A;border-radius:4px 4px 0 0"></span><span style="width:12px;height:${Math.max(2, d.s / mx * 106)}px;background:#F5B700;border-radius:4px 4px 0 0"></span></div><span class="mini gris">${new Date(f + 'T12:00').toLocaleDateString('es-MX', { weekday: 'short' }).slice(0, 2)}</span></div>`).join('')}</div></section>
-    <section class="tarjeta"><h2 style="margin-bottom:6px">Reglas de equilibrio</h2>${[['Comisión del Fondo del castor', REGLAS.comisionFondo * 100 + '%'], ['Máximo por predicción', REGLAS.maxPorPrediccion], ['Máximo diario en predicciones', REGLAS.maxPrediccionDia], ['Regalo diario', REGLAS.regaloDiario], ['Tope diario en retos', REGLAS.topeRetosDia], ['Ramitas al casino por día', REGLAS.maxCasinoDia], ['Créditos por ramita', REGLAS.creditosPorRamita], ['Propuestas por día', REGLAS.limitePropuestasDia]].map(([t, v]) => `<div class="entre" style="padding:8px 0;border-bottom:1px solid var(--linea)"><span class="peq">${t}</span><b>${v}</b></div>`).join('')}<p class="mini gris" style="margin:8px 0 0">Las predicciones reparten el pozo entre quienes aciertan, así que nunca pagan más de lo que se apostó. La ruleta y la tragamonedas devuelven en promedio menos de lo que se juega, así que retiran ramitas. Se cambian en js/datos.js (REGLAS).</p></section>`;
+    <section class="tarjeta"><h2 style="margin-bottom:6px">Reglas de equilibrio</h2>${[['Comisión del Fondo del castor', REGLAS.comisionFondo * 100 + '%'], ['Máximo por predicción', REGLAS.maxPorPrediccion], ['Máximo diario en predicciones', REGLAS.maxPrediccionDia], ['Regalo diario', REGLAS.regaloDiario], ['Tope diario en retos', REGLAS.topeRetosDia], ['Ramitas al casino por día', REGLAS.maxCasinoDia], ['Créditos por ramita', REGLAS.creditosPorRamita], ['Propuestas por día', REGLAS.limitePropuestasDia]].map(([t, v]) => `<div class="entre" style="padding:8px 0;border-bottom:1px solid var(--linea)"><span class="peq">${t}</span><b>${v}</b></div>`).join('')}</section>`;
 }
 function admRegistro() {
   const l = DB.estado.libro.slice().reverse().slice(0, 150), sosp = new Set(Object.values(DB.estado.usuarios).filter(u => Object.values(DB.estado.usuarios).filter(v => v.dispositivo === u.dispositivo).length >= 3).map(u => u.id));
@@ -99,3 +99,66 @@ function admContenido() {
 }
 ACC.admCont = b => { UI.admCont = b.dataset.t; refrescar(); };
 ACC.moderarProfe = b => { DB.moderarProfe(b.dataset.id, b.dataset.ok === '1'); refrescar(); };
+
+/* ---------- Usuarios: buscar a alguien y ver lo que hace (los mensajes privados NO se muestran) ---------- */
+UI.admBusca = '';
+function admUsuarios() {
+  const q = UI.admBusca.trim().toLowerCase().replace(/^@/, ''), S = DB.estado;
+  const lista = Object.values(S.usuarios).filter(u => u.id !== 'u_equipo' && (!q || [u.usuario, u.nombre, u.contacto, u.carrera].some(x => String(x || '').toLowerCase().includes(q))));
+  const reportesDe = id => reportesContra(id).length;
+  const sel = UI.admUsuario && DB.usuario(UI.admUsuario);
+  return `<section class="tarjeta pila" style="gap:10px"><label class="oculto" for="admBus">Buscar usuario</label><input id="admBus" type="search" placeholder="Buscar por @usuario, nombre, correo o carrera" value="${esc(UI.admBusca)}" data-entrada="admBuscar" autocomplete="off">
+    <div id="admLista" class="pila" style="gap:0">${filasUsuariosAdm(lista, reportesDe)}</div></section>${sel ? fichaCompletaAdm(sel) : ''}`;
+}
+function filasUsuariosAdm(lista, reportesDe) {
+  return lista.slice(0, 60).map(u => `<button class="entre" style="padding:10px 4px;border:0;border-bottom:1px solid var(--linea);background:${UI.admUsuario === u.id ? 'var(--suave)' : 'transparent'};text-align:left;width:100%;font:inherit;color:inherit;cursor:pointer" data-a="abrirFichaAdm" data-u="${u.id}">
+    <span class="fila" style="flex-wrap:nowrap">${avatar(u.id).replace('<a ', '<span ').replace('</a>', '</span>')}<span><b>@${esc(u.usuario)}</b>${u.rol === 'admin' ? ' <span class="insignia i-morado">admin</span>' : ''}${u.suspendido ? ' <span class="insignia i-rojo">suspendido</span>' : ''}<br><span class="mini gris">${esc(u.carrera || '')} · ${u.verificado === 'si' ? 'verificado' : u.verificado === 'pendiente' ? 'en revisión' : 'sin verificar'}</span></span></span>
+    <span style="text-align:right"><b>${numero(DB.saldo(u.id))}</b><br>${reportesDe(u.id) ? `<span class="insignia i-rojo">${reportesDe(u.id)} reporte${reportesDe(u.id) > 1 ? 's' : ''}</span>` : ''}</span></button>`).join('') || '<p class="peq gris">Nadie coincide.</p>';
+}
+/* reportes contra alguien: directos (usuario) o sobre algo que publicó */
+function reportesContra(id) {
+  const S = DB.estado, autorDe = r => r.tipo === 'usuario' ? r.ref : r.tipo === 'post' ? S.posts.find(p => p.id === r.ref)?.autor : r.tipo === 'ranking' ? S.rankings.find(x => x.id === r.ref)?.autor : r.tipo === 'tablon' ? S.tablonItems.find(x => x.id === r.ref)?.autor : r.tipo === 'venta' ? S.ventas.find(x => x.id === r.ref)?.autor : r.quien || null;
+  return S.reportes.filter(r => autorDe(r) === id);
+}
+function graficaLineas(series, alto = 160) {
+  const W = 600, H = alto, todos = series.flatMap(s => s.puntos); if (todos.length < 2) return '<p class="peq gris" style="margin:0">Todavía no hay suficientes datos para graficar.</p>';
+  const xs = todos.map(p => p[0]), ys = todos.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs) || x0 + 1, y0 = Math.min(0, ...ys), y1 = Math.max(1, ...ys);
+  const X = x => 8 + (x - x0) / ((x1 - x0) || 1) * (W - 16), Y = y => H - 18 - (y - y0) / ((y1 - y0) || 1) * (H - 30);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(series.map(s => s.nombre).join(' y '))}" style="display:block;background:var(--suave);border-radius:12px">
+    <line x1="8" x2="${W - 8}" y1="${Y(0)}" y2="${Y(0)}" stroke="#B9AFCB" stroke-dasharray="4 4"/>
+    ${series.map(s => `<polyline fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round" ${s.punteada ? 'stroke-dasharray="6 5"' : ''} points="${s.puntos.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' ')}"/>`).join('')}
+    <text x="12" y="14" font-size="12" fill="#6B6280">${numero(Math.round(y1))}</text><text x="12" y="${H - 4}" font-size="12" fill="#6B6280">${numero(Math.round(y0))}</text></svg>
+    <div class="fila mini" style="margin-top:4px">${series.map(s => `<span class="fila" style="gap:4px"><span style="width:14px;height:3px;background:${s.color};display:inline-block"></span>${esc(s.nombre)}</span>`).join('')}</div>`;
+}
+function fichaCompletaAdm(u) {
+  const S = DB.estado, id = u.id, libro = S.libro.filter(m => m.u === id).sort((a, b) => a.f.localeCompare(b.f));
+  let acum = 0; const saldoPts = libro.map(m => [new Date(m.f).getTime(), acum += m.monto]);
+  const por = {}; libro.forEach(m => { const k = m.tipo; por[k] = por[k] || { e: 0, s: 0 }; if (m.monto >= 0) por[k].e += m.monto; else por[k].s -= m.monto; });
+  const nombres = { regalo: 'Regalos', diario: 'Regalo diario', reto: 'Retos', juego: 'Juegos diarios', racha: 'Rachas', apuesta: 'Puso en predicciones', ganancia: 'Ganó en predicciones', devolucion: 'Devoluciones', premio: 'Premios', casino: 'Ruleta y tragamonedas', compra: 'Compras' };
+  const J = (S.jugadas || []).filter(j => j.u === id), ap = J.reduce((s, j) => s + j.apuesta, 0), pag = J.reduce((s, j) => s + j.pago, 0), real = pag - ap, esp = J.reduce((s, j) => s + j.apuesta * j.ev, 0);
+  const vari = J.reduce((s, j) => s + j.apuesta * j.apuesta * (j.v || (j.juego === 'ruleta' ? 1 : 4)), 0), z = vari ? (real - esp) / Math.sqrt(vari) : 0;
+  let r1 = 0, r2 = 0; const realPts = J.map((j, i) => [i + 1, r1 += j.pago - j.apuesta]), espPts = J.map((j, i) => [i + 1, r2 += j.apuesta * j.ev]);
+  const st = DB.estadisticasUsuario(id), preds = S.propuestas.filter(p => p.apuestas.some(a => a.u === id));
+  const repC = reportesContra(id), repH = S.reportes.filter(r => r.por === id);
+  const actividad = [['Publicaciones', S.posts.filter(p => p.autor === id).length], ['Comentarios', S.posts.reduce((n, p) => n + p.comentarios.filter(c => c.autor === id).length, 0)], ['Propuestas', S.propuestas.filter(p => p.autor === id).length], ['Rankings', S.rankings.filter(r => r.autor === id).length], ['Cosas en tablones', (S.tablonItems || []).filter(x => x.autor === id).length], ['Ventas', S.ventas.filter(v => v.autor === id).length], ['Opiniones de profes', S.profes.reduce((n, p) => n + p.opiniones.filter(o => o.u === id).length, 0)], ['Jugadas de casino', J.length]];
+  const caja = (t, v, color = '') => `<div style="background:var(--suave);border-radius:12px;padding:10px"><span class="mini gris">${t}</span><br><b style="${color}">${v}</b></div>`;
+  return `<section class="tarjeta pila" id="fichaUsuario" style="border:2px solid var(--morado);gap:14px">
+    <div class="entre"><span class="fila" style="flex-wrap:nowrap">${avatar(id, true)}<span><h2>@${esc(u.usuario)}</h2><span class="peq gris">${esc(u.nombre || '')} · ${esc(u.carrera || '')}${u.semestre ? ' · ' + u.semestre + '.º' : ''}</span><br><span class="mini gris">Desde ${new Date(u.creado).toLocaleDateString('es-MX')} · ${u.verificado === 'si' ? 'Verificado' + (u.correoUni ? ' con ' + esc(u.correoUni) : '') : u.verificado === 'pendiente' ? 'En revisión (' + esc(u.tipoDocumento || 'documento') + ')' : 'Sin verificar'}${u.contacto ? ' · ' + esc(u.contacto) : ''}</span></span></span>
+      <button class="icono-btn" data-a="abrirFichaAdm" data-u="" aria-label="Cerrar">${icono('cerrar')}</button></div>
+    ${u.id !== DB.yo().id ? `<button class="${u.suspendido ? 'btn2' : 'btn-peligro'}" style="align-self:flex-start" data-a="suspender" data-u="${id}">${u.suspendido ? 'Reactivar cuenta' : 'Suspender cuenta'}</button>` : ''}
+    <div class="rejilla4">${caja('Saldo', numero(DB.saldo(id)))}${caja('Le entró', '+' + numero(libro.filter(m => m.monto > 0).reduce((s, m) => s + m.monto, 0)), 'color:var(--okTxt)')}${caja('Le salió', MENOS + numero(-libro.filter(m => m.monto < 0).reduce((s, m) => s + m.monto, 0)), 'color:var(--malTxt)')}${caja('Compró', numero(por.compra?.e || 0))}</div>
+    <div><h3 style="margin:0 0 6px">Ramitas en el tiempo</h3>${graficaLineas([{ nombre: 'Saldo', color: '#4B1F7A', puntos: saldoPts }])}</div>
+    <div class="tabla"><table><thead><tr><th>De dónde</th><th class="num">Entró</th><th class="num">Salió</th></tr></thead><tbody>${Object.entries(por).map(([k, v]) => `<tr><td>${esc(nombres[k] || k)}</td><td class="num">${v.e ? '+' + numero(v.e) : ''}</td><td class="num">${v.s ? MENOS + numero(v.s) : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="gris">Sin movimientos</td></tr>'}</tbody></table></div>
+    <div><h3 style="margin:0 0 6px">Ruleta y tragamonedas</h3>${J.length ? `<div class="rejilla4">${caja('Jugadas', numero(J.length))}${caja('Apostó', numero(ap) + ' cr.')}${caja('Resultado', (real >= 0 ? '+' : MENOS) + numero(Math.abs(real)) + ' cr.', real >= 0 ? 'color:var(--okTxt)' : 'color:var(--malTxt)')}${caja('Lo esperado', (esp >= 0 ? '+' : MENOS) + numero(Math.abs(Math.round(esp))) + ' cr.')}</div>
+      <p class="peq" style="margin:8px 0">${Math.abs(z) < 2 ? 'Sus resultados <b>concuerdan con la probabilidad</b>.' : z >= 2 ? `<b style="color:var(--avisoTxt)">Le está yendo mejor de lo normal</b> (${z.toFixed(1)} desviaciones). Con pocas jugadas puede ser suerte; si sigue así, revisa.` : `Le está yendo peor de lo normal (${z.toFixed(1)} desviaciones); también puede ser mala racha.`}</p>
+      ${graficaLineas([{ nombre: 'Lo que lleva', color: '#1D5FD1', puntos: realPts }, { nombre: 'Lo esperado por probabilidad', color: '#C2410C', punteada: true, puntos: espPts }])}
+      <p class="mini gris" style="margin:6px 0 0">Ruleta: ${J.filter(j => j.juego === 'ruleta').length} · Tragamonedas: ${J.filter(j => j.juego === 'tragamonedas').length} · Última: ${hace(J.at(-1).f)}</p>` : '<p class="peq gris" style="margin:0">No ha jugado.</p>'}</div>
+    <div><h3 style="margin:0 0 6px">Predicciones</h3><div class="rejilla4">${caja('Participó', preds.length)}${caja('Acertó', st.n ? st.g + '/' + st.n : '—')}${caja('Neto', (st.neto >= 0 ? '+' : MENOS) + numero(Math.abs(st.neto)))}${caja('Mismo celular', st.mismos ? st.mismos + ' cuentas' : 'ninguna', st.mismos >= 2 ? 'color:var(--malTxt)' : '')}</div>
+      ${preds.slice(-8).reverse().map(p => { const a = p.apuestas.filter(x => x.u === id), m = a.reduce((t, x) => t + x.monto, 0); return `<div class="entre peq" style="padding:6px 0;border-bottom:1px solid var(--linea)"><span>${esc(p.titulo)}<br><span class="mini gris">${esc(p.opciones[a[0].op])} · ${p.estado}</span></span><b>${m}</b></div>`; }).join('')}</div>
+    <div><h3 style="margin:0 0 6px">Reportes en su contra (${repC.length})</h3>${repC.map(r => `<div style="padding:6px 0;border-bottom:1px solid var(--linea)"><span class="insignia i-rojo">${esc(r.motivo)}</span> <span class="mini gris">${esc(r.tipo)} · por @${esc(DB.usuario(r.por)?.usuario || '?')} · ${hace(r.fecha)} · ${r.estado}</span>${(() => { const p = r.tipo === 'post' && S.posts.find(x => x.id === r.ref); return p ? `<p class="peq" style="margin:4px 0 0">“${esc(p.texto.slice(0, 160))}”</p>` : ''; })()}</div>`).join('') || '<p class="peq gris" style="margin:0">Ninguno.</p>'}
+      <p class="mini gris" style="margin:8px 0 0">Reportes que él/ella hizo: ${repH.length}</p></div>
+    <div><h3 style="margin:0 0 6px">Actividad</h3><div class="rejilla2">${actividad.map(([t, n]) => `<div class="entre peq" style="padding:6px 10px;background:var(--suave);border-radius:10px"><span>${t}</span><b>${n}</b></div>`).join('')}</div></div>
+    <p class="mini gris" style="margin:0">Los mensajes privados no se muestran aquí.</p></section>`;
+}
+ACC.abrirFichaAdm = b => { UI.admUsuario = b.dataset.u || null; refrescar(); if (UI.admUsuario) $('#fichaUsuario')?.scrollIntoView({ behavior: 'smooth' }); };
+ENTRADAS.admBuscar = el => { UI.admBusca = el.value; const q = el.value.trim().toLowerCase().replace(/^@/, ''); const l = Object.values(DB.estado.usuarios).filter(u => u.id !== 'u_equipo' && (!q || [u.usuario, u.nombre, u.contacto, u.carrera].some(x => String(x || '').toLowerCase().includes(q)))); const c = $('#admLista'); if (c) c.innerHTML = filasUsuariosAdm(l, id => reportesContra(id).length); };

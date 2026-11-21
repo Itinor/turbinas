@@ -394,6 +394,7 @@ const DB = {
 
   /* ---------- Casino (ruleta y tragamonedas): 1 ramita = 100 créditos ---------- */
   creditos() { return this.yo()?.creditos || 0; },
+  jugadaCasino({ juego, apuesta, pago, ev, v }) { const u = this.yo(); if (!u || !(apuesta > 0)) return; (E.jugadas = E.jugadas || []).push({ u: u.id, juego, apuesta: Math.round(apuesta), pago: Math.round(pago || 0), ev: Number(ev) || 0, v: Number(v) || null, f: new Date().toISOString() }); if (E.jugadas.length > 20000) E.jugadas.splice(0, E.jugadas.length - 20000); },
   setCreditos(n) { const u = this.yo(); if (!u) return; u.creditos = Math.max(0, Math.floor(Number(n) || 0)); this.guardar(); },
   comprarCreditos(r) {
     const u = this.yo(), L = this.limites(); r = Math.floor(Number(r));

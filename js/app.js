@@ -88,7 +88,12 @@ ACC.plegarLado = () => { UI.ladoContraido = !UI.ladoContraido; try { localStorag
 
 /* ---------- Reproductor global: la canción sigue sonando al cambiar de pantalla ---------- */
 const REPRO = {
-  audio: null, src: null, cancion: null, dueno: null,
+  audio: null, src: null, cancion: null, dueno: null, cola: [], modo: (() => { try { return localStorage.getItem('cdu_modo') || 'aleatorio'; } catch { return 'aleatorio'; } })(),
+  /* como una playlist: al terminar pasa a otra (al azar o en orden); en 'repetir' se queda en la misma */
+  siguiente(auto) { const c = this.cola; if (!c.length) return; let i = c.findIndex(x => x.archivo === this.src);
+    if (this.modo === 'aleatorio' && c.length > 1) { let j; do j = Math.floor(Math.random() * c.length); while (j === i); i = j; } else i = (i + 1) % c.length;
+    const sig = c[i]; if (c.length === 1) { this.audio.currentTime = 0; this.audio.play().catch(() => {}); return; } this.src = null; this.alternar(sig, this.dueno, auto); },
+  cambiarModo() { const m = ['aleatorio', 'orden', 'repetir']; this.modo = m[(m.indexOf(this.modo) + 1) % 3]; try { localStorage.setItem('cdu_modo', this.modo); } catch {} if (this.audio) this.audio.loop = this.modo === 'repetir'; this.pintarMini(); aviso(this.modo === 'aleatorio' ? 'Aleatorio' : this.modo === 'orden' ? 'En orden' : 'Repetir esta canción'); },
   sonando(src) { return !!(this.audio && !this.audio.paused && (!src || this.src === src)); },
   async alternar(cancion, dueno, auto) {
     if (this.audio && this.src === cancion.archivo) { if (this.audio.paused) this.audio.play().catch(() => {}); else this.audio.pause(); return; }
@@ -96,8 +101,9 @@ const REPRO = {
     if (real.startsWith('idb:')) { const blob = await ARCHIVOS.leer(real.slice(4)).catch(() => null); if (!blob) { if (!auto) aviso('Esta canción solo está guardada en el celular de quien la subió.'); return; } real = URL.createObjectURL(blob);
       if (!cancion.portada && typeof extraerPortada === 'function') extraerPortada(blob).then(p => { if (!p) return; cancion.portada = p; DB.guardar(); $$('[data-vinilo]').forEach(v => { if (v.dataset.vinilo === cancion.archivo) { const e = v.querySelector('.etiqueta-disco'); if (e) e.style.background = `#4B1F7A url('${p}') center/cover`; } }); }).catch(() => {}); }
     this.parar(true);
-    const a = new Audio(real); a.loop = true; this.audio = a; this.src = cancion.archivo; this.cancion = cancion; this.dueno = dueno;
-    a.addEventListener('play', () => this.marcar()); a.addEventListener('pause', () => this.marcar());
+    const a = new Audio(real); a.loop = this.modo === 'repetir'; this.audio = a; this.src = cancion.archivo; this.cancion = cancion; this.dueno = dueno;
+    this.cola = (DB.usuario(dueno) ? DB.canciones(DB.usuario(dueno)) : [cancion]).filter(c => c.archivo); if (!this.cola.some(c => c.archivo === cancion.archivo)) this.cola.unshift(cancion);
+    a.addEventListener('play', () => this.marcar()); a.addEventListener('pause', () => this.marcar()); a.addEventListener('ended', () => this.siguiente(true));
     this.ajustarVolumen();
     a.play().then(() => this.pintarMini()).catch(() => { if (!auto) aviso('No se pudo reproducir la canción'); });
   },
@@ -113,9 +119,13 @@ function miniReproductor() {
   return `<div id="miniRepro" class="mini-repro${R.sonando() ? '' : ' pausado'}" role="region" aria-label="Reproductor">
     <span class="vinilo chico${R.sonando() ? ' girando' : ''}" data-vinilo="${esc(R.src)}" aria-hidden="true"><span class="etiqueta-disco" style="${ok ? `background:#4B1F7A url('${c.portada}') center/cover` : ''}"></span></span>
     <a href="${u ? '#/perfil/' + esc(u.usuario) : '#/perfil'}" style="flex:1;min-width:0;text-decoration:none;color:inherit"><b class="peq" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.titulo || 'Canción')}</b><span class="mini" style="opacity:.75">${u ? '@' + esc(u.usuario) : ''}${c.artista ? ' · ' + esc(c.artista) : ''}</span></a>
+    <button class="icono-btn" data-a="miniModo" aria-label="Modo: ${R.modo === 'aleatorio' ? 'aleatorio' : R.modo === 'orden' ? 'en orden' : 'repetir'}" title="${R.modo === 'aleatorio' ? 'Aleatorio' : R.modo === 'orden' ? 'En orden' : 'Repetir'}" style="${R.modo === 'repetir' ? 'color:#FFC93C' : ''}">${icono(R.modo, 18)}</button>
     <button class="icono-btn mini-btn" data-repro="${esc(R.src)}" data-a="miniPlay" aria-label="Reproducir o pausar">${icono(R.sonando() ? 'pausa' : 'play', 18)}</button>
+    ${R.cola.length > 1 ? `<button class="icono-btn" data-a="miniSiguiente" aria-label="Siguiente canción">${icono('siguiente', 18)}</button>` : ''}
     <button class="icono-btn" data-a="miniCerrar" aria-label="Cerrar reproductor">${icono('cerrar', 18)}</button></div>`;
 }
 ACC.miniPlay = () => { if (REPRO.audio) REPRO.audio.paused ? REPRO.audio.play().catch(() => {}) : REPRO.audio.pause(); };
 ACC.miniCerrar = () => REPRO.parar();
 window.addEventListener('hashchange', () => setTimeout(() => REPRO.ajustarVolumen(), 0));
+ACC.miniModo = () => REPRO.cambiarModo();
+ACC.miniSiguiente = () => REPRO.siguiente();

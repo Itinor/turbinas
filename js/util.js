@@ -98,6 +98,10 @@ const RUTAS = {
   descargar: 'M12 4v11M7 10l5 5 5-5M5 20h14',
   archivo: 'M6 2h9l5 5v15H6zM15 2v5h5',
   menu: 'M4 7h16M4 12h16M4 17h16',
+  aleatorio: 'M16 4h4v4M4 20L20 4M20 16v4h-4M15 15l5 5M4 4l5 5',
+  repetir: 'M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4',
+  orden: 'M4 6h12M4 12h12M4 18h8M18 14v6M15 17l3 3 3-3',
+  siguiente: 'M5 5l10 7-10 7zM19 5v14',
   basura: 'M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3'
 };
 function icono(n, t = 22, extra = '') { return `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}><path d="${RUTAS[n] || ''}"/></svg>`; }
