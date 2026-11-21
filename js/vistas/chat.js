@@ -1,0 +1,40 @@
+/* Chat: grupos de materia y mensajes directos */
+'use strict';
+VISTAS.chat = {
+  titulo: ([id]) => { if (!id) return 'Chat'; const c = DB.estado.chats.find(x => x.id === id); return c ? tituloChat(c) : 'Chat'; },
+  nav: 'chat', get atras() { return ruta().params[0] ? '#/chat' : null; },
+  render([id]) {
+    if (id) return vistaConversacion(id);
+    const chats = DB.misChats(), fila = c => { const ult = c.mensajes.at(-1), n = DB.sinLeer(c), otro = c.miembros.find(m => m !== DB.yo().id);
+      return `<a href="#/chat/${c.id}" class="fila" style="flex-wrap:nowrap;padding:10px 4px;text-decoration:none;color:inherit;border-bottom:1px solid var(--linea)">
+        ${c.tipo === 'grupo' ? `<span class="avatar" style="border-radius:14px;background:var(--suave);color:var(--moradoTxt)">${esc(c.nombre.slice(0, 2).toUpperCase())}</span>` : avatar(otro).replace('<a ', '<span ').replace('</a>', '</span>')}
+        <span style="flex:1"><b>${esc(tituloChat(c))}</b><br><span class="peq gris" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ult ? (ult.u === DB.yo().id ? 'Tú: ' : c.tipo === 'grupo' ? esc(nombreVisible(ult.u)) + ': ' : '') + esc(ult.t) : 'Sin mensajes'}</span></span>
+        <span style="text-align:right"><span class="mini gris">${ult ? hace(ult.f) : ''}</span><br>${n ? `<span class="insignia" style="background:var(--g-accion);color:#1B1530">${n}</span>` : ''}</span></a>`; };
+    const grupos = chats.filter(c => c.tipo === 'grupo'), dms = chats.filter(c => c.tipo === 'dm');
+    return `<div class="pila"><form data-form="buscarPersona" class="fila" style="flex-wrap:nowrap"><label class="oculto" for="bpers">Escribir a alguien</label><input id="bpers" name="q" placeholder="Escribe a alguien: @usuario" autocomplete="off"><button class="btn2">Abrir</button></form>
+      <section class="tarjeta" style="padding:6px 12px"><p class="etiqueta gris" style="margin:8px 4px">Grupos de materia</p>${grupos.map(fila).join('') || '<p class="vacio">Sin grupos.</p>'}<button class="btn3 ancho" style="margin:10px 0" data-a="nuevoGrupo">${icono('mas', 18)}Crear grupo</button></section>
+      <section class="tarjeta" style="padding:6px 12px"><p class="etiqueta gris" style="margin:8px 4px">Mensajes directos</p>${dms.map(fila).join('') || '<p class="vacio">Aún no tienes conversaciones.</p>'}</section></div>`;
+  },
+  montar([id]) { if (id) { DB.marcarLeido(id); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight; } }
+};
+function tituloChat(c) { if (c.tipo === 'grupo') return c.nombre; return nombreVisible(c.miembros.find(m => m !== DB.yo().id)); }
+function vistaConversacion(id) {
+  const c = DB.estado.chats.find(x => x.id === id), yo = DB.yo().id;
+  if (!c || !c.miembros.includes(yo)) return '<p class="vacio">No encontramos esta conversación.</p>';
+  const fijado = c.fijado && DB.estado.agenda.find(a => a.id === c.fijado);
+  return `<div class="pila" style="gap:10px">
+    ${fijado ? `<a href="#/agenda" class="insignia i-amarillo" style="align-self:center;text-decoration:none">Fijado: ${esc(fijado.titulo)} · ${fechaBonita(fijado.fecha)}</a>` : ''}
+    <div id="mensajes" class="tarjeta pila" style="gap:8px;max-height:60vh;overflow-y:auto">${c.mensajes.map(m => { const mio = m.u === yo; return `<div style="align-self:${mio ? 'flex-end' : 'flex-start'};max-width:80%">${!mio && c.tipo === 'grupo' ? `<div class="mini gris" style="margin:0 0 2px 6px">${esc(nombreVisible(m.u))}</div>` : ''}<div style="background:${mio ? 'var(--g-marca)' : 'var(--suave)'};color:${mio ? '#fff' : 'inherit'};padding:9px 13px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere">${esc(m.t)}</div><div class="mini gris" style="text-align:${mio ? 'right' : 'left'};margin:2px 6px 0">${hace(m.f)}</div></div>`; }).join('') || '<p class="vacio">Escribe el primer mensaje.</p>'}</div>
+    <form class="fila" style="flex-wrap:nowrap" data-form="enviarMsg"><input type="hidden" name="id" value="${c.id}"><label class="oculto" for="msg">Mensaje</label><input id="msg" name="t" required maxlength="1000" placeholder="Escribe un mensaje…" autocomplete="off"><button class="btn2" aria-label="Enviar">${icono('enviar', 18)}</button></form>
+    ${c.tipo === 'dm' ? `<button class="btn3" style="align-self:flex-start;color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${c.miembros.find(m => m !== yo)}" data-quien="${c.miembros.find(m => m !== yo)}">${icono('bandera', 16)}Reportar conversación</button>` : ''}</div>`;
+}
+FORMS.enviarMsg = d => { DB.enviar(d.id, d.t); refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight; $('#msg')?.focus(); };
+FORMS.buscarPersona = d => { const u = DB.porUsuario(d.q.trim()); if (!u || u.id === DB.yo().id) return aviso('No encontramos a ese usuario'); abrirChatCon(u.id); };
+function abrirChatCon(id) { const c = DB.chatCon(id); if (!c) return aviso(`${nombreVisible(id)} solo recibe mensajes de ciertas personas`); ir('#/chat/' + c.id); }
+ACC.escribirA = b => abrirChatCon(b.dataset.u);
+ACC.nuevoGrupo = () => abrirHoja(`<form class="pila" data-form="crearGrupo"><h2>Nuevo grupo</h2><div><label class="campo" for="gn">Nombre</label><input id="gn" name="nombre" required maxlength="50" placeholder="Física II · Equipo 4"></div><div><label class="campo" for="gm">Integrantes</label><input id="gm" name="miembros" placeholder="@vale.a, @pedro.g"></div><button class="btn ancho">Crear</button></form>`);
+FORMS.crearGrupo = d => {
+  const ids = [...new Set((d.miembros || '').split(/[,\s]+/).map(n => DB.porUsuario(n)?.id).filter(Boolean))].filter(i => DB.puedeEscribir(i));
+  const c = { id: uid('ch'), tipo: 'grupo', nombre: d.nombre.trim().slice(0, 50), miembros: [DB.yo().id, ...ids], mensajes: [], fijado: null };
+  DB.estado.chats.push(c); DB.guardar(); cerrarHoja(); ir('#/chat/' + c.id);
+};

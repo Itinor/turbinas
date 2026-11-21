@@ -1,0 +1,10 @@
+{
+  "name": "Cosas de la uni",
+  "short_name": "Cosas de la uni",
+  "start_url": "./index.html#/inicio",
+  "display": "standalone",
+  "background_color": "#F7F5FB",
+  "theme_color": "#4B1F7A",
+  "lang": "es",
+  "icons": [{ "src": "icono.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

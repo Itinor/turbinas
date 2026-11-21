@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Métodos Numéricos</title>
+  <link rel="icon" href="../icono.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; scroll-behavior: smooth; }
+    body { background-color: #f4f4f4; color: #222; }
+    .navbar {
+      background-color: #333; padding: 15px; text-align: center; position: fixed;
+      width: 100%; top: 0; left: 0; z-index: 1000; display: flex;
+      justify-content: center; gap: 22px; flex-wrap: wrap;
+    }
+    .navbar a { color: white; text-decoration: none; padding: 12px 16px; display: inline-block; position: relative; }
+    .navbar a:hover { background-color: #555; }
+    .spacer { height: 85px; }
+    .container {
+      text-align: center; width: min(1100px, 92%); margin: 35px auto; background-color: #fff;
+      padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+    }
+    h1 { color: #143659; margin-bottom: 10px; }
+    h2 { color: #2863a8; margin: 20px 0 10px; }
+    .subtitulo { color: #555; margin-bottom: 20px; }
+    label { display: block; margin: 12px 0 6px; font-size: 15px; color: #444; font-weight: bold; text-align: left; }
+    input, select, textarea {
+      width: 100%; padding: 12px; margin: 4px 0 10px; border: 1px solid #ccc;
+      border-radius: 6px; box-sizing: border-box; font-size: 15px;
+    }
+    textarea { min-height: 90px; resize: vertical; font-family: Consolas, monospace; }
+    .btn {
+      min-width: 12em; height: 3.5em; border-radius: 7px; font-size: 15px; font-family: inherit;
+      border: none; position: relative; cursor: pointer; overflow: hidden; z-index: 1;
+      box-shadow: 6px 6px 12px #c5c5c5, -6px -6px 12px #ffffff; transition: 0.3s ease;
+      margin-top: 15px; background: white;
+    }
+    .btn::before {
+      content: ""; width: 0; height: 3.5em; border-radius: 0; position: absolute; top: 0; left: 0;
+      background-image: linear-gradient(to right, #007BFF 0%, #6361eb 100%); transition: 0.5s ease;
+      display: block; z-index: -1;
+    }
+    .btn:hover::before { width: 100%; }
+    .btn:hover { color: white; }
+    .hidden { display: none; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .method-box {
+      background: #f8faff; border: 1px solid #dbe7ff; border-left: 6px solid #2863a8;
+      padding: 18px; border-radius: 10px; margin-top: 18px; text-align: left;
+    }
+    .entrada-legible {
+  margin-top: 20px;
+  background: #eef3ff;
+  padding: 16px;
+  border-radius: 10px;
+  border-left: 5px solid #2863a8;
+  text-align: left;
+  color: #222;
+}
+
+.entrada-legible h3 {
+  margin-bottom: 10px;
+  color: #143659;
+}
+
+.entrada-legible code {
+  background: white;
+  padding: 3px 6px;
+  border-radius: 5px;
+}
+
+.ecuacion-linea {
+  margin: 6px 0;
+  font-family: Consolas, monospace;
+}
+    .condiciones {
+      margin: 14px 0; background: #fff3cd; padding: 14px; border-radius: 10px;
+      border-left: 5px solid #e67e22; text-align: left;
+    }
+    .resultado {
+      margin-top: 20px; background: #e8f5e9; padding: 16px; border-radius: 10px;
+      border-left: 5px solid #2e7d32; text-align: left; white-space: pre-wrap;
+    }
+    .error {
+      margin-top: 20px; background: #fdecea; padding: 16px; border-radius: 10px;
+      border-left: 5px solid #c0392b; color: #8a1f11; text-align: left;
+    }
+    .tabla { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+    .tabla th, .tabla td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    .tabla th { background: #2863a8; color: white; }
+    canvas { width: 100%; max-width: 900px; height: 360px; border: 1px solid #ddd; border-radius: 10px; margin-top: 18px; background: #fff; }
+    code { background: #eef3ff; padding: 2px 5px; border-radius: 4px; }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin: 25px 0 25px;
+    }
+    .option {
+      min-height: 135px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      background-color: #f4f4f4;
+      padding: 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 6px 6px 12px #c5c5c5, -6px -6px 12px #ffffff;
+      transition: 0.35s ease;
+      border: 2px solid transparent;
+      text-align: center;
+    }
+    .option i {
+      font-size: 34px;
+      color: #2863a8;
+      transition: 0.35s ease;
+    }
+    .option strong {
+      font-size: 17px;
+      color: #143659;
+    }
+    .option span {
+      font-size: 13px;
+      color: #666;
+    }
+    .option:hover {
+      background-color: #6361eb;
+      color: white;
+      transform: translateY(-4px);
+    }
+    .option:hover i,
+    .option:hover strong,
+    .option:hover span {
+      color: white;
+    }
+    .option.selected {
+      background-color: #28a745;
+      color: white;
+      border-color: #1e7e34;
+      transform: scale(1.02);
+    }
+    .option.selected i,
+    .option.selected strong,
+    .option.selected span {
+      color: white;
+    }
+
+    @media(max-width: 760px) { .grid, .options { grid-template-columns: 1fr; } .navbar { gap: 5px; } .navbar a { padding: 10px; } }
+
+    /* Colores de Cosas de la uni */
+    body{background:#F7F5FB;color:#1B1530;font-family:Inter,system-ui,sans-serif}
+    *{font-family:Inter,system-ui,sans-serif}
+    .cdu-barra{position:sticky;top:0;z-index:10;display:flex;gap:16px;align-items:center;padding:14px 20px;color:#fff;background:linear-gradient(120deg,#4B1F7A 50%,#1D5FD1)}
+    .cdu-barra a{color:#fff;text-decoration:none;font-weight:700}
+    h1{color:#4B1F7A} h2{color:#1D5FD1}
+    .container{border-radius:20px;box-shadow:0 8px 24px rgba(27,21,48,.06);margin-top:20px}
+    .btn{background:linear-gradient(135deg,#4B1F7A,#1D5FD1);color:#fff;box-shadow:none;border-radius:14px;font-weight:800}
+    .btn::before{background-image:linear-gradient(135deg,#FFC93C,#FF9F1C)}
+    .btn:hover{color:#1B1530}
+    .option{background:#fff;box-shadow:none;border:1px solid #E6E1F0}
+    .option i{color:#4B1F7A}.option strong{color:#1B1530}
+    .option:hover{background:linear-gradient(135deg,#4B1F7A,#1D5FD1)}
+    .option.selected{background:linear-gradient(135deg,#FFC93C,#FF9F1C);border-color:transparent}
+    .option.selected i,.option.selected strong,.option.selected span{color:#1B1530}
+    .method-box{border-left-color:#4B1F7A;background:#FBFAFD;border-color:#E6E1F0}
+    .entrada-legible{border-left-color:#1D5FD1}
+    .tabla th{background:#4B1F7A}
+    .condiciones{border-left-color:#FF9F1C;background:#FFF6DA}
+  </style>
+</head>
+<body>
+  <header class="cdu-barra"><a href="../index.html#/herramientas" target="_top">← Herramientas</a><b>Métodos numéricos</b></header>
+
+  <div class="container">
+    <h1>Panel de Métodos Numéricos</h1>
+    <p class="subtitulo">Selecciona un método, captura los datos necesarios y ejecuta el cálculo.</p>
+
+    <h2>Elige un método</h2>
+    <p class="subtitulo">Haz clic en el método deseado.</p>
+
+    <div class="options">
+      <div class="option" onclick="seleccionarMetodo(this, 'gauss')">
+        <i class='bx bx-grid-alt'></i>
+        <strong>Gauss-Seidel</strong>
+        <span>Sistemas Ax = b</span>
+      </div>
+      <div class="option" onclick="seleccionarMetodo(this, 'biseccion')">
+        <i class='bx bx-git-branch'></i>
+        <strong>Bisección</strong>
+        <span>Búsqueda de raíces</span>
+      </div>
+      <div class="option" onclick="seleccionarMetodo(this, 'newton')">
+        <i class='bx bx-line-chart'></i>
+        <strong>Newton-Raphson</strong>
+        <span>Raíces con derivada</span>
+      </div>
+      <div class="option" onclick="seleccionarMetodo(this, 'simpson13')">
+        <i class='bx bx-area'></i>
+        <strong>Simpson 1/3</strong>
+        <span>Integración</span>
+      </div>
+      <div class="option" onclick="seleccionarMetodo(this, 'simpson38')">
+        <i class='bx bx-area'></i>
+        <strong>Simpson 3/8</strong>
+        <span>Integración</span>
+      </div>
+      <div class="option" onclick="seleccionarMetodo(this, 'regla245')">
+        <i class='bx bx-area'></i>
+        <strong>Regla 2/45</strong>
+        <span>Integración</span>
+      </div>
+      <div class="option" onclick="seleccionarMetodo(this, 'interpolacion')">
+        <i class='bx bx-line-chart'></i>
+        <strong>Interpolación Lineal</strong>
+        <span>Entre 2 puntos</span>
+      </div>
+      <div class="option" onclick="seleccionarMetodo(this, 'lagrange')">
+        <i class='bx bx-scatter-chart'></i>
+        <strong>Lagrange</strong>
+        <span>Varios puntos</span>
+      </div>
+      <div class="option" onclick="seleccionarMetodo(this, 'minimos')">
+        <i class='bx bx-stats'></i>
+        <strong>Mínimos Cuadrados</strong>
+        <span>Ajuste lineal</span>
+      </div>
+    </div>
+
+    <div id="gauss" class="method-box hidden">
+      <h2>Gauss-Seidel</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> matriz cuadrada, diagonal principal sin ceros, tolerancia positiva y máximo de iteraciones válido. Funciona mejor con matrices diagonalmente dominantes.</div>
+      <label>Matriz A (una fila por línea, valores separados por coma):</label>
+      <textarea id="gsA">10,-1,2
+-1,11,-1
+2,-1,10</textarea>
+      <label>Vector b:</label><input id="gsB" value="6,25,-11">
+      <label>Vector inicial x0:</label><input id="gsX0" value="0,0,0">
+      <div class="grid"><div><label>Tolerancia:</label><input id="gsTol" type="number" step="any" value="0.00001"></div><div><label>Máx. iteraciones:</label><input id="gsMax" type="number" value="50"></div></div>
+      <button class="btn" onclick="resolverGauss()">Ejecutar método</button>
+    </div>
+
+    <div id="biseccion" class="method-box hidden">
+      <h2>Bisección</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> la función debe ser continua y debe cumplirse <code>f(a)·f(b) &lt; 0</code>.</div>
+      <label>Función f(x):</label><input id="biF" value="x*x - 4">
+      <div class="grid"><div><label>a:</label><input id="biA" type="number" step="any" value="0"></div><div><label>b:</label><input id="biB" type="number" step="any" value="3"></div></div>
+      <div class="grid"><div><label>Tolerancia:</label><input id="biTol" type="number" step="any" value="0.000001"></div><div><label>Máx. iteraciones:</label><input id="biMax" type="number" value="30"></div></div>
+      <button class="btn" onclick="resolverBiseccion()">Ejecutar método</button>
+    </div>
+
+    <div id="newton" class="method-box hidden">
+      <h2>Newton-Raphson</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> buena aproximación inicial y derivada no cercana a cero.</div>
+      <label>Función f(x):</label><input id="nwF" value="x*x - 4">
+      <div class="grid"><div><label>Valor inicial x0:</label><input id="nwX0" type="number" step="any" value="3"></div><div><label>Tolerancia:</label><input id="nwTol" type="number" step="any" value="0.000001"></div></div>
+      <label>Máx. iteraciones:</label><input id="nwMax" type="number" value="30">
+      <button class="btn" onclick="resolverNewton()">Ejecutar método</button>
+    </div>
+
+    <div id="simpson13" class="method-box hidden">
+      <h2>Simpson 1/3</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> n debe ser par y la función debe ser continua en [a,b].</div>
+      <label>Función f(x):</label><input id="s13F" value="x*x + 1">
+      <div class="grid"><div><label>a:</label><input id="s13A" type="number" step="any" value="0"></div><div><label>b:</label><input id="s13B" type="number" step="any" value="2"></div></div>
+      <label>Subintervalos n:</label><input id="s13N" type="number" value="10">
+      <button class="btn" onclick="resolverSimpson13()">Ejecutar método</button>
+    </div>
+
+    <div id="simpson38" class="method-box hidden">
+      <h2>Simpson 3/8</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> n debe ser múltiplo de 3 y la función debe ser continua en [a,b].</div>
+      <label>Función f(x):</label><input id="s38F" value="x*x + 1">
+      <div class="grid"><div><label>a:</label><input id="s38A" type="number" step="any" value="0"></div><div><label>b:</label><input id="s38B" type="number" step="any" value="2"></div></div>
+      <label>Subintervalos n:</label><input id="s38N" type="number" value="12">
+      <button class="btn" onclick="resolverSimpson38()">Ejecutar método</button>
+    </div>
+
+    <div id="regla245" class="method-box hidden">
+      <h2>Regla 2/45</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> usa 5 puntos en el intervalo. h = (b-a)/4.</div>
+      <label>Función f(x):</label><input id="r245F" value="x*x + 1">
+      <div class="grid"><div><label>a:</label><input id="r245A" type="number" step="any" value="0"></div><div><label>b:</label><input id="r245B" type="number" step="any" value="2"></div></div>
+      <button class="btn" onclick="resolverRegla245()">Ejecutar método</button>
+    </div>
+
+    <div id="interpolacion" class="method-box hidden">
+      <h2>Interpolación Lineal</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> x1 ≠ x2 para calcular y; y1 ≠ y2 para despejar x.</div>
+      <div class="grid"><div><label>x1:</label><input id="ilX1" type="number" step="any" value="1"></div><div><label>y1:</label><input id="ilY1" type="number" step="any" value="2"></div></div>
+      <div class="grid"><div><label>x2:</label><input id="ilX2" type="number" step="any" value="4"></div><div><label>y2:</label><input id="ilY2" type="number" step="any" value="8"></div></div>
+      <div class="grid"><div><label>Calcular y dado x:</label><input id="ilX" type="number" step="any" value="2.5"></div><div><label>Calcular x dado y:</label><input id="ilY" type="number" step="any" value="5"></div></div>
+      <button class="btn" onclick="resolverInterpolacion()">Ejecutar método</button>
+    </div>
+
+    <div id="lagrange" class="method-box hidden">
+      <h2>Interpolación de Lagrange</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> no repetir valores de x; se recomienda usar pocos puntos para evitar oscilaciones.</div>
+      <label>Puntos (x,y), una pareja por línea:</label>
+      <textarea id="lgDatos">1,0.1411
+1.3,-0.6878
+1.6,-0.9962
+1.9,-0.5507
+2.2,0.3115</textarea>
+      <label>Evaluar en x:</label><input id="lgX" type="number" step="any" value="1.5">
+      <button class="btn" onclick="resolverLagrange()">Ejecutar método</button>
+    </div>
+
+    <div id="minimos" class="method-box hidden">
+      <h2>Mínimos Cuadrados</h2>
+      <div class="condiciones"><strong>Condiciones:</strong> x e y deben tener la misma cantidad de datos y el denominador no debe ser cero.</div>
+      <label>Valores x separados por coma:</label><input id="mcX" value="1,2,3,4">
+      <label>Valores y separados por coma:</label><input id="mcY" value="2,3,5,4">
+      <button class="btn" onclick="resolverMinimos()">Ejecutar método</button>
+    </div>
+
+    <div id="salida"></div>
+    <canvas id="grafica" width="900" height="360" class="hidden"></canvas>
+  </div>
+
+  <script src="../js/util.js"></script>
+  <script>
+    const metodos = ['gauss','biseccion','newton','simpson13','simpson38','regla245','interpolacion','lagrange','minimos'];
+    const salida = document.getElementById('salida');
+    const canvas = document.getElementById('grafica');
+    const ctx = canvas.getContext('2d');
+
+    function seleccionarMetodo(card, metodo) {
+      document.querySelectorAll('.option').forEach(op => op.classList.remove('selected'));
+      card.classList.add('selected');
+      metodos.forEach(id => document.getElementById(id).classList.add('hidden'));
+      salida.innerHTML = '';
+      canvas.classList.add('hidden');
+      document.getElementById(metodo).classList.remove('hidden');
+      document.getElementById(metodo).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function toggleMetodo() {
+    }
+
+    function mostrarResultado(html) { salida.innerHTML = `<div class="resultado">${html}</div>`; }
+    function mostrarError(msg) { salida.innerHTML = `<div class="error"><strong>Error:</strong> ${msg}</div>`; canvas.classList.add('hidden'); }
+
+    function parseVector(str) {
+      return str.split(',').map(v => Number(v.trim())).filter(v => !Number.isNaN(v));
+    }
+    function parseMatriz(str) {
+      return str.trim().split('\n').map(row => parseVector(row));
+    }
+    function parsePuntos(str) {
+      return str.trim().split('\n').map(line => {
+        const [x,y] = line.split(',').map(v => Number(v.trim()));
+        return {x, y};
+      }).filter(p => !Number.isNaN(p.x) && !Number.isNaN(p.y));
+    }
+
+    function crearFuncion(expr) {
+      // Lector seguro (js/util.js): no ejecuta texto como código
+      return compilarFormula(expr);
+    }
+
+    function distancia(x, y) {
+      return Math.max(...x.map((v, i) => Math.abs(v - y[i])));
+    }
+    function funcionLegible(expr) {
+  let legible = expr;
+
+  legible = legible.replace(/\*\*/g, "^");
+  legible = legible.replace(/\*/g, "·");
+  legible = legible.replace(/\bpi\b/gi, "π");
+
+  legible = legible.replace(/\bsin\b/g, "sen");
+  legible = legible.replace(/\bcos\b/g, "cos");
+  legible = legible.replace(/\btan\b/g, "tan");
+  legible = legible.replace(/\bsqrt\b/g, "√");
+  legible = legible.replace(/\bexp\b/g, "e^");
+  legible = legible.replace(/\blog\b/g, "ln");
+
+  legible = legible.replace(/x\^2/g, "x²");
+  legible = legible.replace(/x\^3/g, "x³");
+
+  return legible;
+}
+
+function tipoFuncion(expr) {
+  const e = expr.toLowerCase();
+
+  let tipos = [];
+
+  if (e.includes("sin") || e.includes("cos") || e.includes("tan")) {
+    tipos.push("trigonométrica");
+  }
+
+  if (e.includes("sqrt") || e.includes("**0.5") || e.includes("^0.5")) {
+    tipos.push("con raíz o radical");
+  }
+
+  if (e.includes("exp")) {
+    tipos.push("exponencial");
+  }
+
+  if (e.includes("log")) {
+    tipos.push("logarítmica");
+  }
+
+  if (e.includes("x*x") || e.includes("x**2") || e.includes("x^2")) {
+    tipos.push("cuadrática / parábola");
+  }
+
+  if (e.includes("x**3") || e.includes("x^3")) {
+    tipos.push("cúbica");
+  }
+
+  if (tipos.length === 0 && e.includes("x")) {
+    tipos.push("algebraica en x");
+  }
+
+  if (tipos.length === 0) {
+    tipos.push("constante o expresión numérica");
+  }
+
+  return tipos.join(", ");
+}
+
+function confirmarFuncion(expr, metodo) {
+  return `
+    <div class="entrada-legible">
+      <h3>Datos interpretados por el programa</h3>
+      <p><strong>Método:</strong> ${metodo}</p>
+      <p><strong>Función ingresada:</strong> <code>${expr}</code></p>
+      <p><strong>Forma legible:</strong> f(x) = <code>${funcionLegible(expr)}</code></p>
+      <p><strong>Tipo aproximado:</strong> ${tipoFuncion(expr)}</p>
+    </div>
+  `;
+}
+
+function convertirFilaAEcuacion(fila, resultado, numFila) {
+  let partes = [];
+
+  for (let j = 0; j < fila.length; j++) {
+    let coef = fila[j];
+
+    if (coef === 0) continue;
+
+    let signo = coef >= 0 ? "+" : "-";
+    let valor = Math.abs(coef);
+    let termino = `${valor}x${j + 1}`;
+
+    if (partes.length === 0) {
+      partes.push(coef < 0 ? `-${termino}` : termino);
+    } else {
+      partes.push(`${signo} ${termino}`);
+    }
+  }
+
+  return `<div class="ecuacion-linea">E${numFila}: ${partes.join(" ")} = ${resultado}</div>`;
+}
+
+function confirmarSistema(A, b, x0, tol, maxIter) {
+  let ecuaciones = "";
+
+  for (let i = 0; i < A.length; i++) {
+    ecuaciones += convertirFilaAEcuacion(A[i], b[i], i + 1);
+  }
+
+  return `
+    <div class="entrada-legible">
+      <h3>Datos interpretados por el programa</h3>
+      <p><strong>Método:</strong> Gauss-Seidel</p>
+      <p><strong>Matriz detectada:</strong> ${A.length} × ${A[0].length}</p>
+      <p><strong>Vector b:</strong> [${b.join(", ")}]</p>
+      <p><strong>Vector inicial x0:</strong> [${x0.join(", ")}]</p>
+      <p><strong>Tolerancia:</strong> ${tol}</p>
+      <p><strong>Máximo de iteraciones:</strong> ${maxIter}</p>
+      <p><strong>Sistema interpretado:</strong></p>
+      ${ecuaciones}
+    </div>
+  `;
+}
+
+function confirmarPuntos(datos, nombreMetodo) {
+  let filas = datos.map((p, i) => {
+    return `<div class="ecuacion-linea">P${i + 1}: (${p.x}, ${p.y})</div>`;
+  }).join("");
+
+  return `
+    <div class="entrada-legible">
+      <h3>Datos interpretados por el programa</h3>
+      <p><strong>Método:</strong> ${nombreMetodo}</p>
+      <p><strong>Cantidad de puntos:</strong> ${datos.length}</p>
+      ${filas}
+    </div>
+  `;
+}
+
+function confirmarVectores(x, y, nombreMetodo) {
+  return `
+    <div class="entrada-legible">
+      <h3>Datos interpretados por el programa</h3>
+      <p><strong>Método:</strong> ${nombreMetodo}</p>
+      <p><strong>Valores de x:</strong> [${x.join(", ")}]</p>
+      <p><strong>Valores de y:</strong> [${y.join(", ")}]</p>
+      <p><strong>Cantidad de datos:</strong> ${x.length}</p>
+    </div>
+  `;
+}
+function resolverGauss() {
+  try {
+    const A = parseMatriz(document.getElementById('gsA').value);
+    const b = parseVector(document.getElementById('gsB').value);
+
+    let x = parseVector(document.getElementById('gsX0').value);
+    const x0 = [...x];
+
+    const tol = Number(document.getElementById('gsTol').value);
+    const maxIter = Number(document.getElementById('gsMax').value);
+    const n = A.length;
+
+    if (!n || A.some(row => row.length !== n)) {
+      return mostrarError('La matriz A debe ser cuadrada.');
+    }
+
+    if (b.length !== n || x.length !== n) {
+      return mostrarError('El vector b y x0 deben tener el mismo tamaño que A.');
+    }
+
+    if (tol <= 0 || maxIter <= 0) {
+      return mostrarError('La tolerancia y las iteraciones deben ser positivas.');
+    }
+
+    for (let i = 0; i < n; i++) {
+      if (Math.abs(A[i][i]) < 1e-15) {
+        return mostrarError('División entre cero: hay un elemento cero en la diagonal principal.');
+      }
+    }
+
+    const confirmacion = confirmarSistema(A, b, x0, tol, maxIter);
+
+    let tabla = [];
+
+    for (let k = 1; k <= maxIter; k++) {
+      const xOld = [...x];
+
+      for (let i = 0; i < n; i++) {
+        let s1 = 0;
+        let s2 = 0;
+
+        for (let j = 0; j < i; j++) {
+          s1 += A[i][j] * x[j];
+        }
+
+        for (let j = i + 1; j < n; j++) {
+          s2 += A[i][j] * xOld[j];
+        }
+
+        x[i] = (b[i] - s1 - s2) / A[i][i];
+      }
+
+      tabla.push([k, ...x, distancia(x, xOld)]);
+
+      if (distancia(x, xOld) < tol) {
+        break;
+      }
+    }
+
+    let html = `
+      <h3>Resultado Gauss-Seidel</h3>
+      <p>Solución aproximada: [${x.map(v => v.toFixed(8)).join(', ')}]</p>
+    `;
+
+    html += tablaHTML(
+      ['Iter', ...x.map((_, i) => `x${i + 1}`), 'Error'],
+      tabla.map(r => r.map(v => typeof v === 'number' ? v.toFixed(8) : v))
+    );
+
+    mostrarResultado(confirmacion + html);
+
+  } catch(e) {
+    mostrarError('Revisa los datos ingresados. ' + e.message);
+  }
+}
+
+    function tablaHTML(headers, rows) {
+      let html = '<table class="tabla"><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+      rows.forEach(r => { html += '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>'; });
+      return html + '</table>';
+    }
+
+function resolverBiseccion() {
+  try {
+    const f = crearFuncion(document.getElementById('biF').value);
+
+    let a = Number(document.getElementById('biA').value);
+    let b = Number(document.getElementById('biB').value);
+
+    const tol = Number(document.getElementById('biTol').value);
+    const max = Number(document.getElementById('biMax').value);
+
+    if (a >= b)
+      return mostrarError('a debe ser menor que b.');
+
+    if (tol <= 0 || max <= 0)
+      return mostrarError('La tolerancia y las iteraciones deben ser positivas.');
+
+    if (f(a) * f(b) >= 0)
+      return mostrarError('No se cumple f(a)·f(b) < 0. Cambia el intervalo.');
+
+    let tabla = [];
+    let puntos = [];
+    let p;
+
+    for (let i = 1; i <= max; i++) {
+
+      p = (a + b) / 2;
+
+      puntos.push(p);
+
+      tabla.push([
+        i,
+        p,
+        f(p)
+      ]);
+
+      // criterio de paro
+      if (Math.abs(f(p)) < tol)
+        break;
+
+      // actualización del intervalo
+      if (f(a) * f(p) > 0)
+        a = p;
+      else
+        b = p;
+    }
+
+    const expr = document.getElementById('biF').value;
+
+    const confirmacion = confirmarFuncion(expr, "Bisección");
+
+    mostrarResultado(
+      confirmacion +
+      `<h3>Resultado Bisección</h3>
+       <p>Raíz aproximada: ${p.toFixed(10)}</p>` +
+      tablaHTML(
+        ['Iter', 'p', 'f(p)'],
+        tabla.map(r => [
+          r[0],
+          r[1].toFixed(10),
+          r[2].toExponential(4)
+        ])
+      )
+    );
+
+  } catch (e) {
+    mostrarError(e.message);
+  }
+}
+
+    function resolverNewton() {
+      try {
+        const f = crearFuncion(document.getElementById('nwF').value);
+        let p0 = Number(document.getElementById('nwX0').value);
+        const tol = Number(document.getElementById('nwTol').value), max = Number(document.getElementById('nwMax').value);
+        if (tol <= 0 || max <= 0) return mostrarError('La tolerancia y las iteraciones deben ser positivas.');
+        const h = 1e-5;
+        const fp = x => (f(x+h)-f(x-h))/(2*h);
+        let tabla = [], puntos = [p0], p = p0;
+        for (let i=1; i<=max; i++) {
+          const der = fp(p0);
+          if (Math.abs(der) < 1e-12) return mostrarError('La derivada es cero o muy cercana a cero.');
+          p = p0 - f(p0)/der;
+          puntos.push(p); tabla.push([i, p, f(p)]);
+          if (Math.abs(p-p0) < tol) break;
+          p0 = p;
+        }
+        const expr = document.getElementById('nwF').value;
+const confirmacion = confirmarFuncion(expr, "Newton-Raphson");
+
+mostrarResultado(
+  confirmacion +
+  `<h3>Resultado Newton-Raphson</h3>
+   <p>Raíz aproximada: ${p.toFixed(10)}</p>` +
+  tablaHTML(['Iter','p','f(p)'], tabla.map(r => [r[0], r[1].toFixed(10), r[2].toExponential(4)]))
+);
+        dibujarFuncion(f, Math.min(...puntos)-2, Math.max(...puntos)+2, puntos, 'Newton-Raphson');
+      } catch(e) { mostrarError('Función o datos inválidos. ' + e.message); }
+    }
+
+function resolverSimpson13() {
+  try {
+    const f = crearFuncion(document.getElementById('s13F').value);
+
+    const a = Number(document.getElementById('s13A').value);
+    const b = Number(document.getElementById('s13B').value);
+    const n = Number(document.getElementById('s13N').value);
+
+    if (a >= b) {
+      return mostrarError('a debe ser menor que b.');
+    }
+
+    if (n <= 0 || n % 2 !== 0) {
+      return mostrarError('Para Simpson 1/3, n debe ser positivo y par.');
+    }
+
+    const h = (b - a) / n;
+
+    let suma = f(a) + f(b);
+    let puntos = [a, b];
+
+    for (let i = 1; i < n; i++) {
+      const x = a + i * h;
+      puntos.push(x);
+
+      suma += (i % 2 === 0 ? 2 : 4) * f(x);
+    }
+
+    const res = (h / 3) * suma;
+
+    const expr = document.getElementById('s13F').value;
+    const confirmacion = confirmarFuncion(expr, "Simpson 1/3");
+
+    mostrarResultado(
+      confirmacion +
+      `<h3>Resultado Simpson 1/3</h3>
+       <p>h = ${h.toFixed(8)}</p>
+       <p>Integral aproximada = <strong>${res.toFixed(10)}</strong></p>`
+    );
+    dibujarArea(f, a, b, puntos, 'simpson');
+  } catch (error) {
+    mostrarError("Error en el cálculo: " + error.message);
+  }
+}
+
+    function resolverSimpson38() {
+      try {
+        const f = crearFuncion(document.getElementById('s38F').value);
+        const a = Number(document.getElementById('s38A').value), b = Number(document.getElementById('s38B').value);
+        const n = Number(document.getElementById('s38N').value);
+        if (a >= b) return mostrarError('a debe ser menor que b.');
+        if (n <= 0 || n % 3 !== 0) return mostrarError('Para Simpson 3/8, n debe ser positivo y múltiplo de 3.');
+        const h = (b-a)/n; let suma = f(a)+f(b); let puntos = [a,b];
+        for (let i=1; i<n; i++) { const x = a+i*h; puntos.push(x); suma += (i%3===0 ? 2 : 3)*f(x); }
+        const res = (3*h/8)*suma;
+const expr = document.getElementById('s38F').value;
+const confirmacion = confirmarFuncion(expr, "Simpson 3/8");
+
+mostrarResultado(
+  confirmacion +
+  `<h3>Resultado Simpson 3/8</h3>
+   <p>h = ${h.toFixed(8)}</p>
+   <p>Integral aproximada = <strong>${res.toFixed(10)}</strong></p>`
+);
+dibujarArea(f, a, b, puntos, ' Regla de 3/8');
+      } catch(e) { mostrarError('Función o datos inválidos. ' + e.message); }
+    }
+
+    function resolverRegla245() {
+      try {
+        const f = crearFuncion(document.getElementById('r245F').value);
+        const a = Number(document.getElementById('r245A').value), b = Number(document.getElementById('r245B').value);
+        if (a >= b) return mostrarError('a debe ser menor que b.');
+        const h = (b-a)/4, coef = [7,32,12,32,7];
+        const xs = [0,1,2,3,4].map(i => a+i*h);
+        let suma = 0; xs.forEach((x,i) => suma += coef[i]*f(x));
+        const res = (2*h/45)*suma;
+const expr = document.getElementById('r245F').value;
+const confirmacion = confirmarFuncion(expr, "Regla 2/45");
+
+mostrarResultado(
+  confirmacion +
+  `<h3>Resultado Regla 2/45</h3>
+   <p>h = ${h.toFixed(8)}</p>
+   <p>Puntos: ${xs.map(v=>v.toFixed(4)).join(', ')}</p>
+   <p>Integral aproximada = <strong>${res.toFixed(10)}</strong></p>`
+);
+dibujarArea(f, a, b, xs, "Regla 2/45");
+      } catch(e) { mostrarError('Función o datos inválidos. ' + e.message); }
+    }
+
+    function resolverInterpolacion() {
+      const x1 = Number(document.getElementById('ilX1').value), y1 = Number(document.getElementById('ilY1').value);
+      const x2 = Number(document.getElementById('ilX2').value), y2 = Number(document.getElementById('ilY2').value);
+      const x = Number(document.getElementById('ilX').value), y = Number(document.getElementById('ilY').value);
+      if (x1 === x2) return mostrarError('No se puede calcular y: x1 y x2 no deben ser iguales.');
+      let yCalc = y1 + (x-x1)*(y2-y1)/(x2-x1);
+      let xCalc = 'No calculable';
+      if (y2 !== y1) xCalc = (x1 + (y-y1)*(x2-x1)/(y2-y1)).toFixed(8);
+      mostrarResultado(`<h3>Resultado Interpolación Lineal</h3><p>Dado x = ${x}, y ≈ <strong>${yCalc.toFixed(8)}</strong></p><p>Dado y = ${y}, x ≈ <strong>${xCalc}</strong></p>`);
+      dibujarPuntosRecta([{x:x1,y:y1},{x:x2,y:y2},{x:x,y:yCalc}], 'Interpolación Lineal');
+    }
+
+    function resolverLagrange() {
+      try {
+        const datos = parsePuntos(document.getElementById('lgDatos').value);
+        const X = Number(document.getElementById('lgX').value);
+        if (datos.length < 2) return mostrarError('Ingresa al menos dos puntos.');
+        const xs = datos.map(p => p.x);
+        if (new Set(xs).size !== xs.length) return mostrarError('No deben repetirse valores de x.');
+        const confirmacion = confirmarPuntos(datos, "Interpolación de Lagrange");
+        function P(X) {
+          let lag = 0;
+          for (let k=0; k<datos.length; k++) {
+            let L = 1;
+            for (let i=0; i<datos.length; i++) if (i !== k) L *= (X-datos[i].x)/(datos[k].x-datos[i].x);
+            lag += datos[k].y * L;
+          }
+          return lag;
+        }
+        const res = P(X);
+        mostrarResultado(
+  confirmacion +
+  `<h3>Resultado Lagrange</h3>
+   <p>P(${X}) ≈ <strong>${res.toFixed(10)}</strong></p>`
+);
+        dibujarLagrange(P, datos, X, res);
+      } catch(e) { mostrarError('Revisa los puntos ingresados. ' + e.message); }
+    }
+
+    function resolverMinimos() {
+      const x = parseVector(document.getElementById('mcX').value);
+      const y = parseVector(document.getElementById('mcY').value);
+      if (x.length !== y.length || x.length < 2) return mostrarError('x e y deben tener la misma cantidad de datos y al menos 2 puntos.');
+      const confirmacion = confirmarVectores(x, y, "Mínimos Cuadrados");
+      const n = x.length, sx = x.reduce((a,b)=>a+b,0), sy = y.reduce((a,b)=>a+b,0);
+      const sxy = x.reduce((acc,xi,i)=>acc+xi*y[i],0), sx2 = x.reduce((acc,xi)=>acc+xi*xi,0);
+      const den = n*sx2 - sx*sx;
+      if (Math.abs(den) < 1e-12) return mostrarError('El denominador es cero; no se puede ajustar la recta.');
+      const m = (n*sxy - sx*sy)/den, b = (sy - m*sx)/n;
+      mostrarResultado(
+  confirmacion +
+  `<h3>Resultado Mínimos Cuadrados</h3>
+   <p>m = ${m.toFixed(8)}</p>
+   <p>b = ${b.toFixed(8)}</p>
+   <p>Recta ajustada: <strong>y = ${m.toFixed(6)}x + ${b.toFixed(6)}</strong></p>`
+);
+      dibujarRegresion(x.map((xi,i)=>({x:xi,y:y[i]})), m, b);
+    }
+
+    function limpiarCanvas() { ctx.clearRect(0,0,canvas.width,canvas.height); canvas.classList.remove('hidden'); }
+    function mapear(puntos, margin=45) {
+      const xs = puntos.map(p=>p.x), ys = puntos.map(p=>p.y);
+      let minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      if (minX === maxX) { minX -= 1; maxX += 1; }
+      if (minY === maxY) { minY -= 1; maxY += 1; }
+      const sx = x => margin + (x-minX)/(maxX-minX)*(canvas.width-2*margin);
+      const sy = y => canvas.height-margin - (y-minY)/(maxY-minY)*(canvas.height-2*margin);
+      return {sx, sy, minX, maxX, minY, maxY};
+    }
+    function ejes(m) {
+      ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(45, canvas.height-45); ctx.lineTo(canvas.width-25, canvas.height-45); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(45, 25); ctx.lineTo(45, canvas.height-45); ctx.stroke();
+      ctx.fillStyle = '#333'; ctx.font = '14px Arial';
+    }
+    function dibujarFuncion(f, a, b, puntosX, titulo) {
+      limpiarCanvas();
+      let pts=[]; for(let i=0;i<=250;i++){let x=a+(b-a)*i/250; let y=f(x); if(Number.isFinite(y)) pts.push({x,y});}
+      puntosX.forEach(x=>{ const y=f(x); if(Number.isFinite(y)) pts.push({x,y}); });
+      const m = mapear(pts); ejes(m);
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath();
+      pts.slice(0,251).forEach((p,i)=> i?ctx.lineTo(m.sx(p.x),m.sy(p.y)):ctx.moveTo(m.sx(p.x),m.sy(p.y))); ctx.stroke();
+      ctx.fillStyle = '#e74c3c'; puntosX.forEach(x=>{ const y=f(x); ctx.beginPath(); ctx.arc(m.sx(x),m.sy(y),4,0,Math.PI*2); ctx.fill(); });
+      ctx.fillStyle = '#143659'; ctx.font = '18px Arial'; ctx.fillText(titulo, 55, 28);
+    }
+    function dibujarArea(f, a, b, puntosX, titulo) {
+      limpiarCanvas();
+      let pts=[]; for(let i=0;i<=250;i++){let x=a+(b-a)*i/250; let y=f(x); if(Number.isFinite(y)) pts.push({x,y});}
+      const all = [...pts, ...puntosX.map(x=>({x,y:f(x)})), {x:a,y:0},{x:b,y:0}];
+      const m = mapear(all); ejes(m);
+      ctx.fillStyle = 'rgba(80, 180, 230, 0.35)'; ctx.beginPath(); ctx.moveTo(m.sx(a), m.sy(0));
+      pts.forEach(p=>ctx.lineTo(m.sx(p.x), m.sy(p.y))); ctx.lineTo(m.sx(b), m.sy(0)); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(m.sx(p.x),m.sy(p.y)):ctx.moveTo(m.sx(p.x),m.sy(p.y))); ctx.stroke();
+      ctx.fillStyle = '#e74c3c'; puntosX.forEach(x=>{ const y=f(x); ctx.beginPath(); ctx.arc(m.sx(x),m.sy(y),4,0,Math.PI*2); ctx.fill(); });
+      ctx.fillStyle = '#143659'; ctx.font = '18px Arial'; ctx.fillText(titulo, 55, 28);
+    }
+    function dibujarPuntosRecta(datos, titulo) {
+      limpiarCanvas(); const m = mapear(datos); ejes(m);
+      ctx.strokeStyle = '#2863a8'; ctx.lineWidth = 2; ctx.beginPath(); datos.slice(0,2).forEach((p,i)=> i?ctx.lineTo(m.sx(p.x),m.sy(p.y)):ctx.moveTo(m.sx(p.x),m.sy(p.y))); ctx.stroke();
+      ctx.fillStyle = '#e74c3c'; datos.forEach(p=>{ ctx.beginPath(); ctx.arc(m.sx(p.x),m.sy(p.y),5,0,Math.PI*2); ctx.fill(); });
+      ctx.fillStyle = '#143659'; ctx.font = '18px Arial'; ctx.fillText(titulo, 55, 28);
+    }
+    function dibujarLagrange(P, datos, X, Y) {
+      limpiarCanvas(); const minX=Math.min(...datos.map(p=>p.x)), maxX=Math.max(...datos.map(p=>p.x));
+      let pts=[]; for(let i=0;i<=250;i++){let x=minX+(maxX-minX)*i/250; pts.push({x,y:P(x)});} pts.push(...datos,{x:X,y:Y});
+      const m=mapear(pts); ejes(m);
+      ctx.strokeStyle='#2863a8'; ctx.lineWidth=2; ctx.beginPath(); pts.slice(0,251).forEach((p,i)=>i?ctx.lineTo(m.sx(p.x),m.sy(p.y)):ctx.moveTo(m.sx(p.x),m.sy(p.y))); ctx.stroke();
+      ctx.fillStyle='#e74c3c'; datos.forEach(p=>{ctx.beginPath();ctx.arc(m.sx(p.x),m.sy(p.y),5,0,Math.PI*2);ctx.fill();});
+      ctx.fillStyle='#2e7d32'; ctx.beginPath(); ctx.arc(m.sx(X),m.sy(Y),6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#143659'; ctx.font='18px Arial'; ctx.fillText('Interpolación de Lagrange',55,28);
+    }
+    function dibujarRegresion(datos, mRecta, bRecta) {
+      limpiarCanvas(); const minX=Math.min(...datos.map(p=>p.x)), maxX=Math.max(...datos.map(p=>p.x));
+      const linea=[{x:minX,y:mRecta*minX+bRecta},{x:maxX,y:mRecta*maxX+bRecta}]; const m=mapear([...datos,...linea]); ejes(m);
+      ctx.strokeStyle='#2863a8'; ctx.lineWidth=2; ctx.beginPath(); linea.forEach((p,i)=>i?ctx.lineTo(m.sx(p.x),m.sy(p.y)):ctx.moveTo(m.sx(p.x),m.sy(p.y))); ctx.stroke();
+      ctx.fillStyle='#e74c3c'; datos.forEach(p=>{ctx.beginPath();ctx.arc(m.sx(p.x),m.sy(p.y),5,0,Math.PI*2);ctx.fill();});
+      ctx.fillStyle='#143659'; ctx.font='18px Arial'; ctx.fillText('Mínimos Cuadrados',55,28);
+    }
+  </script>
+</body>
+</html>
