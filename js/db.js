@@ -9,7 +9,7 @@ const DB = {
   cargar() {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
     if (!E || E.version !== 4) { E = datosIniciales(); E.version = 4; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); this.guardar(); }
-    E.bitacora = E.bitacora || [];
+    E.bitacora = E.bitacora || []; asegurarEquipo();
     E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || [];
     return E;
   },
@@ -449,4 +449,19 @@ function limpiarPropuestas() {
   E.libro = E.libro.filter(l => !ids.has(l.ref));
   E.propuestas = []; E.bitacora = []; E.posts.forEach(p => { if (p.propuesta) delete p.propuesta; });
   E.notifs = E.notifs.filter(n => !/predicci|propuest/i.test(n.texto));
+}
+
+/* crea las cuentas del equipo de prueba si todavía no existen en este navegador */
+function asegurarEquipo() {
+  let cambio = false;
+  (CONFIG.cuentasEquipo || []).forEach(c => {
+    const u = E.usuarios[c.id];
+    if (u) { if (c.admin && u.rol !== 'admin') { u.rol = 'admin'; cambio = true; } if (!c.admin && u.rol === 'admin' && c.usuario) { u.rol = 'estudiante'; cambio = true; } return; }
+    const base = E.usuarios.u_valeria || Object.values(E.usuarios)[0];
+    E.usuarios[c.id] = { ...JSON.parse(JSON.stringify(base)), id: c.id, usuario: c.usuario, nombre: c.nombre, nombreVis: 'todos', nombreElegidos: [], carrera: 'Sin carrera', gen: null, semestre: null,
+      verificado: 'si', documento: null, contacto: 'equipo de prueba', rol: c.admin ? 'admin' : 'estudiante', bio: '', cancion: null, playlists: [], insignias: ['verificado'], ocultas: [],
+      amigos: [], bloqueados: [], silenciados: [], horario: [], racha: { dias: 0, ultimo: null, semana: [] }, diarios: { fecha: null }, limites: { fecha: null }, reputacion: 0, creado: new Date().toISOString(), suspendido: false, equipo: true, dispositivo: 'equipo-' + c.id };
+    mover(c.id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida'); cambio = true;
+  });
+  if (cambio) DB.guardar();
 }

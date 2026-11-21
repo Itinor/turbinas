@@ -11,7 +11,17 @@
    propuestasDemo: false = las propuestas arrancan en cero (sin las de ejemplo). */
 const CONFIG = {
   entrarDirecto: null,
-  modoPrueba: true,
+  modoPrueba: false,
+  /* cuentas del equipo de prueba: en la bienvenida pulsan "Soy admin", ponen la clave y eligen su cuenta.
+     Solo la de Diego es admin; si quieres que alguien más lo sea, ponle admin: true. */
+  cuentasEquipo: [
+    { id: 'u_diego', nombre: 'Diego', admin: true },
+    { id: 'u_fernanda', usuario: 'fernanda', nombre: 'Fernanda' },
+    { id: 'u_ivana', usuario: 'ivana', nombre: 'Ivana' },
+    { id: 'u_rebeca', usuario: 'rebeca', nombre: 'Rebeca' },
+    { id: 'u_santiago', usuario: 'santiago', nombre: 'Santiago' },
+    { id: 'u_sasha', usuario: 'sasha', nombre: 'Sasha' }
+  ],
   claveAdmin: 'castor-admin',
   dineroReal: false,
   propuestasDemo: false,

@@ -87,7 +87,7 @@ herramientas/metodos.html  métodos numéricos con el lector seguro
 5. **App de celular.** Con Capacitor se empaqueta esta misma carpeta como app de Android e iOS.
 
 ## Modo prueba (para compartir con amigos)
-- En la bienvenida cada quien entra solo con un **@usuario** (sin correo) y queda verificado.
+- Cuentas del equipo (`CONFIG.cuentasEquipo`): "Soy admin" → clave → eligen su cuenta. Los demás se registran normal con correo o número.
 - El admin entra con **"Soy admin"** y la clave de `CONFIG.claveAdmin` en `js/datos.js`.
 - Las propuestas arrancan en cero (`CONFIG.propuestasDemo: false`).
 - Mientras `CONFIG.dineroReal` sea `false`, el admin puede borrar predicciones con ramitas (se devuelve lo apostado).

@@ -22,8 +22,8 @@ VISTAS.bienvenida = {
         <div class="fila" style="flex-wrap:nowrap"><span class="pastilla" style="display:grid;place-items:center">@</span><label class="oculto" for="rr">Usuario</label><input id="rr" name="usuario" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9._]+" placeholder="tu.usuario" autocomplete="off" autocapitalize="off"></div>
         <label class="oculto" for="rrc">Carrera</label><select id="rrc" name="carrera"><option value="">Carrera (opcional)</option>${CARRERAS.map(c => `<option>${esc(c.nombre || c)}</option>`).join('')}</select>
         <button class="btn2 ancho">Entrar a probar</button><button type="button" class="btn3" style="align-self:center;min-height:36px" data-a="soyAdmin">Soy admin</button></form>`
-      : `<div class="tarjeta pila" style="gap:8px"><b>¿Solo quieres probar?</b><span class="peq gris">Entra con una cuenta de ejemplo.</span>
-        <div class="fila"><button class="btn3" data-a="regDemo" data-u="u_valeria">Valeria</button><button class="btn3" data-a="regDemo" data-u="u_jorge">Jorge</button><button class="btn3" data-a="soyAdmin">Soy admin</button></div></div>`}
+      : `<div class="tarjeta pila" style="gap:8px"><b>¿Eres del equipo de prueba?</b><span class="peq gris">Pon la clave y elige tu cuenta.</span>
+        <div class="fila"><button class="btn2" data-a="soyAdmin">Soy admin</button></div></div>`}
     </div>`;
     if (r.paso === 1) return top + `<div class="pila">
       <div class="entre"><h1>Sube tu horario</h1><span class="insignia i-morado">Opcional</span></div>
@@ -96,4 +96,10 @@ FORMS.regRapido = d => {
   u.verificado = 'si'; DB.guardar(); aviso(`¡Bienvenido, @${nombre}! Te regalamos ${REGLAS.regaloBienvenida} ramitas.`); ir('#/inicio');
 };
 ACC.soyAdmin = () => abrirHoja(`<form class="pila" data-form="entrarAdmin"><h2>Entrar como admin</h2><label class="oculto" for="cla">Clave</label><input id="cla" name="clave" type="password" required placeholder="Clave de admin" autocomplete="off"><button class="btn ancho">Entrar</button></form>`);
-FORMS.entrarAdmin = d => { if (d.clave !== CONFIG.claveAdmin) return aviso('Clave incorrecta'); const a = Object.values(DB.estado.usuarios).find(u => u.rol === 'admin'); cerrarHoja(); DB.entrar(a.id); ir('#/inicio'); };
+FORMS.entrarAdmin = d => {
+  if (d.clave !== CONFIG.claveAdmin) return aviso('Clave incorrecta');
+  const cuentas = (CONFIG.cuentasEquipo || []).filter(c => DB.usuario(c.id));
+  if (!cuentas.length) { const a = Object.values(DB.estado.usuarios).find(u => u.rol === 'admin'); cerrarHoja(); DB.entrar(a.id); return ir('#/inicio'); }
+  abrirHoja(`<h2>¿Cuál es tu cuenta?</h2><div class="pila" style="gap:8px">${cuentas.map(c => { const u = DB.usuario(c.id); return `<button class="tarjeta fila" style="flex-wrap:nowrap;text-align:left;box-shadow:none;border:1.5px solid var(--linea);padding:10px 12px" data-a="elegirCuenta" data-id="${c.id}">${avatar(c.id).replace('<a ', '<span ').replace('</a>', '</span>')}<span style="flex:1"><b>${esc(c.nombre)}</b><br><span class="mini gris">@${esc(u.usuario)}</span></span>${u.rol === 'admin' ? '<span class="insignia i-morado">Admin</span>' : ''}</button>`; }).join('')}</div>`);
+};
+ACC.elegirCuenta = b => { cerrarHoja(); DB.entrar(b.dataset.id); aviso(`Hola, ${CONFIG.cuentasEquipo.find(c => c.id === b.dataset.id)?.nombre || ''}`); ir('#/inicio'); };
