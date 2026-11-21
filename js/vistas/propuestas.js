@@ -116,7 +116,7 @@ function campoDuracion(tipo, p) {
   return `<div><label class="campo" for="dur">${tipo === 'actividad' ? '¿Cuándo es?' : '¿Cuánto dura?'}</label><select id="dur" name="minutos" data-cambio="duracion">
     ${p ? `<option value="igual" ${sel === 'igual' ? 'selected' : ''}>Dejar como está</option>` : ''}${DURACIONES.map(([m, n]) => `<option value="${m}" ${String(sel) === String(m) ? 'selected' : ''}>${tipo === 'actividad' ? 'En ' + n : n}</option>`).join('')}<option value="otra" ${otra ? 'selected' : ''}>Elegir fecha y hora…</option></select>
     ${otra ? `<input style="margin-top:8px" name="cierreExacto" type="datetime-local" required min="${minimo}" value="${local}" aria-label="Fecha y hora">` : ''}
-    <p class="mini gris" style="margin:4px 0 0">Mínimo ${REGLAS.duracionMin} minutos. ${tipo === 'prediccion' ? 'Ej.: “¿Llega a tiempo a clase?” puede durar 15 min.' : ''}</p></div>`;
+    <p class="mini gris" style="margin:4px 0 0">Mínimo ${REGLAS.duracionMin} minutos.</p></div>`;
 }
 function leerDuracion(d) {
   UI.duracion = null;

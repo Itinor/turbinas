@@ -1,9 +1,9 @@
 /* El rincón del castor: racha, retos académicos, diarios, mejores de la semana y juegos */
 'use strict';
 const JUEGOS_EXTERNOS = {
-  runner: { nombre: 'Runner', desc: 'Corre, salta y no te caigas', src: 'juegos/runner/index.html?v=202611211540', ico: 'runner', tinte: '#FFF6DA', color: '#8A5A00' },
-  spacewar: { nombre: 'Space War', desc: 'Derrota al jefe asteroide', src: 'juegos/spacewar/index.html?v=202611211540', ico: 'nave', tinte: '#DCE8FB', color: '#174EAD' },
-  royal: { nombre: 'Ruleta y tragamonedas', desc: 'Juega con tus ramitas', src: 'juegos/royal/index.html?v=202611211540', ico: 'ruleta', tinte: '#F3EFFA', color: '#4B1F7A' }
+  runner: { nombre: 'Runner', desc: 'Corre, salta y no te caigas', src: 'juegos/runner/index.html?v=202611211643', ico: 'runner', tinte: '#FFF6DA', color: '#8A5A00' },
+  spacewar: { nombre: 'Space War', desc: 'Derrota al jefe asteroide', src: 'juegos/spacewar/index.html?v=202611211643', ico: 'nave', tinte: '#DCE8FB', color: '#174EAD' },
+  royal: { nombre: 'Ruleta y tragamonedas', desc: 'Juega con tus ramitas', src: 'juegos/royal/index.html?v=202611211643', ico: 'ruleta', tinte: '#F3EFFA', color: '#4B1F7A' }
 };
 VISTAS.juegos = {
   titulo: 'El rincón del castor', nav: 'juegos',
@@ -18,7 +18,6 @@ VISTAS.juegos = {
       <section class="tarjeta" style="background:var(--g-marca);color:#fff;border:0">
         <span class="insignia" style="background:var(--g-accion);color:#1B1530">Retos de tu carrera</span>
         <h2 style="margin:10px 0 2px;font-size:22px">${esc(CARRERAS.find(c => c.nombre === u.carrera)?.facultad || 'Ingeniería')}</h2>
-        <p class="peq" style="margin:0;opacity:.92">Ejercicios del muy fácil al muy difícil. Entre más difícil, más ramitas.</p>
         <div class="fila" style="margin-top:12px"><a class="btn" href="#/retos">Jugar retos</a><a class="btn3" style="background:rgba(255,255,255,.14);color:#fff;border:0" href="#/retos/niveles">Niveles</a><a class="btn3" style="background:rgba(255,255,255,.14);color:#fff;border:0" href="#/retos/crear">Crear nivel</a></div></section>
       <div class="seccion"><h2>Diarios</h2><span class="mini gris">Mantienen tu racha</span></div>
       <div class="rejilla3">${diarios.map(([k, t, ic, ti, co, p]) => `<a class="juego-tile" href="#/juego/${k}"><span class="ico" style="background:${ti};color:${co}">${icono(ic, 20)}</span><b style="font-size:14px;line-height:1.2">${t}</b><span class="mini" style="font-weight:700;color:${d[k] ? 'var(--okTxt)' : '#8A5A00'}">${d[k] ? 'Hecho' : '+' + p}</span></a>`).join('')}</div>

@@ -19,22 +19,21 @@ VISTAS.perfil = {
     const stats = [[E_aportes(u), 'Aportes'], [u.amigos.length, 'Amigos'], [u.racha.dias || 0, 'Racha']];
     return `<div class="pila">
       <section class="tarjeta" style="text-align:center;padding:0;overflow:hidden">
-        <div style="height:84px;background:var(--g-banda);position:relative">${mio ? `<a class="icono-btn" href="#/ajustes" aria-label="Ajustes" style="position:absolute;right:6px;top:6px;color:#fff">${icono('ajustes')}</a>` : ''}</div>
-        <div style="margin-top:-50px"><span class="marco" style="background:${grad}">${avatar(u.id, true)}</span></div>
+        <div style="height:56px;background:var(--g-banda);position:relative">${mio ? `<a class="icono-btn" href="#/ajustes" aria-label="Ajustes" style="position:absolute;right:4px;top:4px;color:#fff;min-width:44px;min-height:44px">${icono('ajustes', 20)}</a>` : ''}</div>
+        <div style="margin-top:-46px;position:relative;z-index:1"><span class="marco" style="background:${grad}">${avatar(u.id, true)}</span></div>
         <div style="padding:8px 16px 18px"><h2 style="font-size:22px">@${esc(u.usuario)}</h2><p class="peq gris" style="margin:4px 0 0">${esc(subNombre(u.id))}</p>
           ${u.bio ? `<p style="margin:10px 0 0">${esc(u.bio)}</p>` : ''}
           <span class="insignia i-morado" style="margin-top:10px">Reputación ${rango} · ${u.reputacion} pts</span>
           <div class="fila" style="justify-content:center;margin-top:12px">${mio ? '<a class="btn3" href="#/editar-perfil">Editar perfil</a>' : `<button class="${amigo ? 'btn3' : 'btn2'}" data-a="amigo" data-u="${u.id}">${amigo ? 'Amigos' : 'Agregar amigo'}</button>${DB.puedeEscribir(u.id) ? `<button class="btn3" data-a="escribirA" data-u="${u.id}">Escribir</button>` : ''}<button class="icono-btn" data-a="menuPerfil" data-u="${u.id}" aria-label="Más opciones">${icono('puntos')}</button>`}</div></div></section>
       ${ins.length ? `<div class="fila">${ins.map(i => `<span class="insignia ${INSIGNIAS[i].clase}">${INSIGNIAS[i].texto}</span>`).join('')}</div>` : ''}
-      ${u.cancion ? `<section class="tarjeta" style="background:#1B1530;color:#fff;border:0"><div class="fila" style="flex-wrap:nowrap"><span style="width:52px;height:52px;border-radius:12px;background:var(--g-marca);display:grid;place-items:center;flex:none;color:var(--amarillo)">${icono('musica', 24)}</span>
+      ${u.cancion ? `<section class="tarjeta" style="background:#1B1530;color:#fff;border:0"><div class="fila" style="flex-wrap:nowrap">${vinilo(u.cancion)}
         <span style="flex:1"><span class="etiqueta" style="color:var(--amarillo)">Canción del perfil</span><br><b>${esc(u.cancion.titulo)}</b><br><span class="mini" style="color:#C9C2DA">${esc(u.cancion.artista || '')}</span></span>
-        ${u.cancion.archivo ? `<button class="icono-btn" style="background:var(--g-accion);color:#1B1530;border-radius:50%;width:48px;height:48px" data-a="playPerfil" data-src="${esc(u.cancion.archivo)}" aria-label="Reproducir canción">${icono('play', 20)}</button>` : ''}</div>
+        ${u.cancion.archivo ? `<button class="icono-btn" style="background:var(--g-accion);color:#1B1530;border-radius:50%;width:48px;height:48px" data-a="playPerfil" data-src="${esc(u.cancion.archivo)}" aria-label="Reproducir o pausar la canción" id="btnPlay">${icono(audioPerfil && !audioPerfil.paused && audioPerfil.dataset.src === u.cancion.archivo ? 'pausa' : 'play', 20)}</button>` : ''}</div>
         ${sp ? `<iframe title="Reproductor de Spotify" src="${sp}" width="100%" height="80" style="border:0;border-radius:12px;margin-top:10px" allow="encrypted-media"></iframe>` : u.cancion.enlace && urlSegura(u.cancion.enlace) ? `<a class="btn3" style="margin-top:10px" href="${esc(u.cancion.enlace)}" target="_blank" rel="noopener">Escuchar</a>` : ''}</section>` : ''}
       ${u.playlists.length ? `<section class="tarjeta"><h2 style="margin-bottom:8px">${mio ? 'Mis playlists' : 'Sus playlists'}</h2>${u.playlists.map(p => { const [, s, c] = servicioDe(p.url); const href = urlSegura(p.url); return `<a ${href ? `href="${esc(href)}" target="_blank" rel="noopener"` : ''} class="fila" style="flex-wrap:nowrap;padding:8px 0;border-bottom:1px solid var(--linea);text-decoration:none;color:inherit"><span style="width:40px;height:40px;border-radius:10px;background:var(--g-marca);flex:none"></span><b class="peq" style="flex:1">${esc(p.nombre)}</b><span class="insignia ${c}">${s}</span></a>`; }).join('')}</section>` : ''}
       <div class="rejilla3">${stats.map(([v, t]) => `<div class="tarjeta" style="text-align:center;padding:12px 6px"><b style="font-family:Sora,sans-serif;font-size:22px">${v}</b><br><span class="mini gris">${t}</span></div>`).join('')}</div>
       ${mio ? `<a href="#/ramitas" class="tarjeta entre" style="text-decoration:none;color:inherit"><span><h2>Tus ramitas</h2><span class="mini gris">Ver movimientos</span></span><b style="font-family:Sora,sans-serif;font-size:28px;color:var(--moradoTxt)">${numero(DB.saldo())}</b></a>
-        ${yo.verificado !== 'si' ? `<a href="#/verificar" class="tarjeta fila" style="flex-wrap:nowrap;text-decoration:none;color:inherit;border:2px solid var(--azul)">${icono('ok', 22, 'style="color:var(--azulTxt)"')}<span><b>${yo.verificado === 'pendiente' ? 'Revisando tu documento' : 'Verifica que eres estudiante'}</b><br><span class="mini gris">Para votar, opinar y usar predicciones</span></span></a>` : ''}` : ''}
-      <p class="mini gris" style="text-align:center">Proyecto independiente, creado por y para estudiantes. No afiliado ni administrado por la universidad.</p></div>`;
+        ${yo.verificado !== 'si' ? `<a href="#/verificar" class="tarjeta fila" style="flex-wrap:nowrap;text-decoration:none;color:inherit;border:2px solid var(--azul)">${icono('ok', 22, 'style="color:var(--azulTxt)"')}<span><b>${yo.verificado === 'pendiente' ? 'Revisando tu documento' : 'Verifica que eres estudiante'}</b><br><span class="mini gris">Para votar, opinar y usar predicciones</span></span></a>` : ''}` : ''}</div>`;
   },
   montar([n]) {
     const u = n ? DB.porUsuario(n) : DB.yo();
@@ -45,8 +44,10 @@ function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).len
 async function reproducir(src, auto) {
   if (audioPerfil && !audioPerfil.paused && audioPerfil.dataset.src === src) { audioPerfil.pause(); return; }
   let real = src; if (src.startsWith('idb:')) { const blob = await ARCHIVOS.leer(src.slice(4)).catch(() => null); if (!blob) { if (!auto) aviso('Esta canción solo está guardada en el celular de quien la subió.'); return; } real = URL.createObjectURL(blob); }
-  audioPerfil?.pause(); audioPerfil = new Audio(real); audioPerfil.dataset.src = src;
-  audioPerfil.addEventListener('timeupdate', () => { if (audioPerfil.currentTime > 30) audioPerfil.pause(); });
+  audioPerfil?.pause(); audioPerfil = new Audio(real); if (src.startsWith('idb:')) audioPerfil.loop = true;
+  const marcar = on => { $('#vinilo')?.classList.toggle('girando', on); const b = $('#btnPlay'); if (b) b.innerHTML = icono(on ? 'pausa' : 'play', 20); };
+  audioPerfil.addEventListener('play', () => marcar(true)); audioPerfil.addEventListener('pause', () => marcar(false)); audioPerfil.dataset.src = src;
+  if (!audioPerfil.loop) audioPerfil.addEventListener('timeupdate', () => { if (audioPerfil.currentTime > 30) audioPerfil.pause(); });
   audioPerfil.play().catch(() => { if (!auto) aviso('No se pudo reproducir la canción'); });
 }
 window.addEventListener('hashchange', () => audioPerfil?.pause());
@@ -84,7 +85,8 @@ FORMS.guardarPerfil = d => {
   if (nuevo !== u.usuario && !DB.usuarioDisponible(nuevo)) return aviso('Ese nombre de usuario ya está ocupado');
   const playlists = [0, 1, 2].map(i => ({ nombre: (d['pn' + i] || '').trim(), url: (d['pu' + i] || '').trim(), servicio: servicioDe(d['pu' + i] || '')[1] })).filter(p => p.nombre && urlSegura(p.url));
   const archivo = d.cArchivo || u.cancion?.archivo || '', titulo = d.cTitulo.trim() || (d.cArchivo ? (UI.audioNombre || 'Mi canción') : '');
-  const cancion = titulo || d.cEnlace.trim() ? { titulo: titulo || 'Mi canción', artista: d.cArtista.trim(), enlace: urlSegura(d.cEnlace.trim()) || '', archivo } : null;
+  const portada = d.cArchivo ? (UI.audioPortada || null) : (u.cancion?.portada || null); UI.audioPortada = null;
+  const cancion = titulo || d.cEnlace.trim() ? { titulo: titulo || 'Mi canción', artista: d.cArtista.trim(), enlace: urlSegura(d.cEnlace.trim()) || '', archivo, portada: archivo ? portada : null } : null;
   if (d.foto === 'quitar') u.foto = null; else if (d.foto) u.foto = d.foto;
   DB.actualizarPerfil({ usuario: nuevo, nombre: d.nombre.trim(), nombreVis: d.nombreVis, nombreElegidos: (d.nombreElegidos || '').split(/[,\s]+/).map(x => DB.porUsuario(x)?.id).filter(Boolean), bio: d.bio.trim(), cancion, playlists, ocultas: u.insignias.filter(i => !d['ins_' + i]) });
   aviso('Perfil actualizado'); ir('#/perfil');
@@ -183,7 +185,36 @@ ACC.quitarFoto = () => { const h = $('#formPerfil input[name=foto]'); h.value = 
 CAMBIOS.audioPerfil = async el => {
   const f = el.files[0]; if (!f) return; if (!f.type.startsWith('audio/')) return aviso('Elige un archivo de audio.'); if (f.size > 15 * 1024 * 1024) return aviso('Máximo 15 MB.');
   try { const clave = 'cancion_' + DB.yo().id + '_' + Date.now(); await ARCHIVOS.guardar(clave, f); const h = $('#formPerfil input[name=cArchivo]'); h.value = 'idb:' + clave; h.dispatchEvent(new Event('input', { bubbles: true }));
-    UI.audioNombre = f.name.replace(/\.[^.]+$/, '').slice(0, 60); const t = $('#ct'); if (t && !t.value) { t.value = UI.audioNombre; t.dispatchEvent(new Event('input', { bubbles: true })); }
+    UI.audioNombre = f.name.replace(/\.[^.]+$/, '').slice(0, 60); UI.audioPortada = await extraerPortada(f).catch(() => null); const t = $('#ct'); if (t && !t.value) { t.value = UI.audioNombre; t.dispatchEvent(new Event('input', { bubbles: true })); }
     const n = $('#audioNombre'); if (n) n.textContent = f.name + ' ✓'; aviso('Canción lista. Dale Guardar.'); }
   catch { aviso('No pudimos guardar el archivo en este celular.'); }
 };
+
+/* disco de vinilo; en el centro la portada del archivo si trae */
+function vinilo(c) {
+  const ok = c?.portada && /^data:image\/(jpeg|png|webp);base64,/.test(c.portada);
+  const sonando = audioPerfil && !audioPerfil.paused && audioPerfil.dataset.src === c?.archivo;
+  return `<span id="vinilo" class="vinilo${sonando ? ' girando' : ''}" aria-hidden="true"><span class="etiqueta-disco" style="${ok ? `background:#4B1F7A url('${c.portada}') center/cover` : ''}"></span></span>`;
+}
+/* lee la portada incrustada en MP3 (ID3v2, APIC) o M4A (covr) */
+async function extraerPortada(f) {
+  const buf = new Uint8Array(await f.slice(0, Math.min(f.size, 15 * 1024 * 1024)).arrayBuffer());
+  const txt = (i, n) => String.fromCharCode(...buf.subarray(i, i + n)), u32 = i => ((buf[i] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3]) >>> 0, sync = i => (buf[i] << 21) | (buf[i + 1] << 14) | (buf[i + 2] << 7) | buf[i + 3];
+  let img = null, mime = 'image/jpeg';
+  if (txt(0, 3) === 'ID3') {
+    const v = buf[3], fin = 10 + sync(6); let i = 10;
+    if (buf[5] & 0x40) i += v === 4 ? sync(10) : u32(10) + 4;
+    while (i + 10 < fin && !img) {
+      const id = txt(i, 4), tam = v === 4 ? sync(i + 4) : u32(i + 4); if (!/^[A-Z0-9]{4}$/.test(id) || tam <= 0) break;
+      if (id === 'APIC') { let j = i + 10; const enc = buf[j++]; let k = j; while (buf[k]) k++; mime = txt(j, k - j) || mime; j = k + 1; j++;
+        if (enc === 1 || enc === 2) { while (!(buf[j] === 0 && buf[j + 1] === 0)) j += 2; j += 2; } else { while (buf[j]) j++; j++; }
+        img = buf.subarray(j, i + 10 + tam); }
+      i += 10 + tam;
+    }
+  } else {
+    for (let i = 0; i < buf.length - 8 && !img; i++) if (buf[i] === 0x63 && txt(i, 4) === 'covr' && txt(i + 8, 4) === 'data') { const tam = u32(i + 4) - 8 - 16; const tipo = u32(i + 12); mime = tipo === 14 ? 'image/png' : 'image/jpeg'; img = buf.subarray(i + 20, i + 20 + tam); }
+  }
+  if (!img || img.length < 100) return null;
+  if (!/^image\//.test(mime)) mime = img[0] === 0x89 ? 'image/png' : 'image/jpeg';
+  return reducirImagen(new Blob([img], { type: mime }), 256);
+}

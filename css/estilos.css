@@ -44,11 +44,15 @@ main#vista{flex:1;width:100%;max-width:880px;margin:0 auto;padding:16px}
 .abajo a.activo svg{stroke:var(--moradoTxt)}
 @media(min-width:900px){
   .lado{display:flex;flex-direction:column;gap:6px;width:250px;flex:none;position:sticky;top:0;height:100vh;padding:18px 14px;background:var(--tarjeta);border-right:1px solid var(--linea);overflow-y:auto}
-  .lado .marca{display:flex;align-items:center;gap:10px;font-family:Sora,sans-serif;font-weight:800;font-size:19px;padding:4px 8px 14px}
+  .lado .marca{display:flex;align-items:center;justify-content:space-between;gap:6px;font-family:Sora,sans-serif;font-weight:800;font-size:19px;padding:4px 0 14px 8px}
+  .lado{transition:width .2s}
+  .lado.contraido{width:76px;padding:18px 10px}
+  .lado.contraido .txt{display:none}
+  .lado.contraido .marca{flex-direction:column;padding:4px 0 14px;gap:8px}
+  .lado.contraido nav a{justify-content:center;padding:0}
   .lado nav{display:flex;flex-direction:column;gap:2px}
   .lado nav a{flex-direction:row;justify-content:flex-start;gap:12px;font-size:15px;padding:0 14px;min-height:46px}
   .lado nav a.activo{background:var(--suave)}
-  .lado .aviso-legal{margin-top:auto;font-size:11px;color:var(--gris);padding:8px}
   .abajo{display:none}
   .lado-movil{display:none!important}
   .lado-movil-txt{display:none}
@@ -177,3 +181,13 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .mapa g[role=button]:focus{outline:none}.mapa g[role=button]:focus-visible path,.mapa g[role=button]:focus-visible ellipse{stroke:#FFC93C;stroke-width:6}
 .mapa .ed{position:absolute;border:1px solid var(--linea);border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#1B1530;text-align:center;padding:2px}
 .mapa .ed.on{outline:3px solid var(--naranja)}
+
+/* vinilo de la canción del perfil */
+.vinilo{width:60px;height:60px;border-radius:50%;flex:none;position:relative;display:grid;place-items:center;
+  background:radial-gradient(circle,#111 0 30%,transparent 31%),repeating-radial-gradient(circle,#1a1a1a 0 2px,#2b2b2b 2px 3px);box-shadow:0 0 0 2px #2b2b2b,inset 0 0 0 1px #000}
+.vinilo::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 30deg,transparent 0 40deg,rgba(255,255,255,.14) 50deg,transparent 70deg 210deg,rgba(255,255,255,.1) 230deg,transparent 250deg)}
+.etiqueta-disco{width:24px;height:24px;border-radius:50%;background:#FFC93C;position:relative;z-index:1;box-shadow:0 0 0 2px #111}
+.etiqueta-disco::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:#111}
+.vinilo.girando{animation:girar 2.2s linear infinite}
+@keyframes girar{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.vinilo.girando{animation-duration:8s}}

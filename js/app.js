@@ -25,9 +25,8 @@ function pintar() {
   const activo = v.nav || nombre, sinLeer = DB.sinLeerNotifs();
   const lado = NAV_LADO.concat(DB.esAdmin() ? [['admin', 'Administración', '#/admin']] : []);
   app.innerHTML = `<div class="shell">
-    <aside class="lado"><a href="#/inicio" class="marca" style="text-decoration:none;color:inherit">${castor(36)}Cosas de la uni</a>
-      <nav aria-label="Secciones">${lado.map(([k, t, h]) => `<a href="${h}" class="${k === activo ? 'activo' : ''}" ${k === activo ? 'aria-current="page"' : ''}>${icono(k === 'tienda' ? 'tienda' : k)}${t}</a>`).join('')}</nav>
-      <p class="aviso-legal">Proyecto independiente, creado por y para estudiantes. No afiliado ni administrado por la universidad.</p></aside>
+    <aside class="lado${UI.ladoContraido ? ' contraido' : ''}"><div class="marca"><a href="#/inicio" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0">${castor(36)}<span class="txt">Cosas de la uni</span></a><button class="icono-btn plegar" data-a="plegarLado" aria-label="${UI.ladoContraido ? 'Expandir' : 'Contraer'} menú" title="${UI.ladoContraido ? 'Expandir' : 'Contraer'} menú">${icono(UI.ladoContraido ? 'mas' : 'atras', 18)}</button></div>
+      <nav aria-label="Secciones">${lado.map(([k, t, h]) => `<a href="${h}" class="${k === activo ? 'activo' : ''}" ${k === activo ? 'aria-current="page"' : ''} title="${t}">${icono(k === 'tienda' ? 'tienda' : k)}<span class="txt">${t}</span></a>`).join('')}</nav></aside>
     <div class="principal">
       <header class="barra">
         ${v.atras ? `<a class="icono-btn" href="${v.atras}" aria-label="Volver">${icono('atras')}</a>` : `<span class="lado-movil" style="display:flex">${castor(34)}</span>`}
@@ -82,3 +81,6 @@ const NOMBRE_TIPO = { profe: 'a este profesor y todas sus opiniones', opinion: '
 ACC.eliminar = b => abrirHoja(`<h2>¿Eliminar ${NOMBRE_TIPO[b.dataset.tipo] || 'esto'}?</h2><p class="gris">${b.dataset.tipo === 'propuesta' && DB.conRamitas(b.dataset.id) ? 'Tiene ramitas apostadas: a cada quien se le devuelve lo que puso y les llega aviso. ' : ''}No se puede deshacer.</p><div class="pila"><button class="btn-peligro ancho" data-a="confirmarEliminar" data-tipo="${b.dataset.tipo}" data-id="${b.dataset.id}" data-extra="${b.dataset.extra || ''}">Sí, eliminar</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
 ACC.confirmarEliminar = b => { const ok = DB.eliminar(b.dataset.tipo, b.dataset.id, b.dataset.extra); cerrarHoja(); aviso(ok ? 'Eliminado' : 'No tienes permiso para eliminar esto'); refrescar(); };
 function botonEliminar(tipo, id, extra = '') { return DB.puedeEliminar(tipo, id) || (tipo === 'lugar' || tipo === 'evento' || tipo === 'comentario') && DB.esAdmin() ? `<button class="icono-btn" style="color:var(--malTxt)" data-a="eliminar" data-tipo="${tipo}" data-id="${esc(id)}" data-extra="${extra}" aria-label="Eliminar">${icono('basura', 18)}</button>` : ''; }
+
+try { UI.ladoContraido = localStorage.getItem('cdu_lado') === '1'; } catch {}
+ACC.plegarLado = () => { UI.ladoContraido = !UI.ladoContraido; try { localStorage.setItem('cdu_lado', UI.ladoContraido ? '1' : '0'); } catch {} pintar(); };

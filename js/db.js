@@ -312,6 +312,10 @@ const DB = {
     this.guardar(); return true;
   },
   suspender(id, on) { if (!this.esAdmin() || id === E.sesion) return; E.usuarios[id].suspendido = on; if (on) notificar(id, 'Tu cuenta fue suspendida por el equipo', '#/inicio'); this.guardar(); },
+  areas() { return E.areas || (E.areas = AREAS.slice()); },
+  agregarArea(nombre) { nombre = String(nombre || '').trim().replace(/\s+/g, ' ').slice(0, 40); if (nombre.length < 3) return { error: 'Escribe el nombre del área.' };
+    const ya = this.areas().find(a => this.claveNombre(a) === this.claveNombre(nombre)); if (ya) return { ok: ya, ya: true }; this.areas().push(nombre); this.guardar(); return { ok: nombre }; },
+  quitarArea(nombre) { if (!this.esAdmin() || E.profes.some(p => p.area === nombre)) return false; E.areas = this.areas().filter(a => a !== nombre); this.guardar(); return true; },
   claveNombre(n) { return String(n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\b(dr|dra|mtro|mtra|maestro|maestra|ing|lic|prof|profa|profe|m\.?\s?c|mc)\b\.?/g, ' ').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim(); },
   profeParecido(nombre) { const k = this.claveNombre(nombre); if (!k) return null; return E.profes.find(p => this.claveNombre(p.nombre) === k) || null; },
   proponerProfe(d) {
@@ -327,11 +331,11 @@ const DB = {
   moderarProfe(id, ok) {
     const i = E.profesPend.findIndex(p => p.id === id); if (i < 0) return; const p = E.profesPend.splice(i, 1)[0];
     let nuevo = null;
-    if (ok) { nuevo = { id: uid('p'), nombre: p.nombre, area: p.area, materias: p.materias, opiniones: [] }; E.profes.push(nuevo); const u = E.usuarios[p.por]; if (u) { u.reputacion += 1; mover(u.id, 10, 'premio', 'profesor propuesto'); } }
+    if (ok) { this.agregarArea(p.area); nuevo = { id: uid('p'), nombre: p.nombre, area: this.areas().find(a => this.claveNombre(a) === this.claveNombre(p.area)) || p.area, materias: p.materias, opiniones: [] }; E.profes.push(nuevo); const u = E.usuarios[p.por]; if (u) { u.reputacion += 1; mover(u.id, 10, 'premio', 'profesor propuesto'); } }
     [p.por, ...p.apoyos].forEach(uId => notificar(uId, ok ? `${p.nombre} ya está en Profesores. Deja tu opinión${uId === p.por ? ' · +10 ramitas' : ''}` : `${p.nombre} no se agregó a Profesores`, ok ? `#/profe/${nuevo.id}` : '#/rankings'));
     this.guardar();
   },
-  crearProfe(d) { E.profes.push({ id: uid('p'), nombre: d.nombre.trim().slice(0, 60), area: d.area, materias: d.materias.split(',').map(m => m.trim()).filter(Boolean).slice(0, 6), opiniones: [] }); this.guardar(); },
+  crearProfe(d) { const ar = this.agregarArea(d.area); E.profes.push({ id: uid('p'), nombre: d.nombre.trim().slice(0, 60), area: ar.ok || d.area, materias: d.materias.split(',').map(m => m.trim()).filter(Boolean).slice(0, 6), opiniones: [] }); this.guardar(); },
   crearEvento(d) { E.eventos.push({ id: uid('ev'), titulo: d.titulo.trim().slice(0, 100), fecha: d.fecha, hora: d.hora || '', lugar: d.lugar.trim().slice(0, 60), interesados: 0 }); this.guardar(); },
 
   /* ---------- Eventos ---------- */
