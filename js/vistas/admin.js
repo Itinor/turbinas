@@ -135,9 +135,8 @@ function fichaCompletaAdm(u) {
   let acum = 0; const saldoPts = libro.map(m => [new Date(m.f).getTime(), acum += m.monto]);
   const por = {}; libro.forEach(m => { const k = m.tipo; por[k] = por[k] || { e: 0, s: 0 }; if (m.monto >= 0) por[k].e += m.monto; else por[k].s -= m.monto; });
   const nombres = { regalo: 'Regalos', diario: 'Regalo diario', reto: 'Retos', juego: 'Juegos diarios', racha: 'Rachas', apuesta: 'Puso en predicciones', ganancia: 'Ganó en predicciones', devolucion: 'Devoluciones', premio: 'Premios', casino: 'Ruleta y tragamonedas', compra: 'Compras' };
-  const J = (S.jugadas || []).filter(j => j.u === id), ap = J.reduce((s, j) => s + j.apuesta, 0), pag = J.reduce((s, j) => s + j.pago, 0), real = pag - ap, esp = J.reduce((s, j) => s + j.apuesta * j.ev, 0);
+  const J = (S.jugadas || []).filter(j => j.u === id && (UI.admJuego === 'todo' || j.juego === UI.admJuego)), ap = J.reduce((s, j) => s + j.apuesta, 0), pag = J.reduce((s, j) => s + j.pago, 0), real = pag - ap, esp = J.reduce((s, j) => s + j.apuesta * j.ev, 0);
   const vari = J.reduce((s, j) => s + j.apuesta * j.apuesta * (j.v || (j.juego === 'ruleta' ? 1 : 4)), 0), z = vari ? (real - esp) / Math.sqrt(vari) : 0;
-  let r1 = 0, r2 = 0; const realPts = J.map((j, i) => [i + 1, r1 += j.pago - j.apuesta]), espPts = J.map((j, i) => [i + 1, r2 += j.apuesta * j.ev]);
   const st = DB.estadisticasUsuario(id), preds = S.propuestas.filter(p => p.apuestas.some(a => a.u === id));
   const repC = reportesContra(id), repH = S.reportes.filter(r => r.por === id);
   const actividad = [['Publicaciones', S.posts.filter(p => p.autor === id).length], ['Comentarios', S.posts.reduce((n, p) => n + p.comentarios.filter(c => c.autor === id).length, 0)], ['Propuestas', S.propuestas.filter(p => p.autor === id).length], ['Rankings', S.rankings.filter(r => r.autor === id).length], ['Cosas en tablones', (S.tablonItems || []).filter(x => x.autor === id).length], ['Ventas', S.ventas.filter(v => v.autor === id).length], ['Opiniones de profes', S.profes.reduce((n, p) => n + p.opiniones.filter(o => o.u === id).length, 0)], ['Jugadas de casino', J.length]];
@@ -149,9 +148,9 @@ function fichaCompletaAdm(u) {
     <div class="rejilla4">${caja('Saldo', numero(DB.saldo(id)))}${caja('Le entró', '+' + numero(libro.filter(m => m.monto > 0).reduce((s, m) => s + m.monto, 0)), 'color:var(--okTxt)')}${caja('Le salió', MENOS + numero(-libro.filter(m => m.monto < 0).reduce((s, m) => s + m.monto, 0)), 'color:var(--malTxt)')}${caja('Compró', numero(por.compra?.e || 0))}</div>
     <div><h3 style="margin:0 0 6px">Ramitas en el tiempo</h3>${graficaLineas([{ nombre: 'Saldo', color: '#4B1F7A', puntos: saldoPts }])}</div>
     <div class="tabla"><table><thead><tr><th>De dónde</th><th class="num">Entró</th><th class="num">Salió</th></tr></thead><tbody>${Object.entries(por).map(([k, v]) => `<tr><td>${esc(nombres[k] || k)}</td><td class="num">${v.e ? '+' + numero(v.e) : ''}</td><td class="num">${v.s ? MENOS + numero(v.s) : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="gris">Sin movimientos</td></tr>'}</tbody></table></div>
-    <div><h3 style="margin:0 0 6px">Ruleta y tragamonedas</h3>${J.length ? `<div class="rejilla4">${caja('Jugadas', numero(J.length))}${caja('Apostó', numero(ap) + ' cr.')}${caja('Resultado', (real >= 0 ? '+' : MENOS) + numero(Math.abs(real)) + ' cr.', real >= 0 ? 'color:var(--okTxt)' : 'color:var(--malTxt)')}${caja('Lo esperado', (esp >= 0 ? '+' : MENOS) + numero(Math.abs(Math.round(esp))) + ' cr.')}</div>
+    <div><div class="entre"><h3 style="margin:0 0 6px">Ruleta y tragamonedas</h3><span class="fila" style="gap:4px">${[['todo', 'Todo'], ['ruleta', 'Ruleta'], ['tragamonedas', 'Tragamonedas']].map(([k, n]) => `<button class="pastilla${UI.admJuego === k ? ' on' : ''}" style="min-height:34px;padding:0 10px;font-size:12px" data-a="admJuego" data-j="${k}">${n}</button>`).join('')}</span></div>${J.length ? `<div class="rejilla4">${caja('Jugadas', numero(J.length))}${caja('Apostó', numero(ap) + ' cr.')}${caja('Resultado', (real >= 0 ? '+' : MENOS) + numero(Math.abs(real)) + ' cr.', real >= 0 ? 'color:var(--okTxt)' : 'color:var(--malTxt)')}${caja('Lo esperado', (esp >= 0 ? '+' : MENOS) + numero(Math.abs(Math.round(esp))) + ' cr.')}</div>
       <p class="peq" style="margin:8px 0">${Math.abs(z) < 2 ? 'Sus resultados <b>concuerdan con la probabilidad</b>.' : z >= 2 ? `<b style="color:var(--avisoTxt)">Le está yendo mejor de lo normal</b> (${z.toFixed(1)} desviaciones). Con pocas jugadas puede ser suerte; si sigue así, revisa.` : `Le está yendo peor de lo normal (${z.toFixed(1)} desviaciones); también puede ser mala racha.`}</p>
-      ${graficaLineas([{ nombre: 'Lo que lleva', color: '#1D5FD1', puntos: realPts }, { nombre: 'Lo esperado por probabilidad', color: '#C2410C', punteada: true, puntos: espPts }])}
+      ${graficaCasino(J)}
       <p class="mini gris" style="margin:6px 0 0">Ruleta: ${J.filter(j => j.juego === 'ruleta').length} · Tragamonedas: ${J.filter(j => j.juego === 'tragamonedas').length} · Última: ${hace(J.at(-1).f)}</p>` : '<p class="peq gris" style="margin:0">No ha jugado.</p>'}</div>
     <div><h3 style="margin:0 0 6px">Predicciones</h3><div class="rejilla4">${caja('Participó', preds.length)}${caja('Acertó', st.n ? st.g + '/' + st.n : '—')}${caja('Neto', (st.neto >= 0 ? '+' : MENOS) + numero(Math.abs(st.neto)))}${caja('Mismo celular', st.mismos ? st.mismos + ' cuentas' : 'ninguna', st.mismos >= 2 ? 'color:var(--malTxt)' : '')}</div>
       ${preds.slice(-8).reverse().map(p => { const a = p.apuestas.filter(x => x.u === id), m = a.reduce((t, x) => t + x.monto, 0); return `<div class="entre peq" style="padding:6px 0;border-bottom:1px solid var(--linea)"><span>${esc(p.titulo)}<br><span class="mini gris">${esc(p.opciones[a[0].op])} · ${p.estado}</span></span><b>${m}</b></div>`; }).join('')}</div>
@@ -162,3 +161,25 @@ function fichaCompletaAdm(u) {
 }
 ACC.abrirFichaAdm = b => { UI.admUsuario = b.dataset.u || null; refrescar(); if (UI.admUsuario) $('#fichaUsuario')?.scrollIntoView({ behavior: 'smooth' }); };
 ENTRADAS.admBuscar = el => { UI.admBusca = el.value; const q = el.value.trim().toLowerCase().replace(/^@/, ''); const l = Object.values(DB.estado.usuarios).filter(u => u.id !== 'u_equipo' && (!q || [u.usuario, u.nombre, u.contacto, u.carrera].some(x => String(x || '').toLowerCase().includes(q)))); const c = $('#admLista'); if (c) c.innerHTML = filasUsuariosAdm(l, id => reportesContra(id).length); };
+
+UI.admJuego = 'todo';
+ACC.admJuego = b => { UI.admJuego = b.dataset.j; refrescar(); $('#fichaUsuario')?.scrollIntoView(); };
+/* como las gráficas del Royal: resultado acumulado (verde gana, rojo pierde), más la curva que marca la
+   probabilidad (esperanza) y la franja normal (±2 desviaciones). Si la línea se sale de la franja, revisar. */
+function graficaCasino(J) {
+  if (J.length < 2) return '<p class="peq gris" style="margin:0">Pocas jugadas para graficar.</p>';
+  const W = 640, H = 260, n = J.length; let r = 0, e = 0, v = 0; const pts = [[0, 0, 0, 0]];
+  J.forEach(j => { r += j.pago - j.apuesta; e += j.apuesta * j.ev; v += j.apuesta * j.apuesta * (j.v || (j.juego === 'ruleta' ? 1 : 4)); pts.push([pts.length, r, e, Math.sqrt(v)]); });
+  const ys = pts.flatMap(p => [p[1], p[2] + 2 * p[3], p[2] - 2 * p[3]]), y0 = Math.min(...ys), y1 = Math.max(...ys), X = i => 34 + i / n * (W - 44), Y = y => 14 + (y1 - y) / ((y1 - y0) || 1) * (H - 34);
+  const banda = pts.map(p => `${X(p[0]).toFixed(1)},${Y(p[2] + 2 * p[3]).toFixed(1)}`).concat(pts.slice().reverse().map(p => `${X(p[0]).toFixed(1)},${Y(p[2] - 2 * p[3]).toFixed(1)}`)).join(' ');
+  const cero = Y(0), area = signo => `<path d="M${X(0)},${cero} ${pts.map(p => `L${X(p[0]).toFixed(1)},${(signo > 0 ? Math.min(Y(p[1]), cero) : Math.max(Y(p[1]), cero)).toFixed(1)}`).join(' ')} L${X(n)},${cero} Z" fill="${signo > 0 ? 'rgba(74,222,128,.35)' : 'rgba(251,113,133,.35)'}"/>`;
+  const fuera = pts.filter(p => p[0] > 10 && (p[1] > p[2] + 2 * p[3] || p[1] < p[2] - 2 * p[3])).length;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Resultado acumulado contra lo esperado" style="display:block;background:#0B0814;border-radius:14px">
+    <polygon points="${banda}" fill="rgba(124,60,255,.22)"/>${area(1)}${area(-1)}
+    <line x1="34" x2="${W - 10}" y1="${cero}" y2="${cero}" stroke="rgba(255,255,255,.35)" stroke-dasharray="4 4"/>
+    <polyline fill="none" stroke="#FFD45A" stroke-width="2.5" points="${pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' ')}"/>
+    <polyline fill="none" stroke="#C4B5FD" stroke-width="2" stroke-dasharray="6 5" points="${pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[2]).toFixed(1)).join(' ')}"/>
+    <text x="4" y="18" font-size="11" fill="#C9C2DA">${numero(Math.round(y1))}</text><text x="4" y="${H - 22}" font-size="11" fill="#C9C2DA">${numero(Math.round(y0))}</text><text x="${W - 10}" y="${H - 6}" font-size="11" fill="#C9C2DA" text-anchor="end">${n} jugadas</text></svg>
+    <div class="fila mini" style="margin-top:6px;gap:12px"><span class="fila" style="gap:4px"><span style="width:14px;height:3px;background:#FFD45A;display:inline-block"></span>Lo que lleva</span><span class="fila" style="gap:4px"><span style="width:14px;height:3px;background:#C4B5FD;display:inline-block"></span>Esperado por probabilidad</span><span class="fila" style="gap:4px"><span style="width:14px;height:10px;background:rgba(124,60,255,.35);display:inline-block"></span>Franja normal</span></div>
+    ${fuera > n * 0.2 ? `<p class="peq" style="margin:6px 0 0;color:var(--avisoTxt)"><b>Se sale de la franja normal en ${Math.round(fuera / n * 100)}% de sus jugadas.</b> Revisa.</p>` : ''}`;
+}
