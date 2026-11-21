@@ -2,13 +2,13 @@
    Hoy guarda todo en el navegador (localStorage). Para pasar a un servidor (Supabase, Firebase…)
    solo hay que reescribir este archivo: las pantallas llaman a DB.* y no tocan el almacenamiento. */
 'use strict';
-const CLAVE = 'cosasdelauni_v4';
+const CLAVE = 'cosasdelauni_v5';
 let E = null;
 
 const DB = {
   cargar() {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
-    if (!E || E.version !== 4) { E = datosIniciales(); E.version = 4; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); this.guardar(); }
+    if (!E || E.version !== 5) { E = datosIniciales(); E.version = 5; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); this.guardar(); }
     E.bitacora = E.bitacora || []; asegurarEquipo();
     E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || [];
     return E;
@@ -476,3 +476,16 @@ function asegurarEquipo() {
 
 /* hash simple para la demo; con la base de datos real, la contraseña la maneja el servidor (Supabase Auth) */
 function hashClave(t) { let h1 = 0xdeadbeef, h2 = 0x41c6ce57; t = 'cdu:' + t; for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); } h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909); return (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16); }
+
+/* deja la app en blanco: solo admin, cuenta del equipo oficial y niveles oficiales */
+function vaciarDemo() {
+  const quedan = new Set(['u_diego', 'u_equipo']);
+  Object.keys(E.usuarios).forEach(id => { if (!quedan.has(id)) delete E.usuarios[id]; });
+  const a = E.usuarios.u_diego;
+  Object.assign(a, { usuario: 'admin', nombre: 'Admin', nombreVis: 'nadie', carrera: 'Sin carrera', gen: null, semestre: null, bio: '', cancion: null, playlists: [], insignias: ['verificado', 'fundador'],
+    amigos: [], bloqueados: [], silenciados: [], horario: [], racha: { dias: 0, ultimo: null, semana: [] }, diarios: { fecha: null }, limites: { fecha: null }, reputacion: 0, creado: new Date().toISOString() });
+  Object.values(E.usuarios).forEach(u => { u.amigos = []; });
+  Object.assign(E, { posts: [], propuestas: [], rankings: [], eventos: [], ventas: [], chats: [], agenda: [], profes: [], profesPend: [], notifs: [], reportes: [], libro: [], bitacora: [], interesEventos: {}, alertasCerradas: {}, lugaresPend: [] });
+  E.niveles = E.niveles.filter(n => n.oficial).map(n => ({ ...n, likes: 0, likers: [], jugadas: 0, mejores: [] }));
+  Object.keys(E.usuarios).forEach(id => mover(id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida'));
+}
