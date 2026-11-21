@@ -34,21 +34,35 @@ const TEMAS_PRIVILEGIADOS = /(examen|parcial|calificaci|reprob|aprob|profe|maest
 /* Palabras que mandan un ranking a revisión antes de publicarse */
 const PALABRAS_REVISION = /(feo|fea|gord|flac|put[oa]|naco|idiota|estúpid|estupid|pendej|zorr|perr[oa]|tont[oa]|asco|odio|mamad|verg|chin)/i;
 
-const SALONES = [
-  { clave: 'A-101', edificio: 'A', piso: 'Planta baja', como: 'Entrando por la puerta principal, a la izquierda.' },
-  { clave: 'A-302', edificio: 'A', piso: 'Tercer piso', como: 'Sube por la escalera del fondo; es el segundo salón.' },
-  { clave: 'B-110', edificio: 'B', piso: 'Planta baja', como: 'Junto a los centros de cómputo.' },
-  { clave: 'C-204', edificio: 'C', piso: 'Segundo piso', como: 'Al fondo a la derecha. A 3 min de la biblioteca.' },
-  { clave: 'LAB-1', edificio: 'Labs', piso: 'Planta baja', como: 'Laboratorio de física, entrada lateral.' },
-  { clave: 'BIBLIO', edificio: 'Biblioteca', piso: 'Todo el edificio', como: 'Frente a la cafetería.' }
+/* Croquis del Campus II (UACH), basado en el mapa oficial "¡Ubícate! con el mapa UACH Campus II" (ANFEI 2025)
+   y en el mapa satelital. Coordenadas en un lienzo de 1150 × 970; son aproximadas. */
+const ZONAS_CAMPUS = [
+  { id: 'cya', nombre: 'Facultad de Contaduría y Administración', color: '#F7CFE2', borde: '#D9468F', etiqueta: [300, 170], puntos: '70,40 610,10 655,240 600,300 480,355 340,440 245,575 150,560 120,400 60,210' },
+  { id: 'fing', nombre: 'Facultad de Ingeniería', color: '#CFE5FB', borde: '#1D5FD1', etiqueta: [470, 455], puntos: '320,480 430,405 600,375 705,385 650,455 610,505 650,605 700,690 560,735 430,722 335,655 305,565' },
+  { id: 'fcq', nombre: 'Facultad de Ciencias Químicas', color: '#E6D9F7', borde: '#6D3FC0', etiqueta: [860, 440], puntos: '615,455 705,385 905,372 1035,470 1085,600 1000,690 850,690 720,705 660,610' },
+  { id: 'aero', nombre: 'Edificio Aeroespacial', color: '#CFE5FB', borde: '#1D5FD1', etiqueta: [725, 950], puntos: '600,770 830,770 850,960 610,960' }
 ];
-const EDIFICIOS_MAPA = [
-  { n: 'A', x: 4, y: 6, w: 26, h: 22, c: '#EEE8F7' }, { n: 'B', x: 36, y: 6, w: 20, h: 32, c: '#EEE8F7' },
-  { n: 'C', x: 62, y: 8, w: 32, h: 24, c: '#FFE7A8' }, { n: 'Biblioteca', x: 4, y: 36, w: 30, h: 24, c: '#DCE8FB' },
-  { n: 'Cafetería', x: 40, y: 44, w: 22, h: 18, c: '#FFF6DA' }, { n: 'Labs', x: 70, y: 40, w: 24, h: 30, c: '#EEE8F7' },
-  { n: 'Canchas', x: 4, y: 68, w: 56, h: 26, c: '#DCF5E3' }
+const LUGARES = [
+  { id: 'sala-seminarios-des', n: 1, nombre: 'Sala de Seminarios DES Ingeniería', zona: 'fing', x: 607, y: 645, tipo: 'edificio', como: 'Al sur del Auditorio Fernando Aguilera Baca, del lado del Circuito Universitario.' },
+  { id: 'auditorio', n: 2, nombre: 'Auditorio Fernando Aguilera Baca', zona: 'fing', x: 575, y: 548, tipo: 'edificio', como: 'Al centro de la Facultad de Ingeniería, frente a la explanada principal.' },
+  { id: 'explanada-labs', n: 3, nombre: 'Explanada de Laboratorios', zona: 'fing', x: 363, y: 598, tipo: 'edificio', como: 'Lado poniente de Ingeniería, entre los edificios de laboratorios.' },
+  { id: 'posgrado', n: 4, nombre: 'Edificio de Salones de Posgrado', zona: 'fing', x: 442, y: 607, tipo: 'edificio', como: 'Junto a la Explanada de Laboratorios, rumbo al auditorio.' },
+  { id: 'seminarios-campus', n: 5, nombre: 'Edificio de Seminarios Campus II', zona: 'cya', x: 363, y: 340, tipo: 'edificio', como: 'En la orilla sur de Contaduría y Administración, cruzando el circuito desde Ingeniería.' },
+  { id: 'biblioteca-des', nombre: 'Biblioteca DES Ingenierías', zona: 'fing', x: 645, y: 572, tipo: 'edificio', como: 'Al oriente del Auditorio Fernando Aguilera Baca.' },
+  { id: 'cafeteria', nombre: 'Cafetería', zona: 'fing', x: 634, y: 497, tipo: 'cafeteria', como: 'Al norte del auditorio, en el límite con Ciencias Químicas.' },
+  { id: 'aeroespacial', nombre: 'Edificio Aeroespacial', zona: 'aero', x: 720, y: 850, tipo: 'edificio', como: 'Cruzando el Circuito Universitario hacia el sur, frente a la Facultad de Ingeniería.' },
+  { id: 'fac-ingenieria', nombre: 'Facultad de Ingeniería', zona: 'fing', x: 470, y: 500, tipo: 'facultad', como: 'Centro del Campus II, dentro del circuito interior.' },
+  { id: 'fac-cya', nombre: 'Facultad de Contaduría y Administración', zona: 'cya', x: 270, y: 230, tipo: 'facultad', como: 'Al norponiente del campus.' },
+  { id: 'fac-fcq', nombre: 'Facultad de Ciencias Químicas', zona: 'fcq', x: 790, y: 520, tipo: 'facultad', como: 'Al oriente de la Facultad de Ingeniería.' },
+  { id: 'est-cya-norte', nombre: 'Estacionamiento Contaduría norte', zona: 'cya', x: 510, y: 208, tipo: 'estacionamiento', como: 'Entrada norte de Contaduría y Administración.' },
+  { id: 'est-cya-sur', nombre: 'Estacionamiento Contaduría sur', zona: 'cya', x: 220, y: 408, tipo: 'estacionamiento', como: 'Junto al Edificio de Seminarios Campus II.' },
+  { id: 'est-cya-poniente', nombre: 'Estacionamiento Contaduría poniente', zona: 'cya', x: 250, y: 510, tipo: 'estacionamiento', como: 'Lado poniente, junto al circuito.' },
+  { id: 'est-ing-norte', nombre: 'Estacionamiento Ingeniería norte', zona: 'fing', x: 590, y: 407, tipo: 'estacionamiento', como: 'Entre Ingeniería y el circuito, del lado norte.' },
+  { id: 'est-fcq', nombre: 'Estacionamiento Ciencias Químicas', zona: 'fcq', x: 862, y: 580, tipo: 'estacionamiento', como: 'Lado oriente de Ciencias Químicas.' },
+  { id: 'est-sur', nombre: 'Estacionamiento sur', zona: 'aero', x: 675, y: 772, tipo: 'estacionamiento', como: 'Cruzando el circuito, antes del Edificio Aeroespacial.' },
+  { id: 'est-aero', nombre: 'Estacionamiento Aeroespacial', zona: 'aero', x: 680, y: 910, tipo: 'estacionamiento', como: 'Frente al Edificio Aeroespacial.' }
 ];
-
+const SALONES = [];
 function datosIniciales() {
   // generador con semilla para que los datos de ejemplo siempre salgan iguales
   let s = 42; const rnd = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;

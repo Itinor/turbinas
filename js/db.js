@@ -9,6 +9,7 @@ const DB = {
   cargar() {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
     if (!E || E.version !== 3) { E = datosIniciales(); sembrarLibro(); this.guardar(); }
+    E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || [];
     return E;
   },
   guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
@@ -191,6 +192,11 @@ const DB = {
   alternarHecho(id) { const a = E.agenda.find(x => x.id === id); a.hechoPor = a.hechoPor || {}; a.hechoPor[E.sesion] = !a.hechoPor[E.sesion]; this.guardar(); },
   compartirRecordatorio(id, chatId) { const a = E.agenda.find(x => x.id === id), c = E.chats.find(x => x.id === chatId); a.compartidoEn = chatId; c.fijado = a.id; c.mensajes.push({ u: E.sesion, t: `Recordatorio: ${a.titulo} · ${fechaBonita(a.fecha)}${a.hora ? ' ' + a.hora : ''}`, f: new Date().toISOString() }); c.miembros.forEach(m => m !== E.sesion && notificar(m, `Nuevo recordatorio en ${c.nombre}: ${a.titulo}`, '#/agenda')); this.guardar(); },
   borrarRecordatorio(id) { E.agenda = E.agenda.filter(a => !(a.id === id && a.u === E.sesion)); this.guardar(); },
+
+  /* ---------- Croquis del campus ---------- */
+  lugares() { return LUGARES.concat(E.lugares); },
+  proponerLugar(d) { E.lugaresPend.push({ id: uid('lg'), nombre: d.nombre.trim().slice(0, 60), como: d.como.trim().slice(0, 200), x: Math.round(d.x), y: Math.round(d.y), tipo: 'salon', zona: d.zona || '', por: E.sesion, fecha: new Date().toISOString() }); avisarAdmins('Lugar propuesto para el mapa: ' + d.nombre, '#/admin'); this.guardar(); },
+  moderarLugar(id, ok) { const i = E.lugaresPend.findIndex(l => l.id === id); if (i < 0) return; const l = E.lugaresPend.splice(i, 1)[0]; if (ok) { E.lugares.push(l); const u = E.usuarios[l.por]; if (u) { u.reputacion += 1; mover(u.id, 10, 'premio', 'lugar en el mapa'); } } notificar(l.por, ok ? `"${l.nombre}" ya está en el mapa. +10 ramitas` : `"${l.nombre}" no se agregó al mapa`, '#/explorar/mapa'); this.guardar(); },
 
   /* ---------- Eventos ---------- */
   interesEvento(id) { const k = E.sesion + ':' + id; E.interesEventos[k] = !E.interesEventos[k]; const ev = E.eventos.find(x => x.id === id); ev.interesados += E.interesEventos[k] ? 1 : -1; this.guardar(); },

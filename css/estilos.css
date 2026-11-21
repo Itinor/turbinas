@@ -51,6 +51,7 @@ main#vista{flex:1;width:100%;max-width:880px;margin:0 auto;padding:16px}
   .lado .aviso-legal{margin-top:auto;font-size:11px;color:var(--gris);padding:8px}
   .abajo{display:none}
   .lado-movil{display:none!important}
+  .lado-movil-txt{display:none}
   .principal{padding-bottom:0}
   main#vista{padding:24px}
 }
@@ -172,6 +173,7 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .fn-fila .color{width:14px;height:14px;border-radius:50%;flex:none}
 
 /* Mapa */
-.mapa{position:relative;height:300px;border-radius:18px;overflow:hidden;background:var(--tarjeta);border:1px solid var(--linea)}
+.mapa{position:relative;border-radius:18px;overflow-x:auto;overflow-y:hidden;background:#E3F0CF;border:1px solid var(--linea)}
+.mapa g[role=button]:focus{outline:none}.mapa g[role=button]:focus-visible path,.mapa g[role=button]:focus-visible ellipse{stroke:#FFC93C;stroke-width:6}
 .mapa .ed{position:absolute;border:1px solid var(--linea);border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#1B1530;text-align:center;padding:2px}
 .mapa .ed.on{outline:3px solid var(--naranja)}
