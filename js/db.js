@@ -9,7 +9,7 @@ const DB = {
   cargar() {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
     if (!E || E.version !== 3) { E = datosIniciales(); sembrarLibro(); this.guardar(); }
-    E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || [];
+    E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || [];
     return E;
   },
   guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
@@ -221,6 +221,25 @@ const DB = {
     this.guardar(); return true;
   },
   suspender(id, on) { if (!this.esAdmin() || id === E.sesion) return; E.usuarios[id].suspendido = on; if (on) notificar(id, 'Tu cuenta fue suspendida por el equipo', '#/inicio'); this.guardar(); },
+  claveNombre(n) { return String(n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\b(dr|dra|mtro|mtra|maestro|maestra|ing|lic|prof|profa|profe|m\.?\s?c|mc)\b\.?/g, ' ').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim(); },
+  profeParecido(nombre) { const k = this.claveNombre(nombre); if (!k) return null; return E.profes.find(p => this.claveNombre(p.nombre) === k) || null; },
+  proponerProfe(d) {
+    if (this.esAdmin()) { this.crearProfe(d); return { ok: true, directo: true }; }
+    if (this.yo().verificado !== 'si') return { error: 'verificar' };
+    const ya = this.profeParecido(d.nombre); if (ya) return { error: 'existe', id: ya.id };
+    const k = this.claveNombre(d.nombre), pend = E.profesPend.find(p => this.claveNombre(p.nombre) === k);
+    if (pend) { if (pend.por === E.sesion || pend.apoyos.includes(E.sesion)) return { error: 'repetido' }; pend.apoyos.push(E.sesion); this.guardar(); return { ok: true, apoyo: true }; }
+    if (E.profesPend.filter(p => p.por === E.sesion).length >= 5) return { error: 'limite' };
+    E.profesPend.push({ id: uid('pp'), nombre: d.nombre.trim().slice(0, 60), area: d.area, materias: d.materias.split(',').map(m => m.trim()).filter(Boolean).slice(0, 6), por: E.sesion, apoyos: [], fecha: new Date().toISOString() });
+    this.guardar(); return { ok: true };
+  },
+  moderarProfe(id, ok) {
+    const i = E.profesPend.findIndex(p => p.id === id); if (i < 0) return; const p = E.profesPend.splice(i, 1)[0];
+    let nuevo = null;
+    if (ok) { nuevo = { id: uid('p'), nombre: p.nombre, area: p.area, materias: p.materias, opiniones: [] }; E.profes.push(nuevo); const u = E.usuarios[p.por]; if (u) { u.reputacion += 1; mover(u.id, 10, 'premio', 'profesor propuesto'); } }
+    [p.por, ...p.apoyos].forEach(uId => notificar(uId, ok ? `${p.nombre} ya está en Profesores. Deja tu opinión${uId === p.por ? ' · +10 ramitas' : ''}` : `${p.nombre} no se agregó a Profesores`, ok ? `#/profe/${nuevo.id}` : '#/rankings'));
+    this.guardar();
+  },
   crearProfe(d) { E.profes.push({ id: uid('p'), nombre: d.nombre.trim().slice(0, 60), area: d.area, materias: d.materias.split(',').map(m => m.trim()).filter(Boolean).slice(0, 6), opiniones: [] }); this.guardar(); },
   crearEvento(d) { E.eventos.push({ id: uid('ev'), titulo: d.titulo.trim().slice(0, 100), fecha: d.fecha, hora: d.hora || '', lugar: d.lugar.trim().slice(0, 60), interesados: 0 }); this.guardar(); },
 
