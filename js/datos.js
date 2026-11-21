@@ -9,7 +9,9 @@ const CONFIG = {
   entrarDirecto: 'u_diego',
   /* Croquis: pon aquí la ruta de una imagen (por ejemplo 'img/croquis.png', de preferencia 1150 × 970 px)
      para usarla de fondo del mapa en lugar del dibujo aproximado. Los pines se acomodan encima. */
-  imagenCroquis: null
+  imagenCroquis: null,
+  /* pagos: el módulo está en js/pagos.js pero apagado. Cámbialo a true solo cuando haya procesador de pagos real. */
+  pagosActivos: false
 };
 const CARRERAS = [
   { nombre: 'Ing. en Sistemas', facultad: 'Ingeniería' }, { nombre: 'Mecatrónica', facultad: 'Ingeniería' },
@@ -32,7 +34,10 @@ const REGLAS = {
   topeRetosDia: 200, segundosPorPregunta: 60,
   umbralRanking: { amigos: 15, salon: 50, generacion: 150 },
   minOpinionesProfe: 15,
-  creditosPorRamita: 100, maxCasinoDia: 100
+  creditosPorRamita: 100, maxCasinoDia: 100,
+  /* arbitraje de predicciones: alguien reporta el resultado con prueba, hay una ventana para disputar
+     y, si nadie disputa y suficientes personas que NO apostaron lo confirman, se reparte solo. */
+  horasDisputa: 24, confirmacionesMin: 3, premioReportar: 5, premioConfirmar: 2
 };
 /* Temas que no pueden ser predicciones con ramitas (alguien de dentro podría saber el resultado) */
 const TEMAS_PRIVILEGIADOS = /(examen|parcial|calificaci|reprob|aprob|profe|maestr|tarea|falta|asistencia|baja\b|kardex|kárdex|promedio|embaraz|novi[oa]|cortar|terminar con|despid)/i;

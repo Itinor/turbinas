@@ -35,7 +35,7 @@ const DB = {
     if (documento) avisarAdmins(`@${yoNuevo.usuario} subió un documento para verificarse`, '#/admin');
     this.alEntrar(); this.guardar(); return yoNuevo;
   },
-  alEntrar() {
+  alEntrar() { this.revisarArbitrajes();
     const u = this.yo(); if (!u) return;
     if (u.diarios.regalo !== fechaLocal()) { u.diarios.regalo = fechaLocal(); mover(u.id, REGLAS.regaloDiario, 'diario', 'regalo del día'); notificar(u.id, `Te llegaron ${REGLAS.regaloDiario} ramitas por entrar hoy`, '#/perfil'); }
     this.miAgenda().forEach(a => { const d = diasHasta(a.fecha); if ([7, 3, 1, 0].includes(d) && !(a.hechoPor || {})[u.id]) { a.avisos = a.avisos || {}; const k = u.id + ':' + d; if (!a.avisos[k]) { a.avisos[k] = true; notificar(u.id, d === 0 ? `Hoy: ${a.titulo}` : `Faltan ${d} ${d === 1 ? 'día' : 'días'}: ${a.titulo}`, '#/agenda'); } } });
@@ -121,8 +121,9 @@ const DB = {
   },
   votar(id, op) { const p = E.propuestas.find(x => x.id === id); if (this.yo().verificado !== 'si') return { error: 'verificar' }; p.votos[E.sesion] = op; this.guardar(); return { ok: true }; },
   apuntarse(id) { const p = E.propuestas.find(x => x.id === id); const i = p.apuntados.indexOf(E.sesion); if (i >= 0) p.apuntados.splice(i, 1); else if (p.apuntados.length < p.cupo) { p.apuntados.push(E.sesion); if (p.apuntados.length === p.cupo) notificar(p.autor, `"${p.titulo}" ya llenó el cupo`, '#/propuestas'); } this.guardar(); },
-  resolver(id, ganadora) {
+  resolver(id, ganadora, como = 'admin') {
     const p = E.propuestas.find(x => x.id === id); if (!p || p.estado === 'resuelta' || p.estado === 'anulada') return;
+    p.ganadora = ganadora; p.resueltaPor = como; this.premiarArbitros(p);
     const total = this.pozo(p), ganadores = p.apuestas.filter(a => a.op === ganadora), base = this.pozoOpcion(p, ganadora);
     if (!ganadores.length) { this.anular(id, 'Nadie acertó: se devolvieron las ramitas'); return; }
     const reparto = Math.floor(total * (1 - REGLAS.comisionFondo)); let pagado = 0;
@@ -135,7 +136,74 @@ const DB = {
     const p = E.propuestas.find(x => x.id === id); const porU = {};
     p.apuestas.forEach(a => porU[a.u] = (porU[a.u] || 0) + a.monto);
     Object.entries(porU).forEach(([u, m]) => { mover(u, m, 'devolucion', p.id); notificar(u, `${motivo}: "${p.titulo}"`, '#/propuestas'); });
-    p.estado = 'anulada'; this.guardar();
+    p.estado = 'anulada'; p.resueltaPor = p.resueltaPor || 'admin'; this.guardar();
+  },
+  /* ---------- Arbitraje ---------- */
+  porArbitrar(p) { return p.tipo === 'prediccion' && p.estado === 'abierta' && diasHasta(p.cierre) < 0; },
+  aposto(p, u = E.sesion) { return p.apuestas.some(a => a.u === u); },
+  reportarResultado(id, op, evidencia) {
+    const p = E.propuestas.find(x => x.id === id), u = this.yo();
+    if (u.verificado !== 'si') return { error: 'verificar' };
+    if (!this.porArbitrar(p) || p.arbitraje) return { error: 'Ya no se puede reportar.' };
+    evidencia = String(evidencia || '').trim().slice(0, 300); if (evidencia.length < 8) return { error: 'Cuenta cómo lo sabes o pon un link de prueba.' };
+    p.arbitraje = { op: +op, por: u.id, evidencia, fecha: new Date().toISOString(), confirman: [], disputan: [] };
+    new Set(p.apuestas.map(a => a.u)).forEach(x => x !== u.id && notificar(x, `Reportaron que en "${p.titulo}" ganó "${p.opciones[op]}". Tienes ${REGLAS.horasDisputa} h para disputarlo.`, '#/propuestas'));
+    this.guardar(); return { ok: true };
+  },
+  confirmarResultado(id) {
+    const p = E.propuestas.find(x => x.id === id), A = p?.arbitraje, u = E.sesion;
+    if (!A || p.estado !== 'abierta') return { error: 'No hay resultado que confirmar.' };
+    if (this.yo().verificado !== 'si') return { error: 'verificar' };
+    if (A.por === u) return { error: 'Tú lo reportaste.' };
+    if (this.aposto(p)) return { error: 'Como apostaste, solo puedes disputar. Confirman quienes no apostaron.' };
+    if (A.confirman.includes(u) || A.disputan.some(d => d.u === u)) return { error: 'Ya diste tu opinión.' };
+    A.confirman.push(u); this.guardar(); this.revisarArbitrajes(); return { ok: true };
+  },
+  disputarResultado(id, motivo, op) {
+    const p = E.propuestas.find(x => x.id === id), A = p?.arbitraje, u = E.sesion;
+    if (!A || p.estado !== 'abierta') return { error: 'No hay resultado que disputar.' };
+    if (this.yo().verificado !== 'si') return { error: 'verificar' };
+    motivo = String(motivo || '').trim().slice(0, 300); if (motivo.length < 8) return { error: 'Explica por qué no es correcto.' };
+    if (A.por === u || A.confirman.includes(u) || A.disputan.some(d => d.u === u)) return { error: 'Ya diste tu opinión.' };
+    A.disputan.push({ u, motivo, op: op === '' || op == null ? null : +op, f: new Date().toISOString() });
+    p.estado = 'disputa';
+    Object.values(E.usuarios).filter(x => x.rol === 'admin').forEach(x => notificar(x.id, `Disputa en "${p.titulo}": revisa la prueba`, '#/admin'));
+    this.guardar(); return { ok: true };
+  },
+  finArbitraje(p) { return p.arbitraje ? new Date(new Date(p.arbitraje.fecha).getTime() + REGLAS.horasDisputa * 36e5) : null; },
+  revisarArbitrajes() {
+    let cambio = false;
+    E.propuestas.forEach(p => {
+      const A = p.arbitraje; if (!A || p.estado !== 'abierta' || A.disputan.length) return;
+      if (Date.now() < this.finArbitraje(p).getTime()) return;
+      if (A.confirman.length >= REGLAS.confirmacionesMin) { this.resolver(p.id, A.op, 'comunidad'); cambio = true; }
+      else if (!A.aviso) { A.aviso = true; Object.values(E.usuarios).filter(x => x.rol === 'admin').forEach(x => notificar(x.id, `"${p.titulo}" no juntó confirmaciones: decide tú`, '#/admin')); cambio = true; }
+    });
+    if (cambio) this.guardar();
+  },
+  premiarArbitros(p) {
+    const A = p.arbitraje; if (!A) return;
+    if (A.op === p.ganadora) { mover(A.por, REGLAS.premioReportar, 'premio', 'reportar resultado'); mover('FONDO', -REGLAS.premioReportar, 'premio', p.id); }
+    A.confirman.forEach(u => { if (A.op === p.ganadora) { mover(u, REGLAS.premioConfirmar, 'premio', 'confirmar resultado'); mover('FONDO', -REGLAS.premioConfirmar, 'premio', p.id); } });
+    A.disputan.forEach(d => { if (d.op != null && d.op === p.ganadora) { mover(d.u, REGLAS.premioReportar, 'premio', 'disputa correcta'); mover('FONDO', -REGLAS.premioReportar, 'premio', p.id); } });
+  },
+  /* ---------- Editar propuestas ---------- */
+  puedeEditar(p) { if (!p || (p.autor !== E.sesion && !this.esAdmin())) return false; return p.estado === 'abierta' && !this.tieneParticipacion(p); },
+  tieneParticipacion(p) { return p.apuestas.length > 0 || Object.keys(p.votos).length > 0 || p.apuntados.some(u => u !== p.autor); },
+  editarPropuesta(id, d) {
+    const p = E.propuestas.find(x => x.id === id); if (!this.puedeEditar(p)) return { error: 'Ya participó alguien: solo puedes agregar una aclaración.' };
+    const titulo = d.titulo.trim().slice(0, 140); if (titulo.length < 6) return { error: 'Escribe la pregunta completa.' };
+    if (p.tipo === 'prediccion' && TEMAS_PRIVILEGIADOS.test(titulo)) return { error: 'Ese tema es de información privilegiada: publícalo como votación.' };
+    if (p.tipo !== 'actividad') { const ops = [d.op0, d.op1, d.op2, d.op3].map(o => String(o || '').trim()).filter(Boolean).slice(0, 6); if (ops.length < 2) return { error: 'Pon al menos dos opciones.' }; p.opciones = ops; }
+    else p.cupo = Math.max(2, Number(d.cupo) || p.cupo);
+    p.titulo = titulo; if (d.cierre && d.cierre >= fechaLocal()) p.cierre = d.cierre; p.editada = new Date().toISOString(); this.guardar(); return { ok: true };
+  },
+  aclarar(id, texto) {
+    const p = E.propuestas.find(x => x.id === id); if (!p || (p.autor !== E.sesion && !this.esAdmin())) return { error: 'No puedes.' };
+    texto = String(texto || '').trim().slice(0, 300); if (texto.length < 4) return { error: 'Escribe la aclaración.' };
+    (p.aclaraciones = p.aclaraciones || []).push({ t: texto, u: E.sesion, f: new Date().toISOString() });
+    new Set([...p.apuestas.map(a => a.u), ...Object.keys(p.votos), ...p.apuntados]).forEach(u => u !== E.sesion && notificar(u, `Aclaración en "${p.titulo}"`, '#/propuestas'));
+    this.guardar(); return { ok: true };
   },
   congelar(id) { const p = E.propuestas.find(x => x.id === id); p.estado = p.estado === 'congelada' ? 'abierta' : 'congelada'; this.guardar(); },
 
