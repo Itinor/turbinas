@@ -116,6 +116,7 @@ const RUTAS = {
   siguiente: 'M5 5l10 7-10 7zM19 5v14',
   youtube: 'M3 7.5a3 3 0 0 1 2.6-3C7.5 4.2 9.7 4 12 4s4.5.2 6.4.5a3 3 0 0 1 2.6 3c.2 1.5.3 3 .3 4.5s-.1 3-.3 4.5a3 3 0 0 1-2.6 3c-1.9.3-4.1.5-6.4.5s-4.5-.2-6.4-.5a3 3 0 0 1-2.6-3C2.8 15 2.7 13.5 2.7 12S2.8 9 3 7.5zM10 9v6l5-3z',
   amigos: 'M9 11a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M17 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.6',
+  clip: 'M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7',
   basura: 'M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3'
 };
 function icono(n, t = 22, extra = '') { return `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}><path d="${RUTAS[n] || ''}"/></svg>`; }

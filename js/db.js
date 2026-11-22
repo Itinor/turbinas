@@ -281,7 +281,7 @@ const DB = {
     if (!c) { if (!this.puedeEscribir(id)) return null; c = { id: uid('ch'), tipo: 'dm', nombre: '', miembros: [E.sesion, id], mensajes: [], fijado: null }; E.chats.push(c); this.guardar(); }
     return c;
   },
-  enviar(chatId, texto) { texto = texto.trim().slice(0, 1000); if (!texto) return; const c = E.chats.find(x => x.id === chatId); c.miembros.filter(m => m !== E.sesion && this.sinLeerDe(c, m) === 0).forEach(m => notificar(m, c.tipo === 'grupo' ? `Mensajes nuevos en ${c.nombre}` : `@${this.yo().usuario} te escribió`, '#/chat/' + c.id)); c.mensajes.push({ u: E.sesion, t: texto, f: new Date().toISOString() }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
+  enviar(chatId, texto, adjunto) { texto = String(texto || '').trim().slice(0, 1000); if (!texto && !adjunto) return; const c = E.chats.find(x => x.id === chatId); c.miembros.filter(m => m !== E.sesion && this.sinLeerDe(c, m) === 0).forEach(m => notificar(m, c.tipo === 'grupo' ? `Mensajes nuevos en ${c.nombre}` : `@${this.yo().usuario} te escribió`, '#/chat/' + c.id)); c.mensajes.push({ u: E.sesion, t: texto, f: new Date().toISOString(), ...(adjunto ? { adjunto } : {}) }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
   visibles(c) { const desde = c.vaciado?.[E.sesion] || 0; return c.mensajes.map((m, i) => ({ ...m, i })).slice(desde); },
   vaciarChat(id) { const c = E.chats.find(x => x.id === id); if (!c) return; c.vaciado = c.vaciado || {}; c.vaciado[E.sesion] = c.mensajes.length; this.marcarLeido(id); },
   quitarChat(id) { const c = E.chats.find(x => x.id === id); if (!c) return; this.vaciarChat(id); c.quitado = c.quitado || {}; c.quitado[E.sesion] = new Date().toISOString(); this.guardar(); },
