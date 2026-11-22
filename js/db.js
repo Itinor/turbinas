@@ -501,7 +501,7 @@ function asegurarEquipo() {
   let cambio = false;
   (CONFIG.cuentasEquipo || []).forEach(c => {
     const u = E.usuarios[c.id];
-    if (u) { if (c.admin && u.rol !== 'admin') { u.rol = 'admin'; cambio = true; } if (!c.admin && u.rol === 'admin' && c.usuario) { u.rol = 'estudiante'; cambio = true; } if (u.verificado !== 'si') { u.verificado = 'si'; if (!u.insignias.includes('verificado')) u.insignias.push('verificado'); cambio = true; } return; }
+    if (u) { if (c.admin && u.rol !== 'admin') { u.rol = 'admin'; cambio = true; } if (!c.admin && u.rol === 'admin' && c.usuario) { u.rol = 'estudiante'; cambio = true; } if (c.usuario && u.equipo && u.usuario !== c.usuario && !Object.values(E.usuarios).some(x => x !== u && x.usuario === c.usuario)) { u.usuario = c.usuario; u.nombre = c.nombre; cambio = true; } if (u.verificado !== 'si') { u.verificado = 'si'; if (!u.insignias.includes('verificado')) u.insignias.push('verificado'); cambio = true; } return; }
     const base = E.usuarios.u_valeria || Object.values(E.usuarios)[0];
     E.usuarios[c.id] = { ...JSON.parse(JSON.stringify(base)), id: c.id, usuario: c.usuario, nombre: c.nombre, nombreVis: 'todos', nombreElegidos: [], carrera: 'Sin carrera', gen: null, semestre: null,
       verificado: 'si', documento: null, contacto: 'equipo de prueba', rol: c.admin ? 'admin' : 'estudiante', bio: '', cancion: null, playlists: [], insignias: ['verificado'], ocultas: [],

@@ -16,9 +16,9 @@ VISTAS.tablon = {
     const U = UI.tablon, todos = DB.itemsTablon(id), items = todos.filter(x => U.filtro === 'todo' || x.tipo === U.filtro);
     const barra = `<div class="entre"><div class="pestanas" style="flex:1">${[['todo', 'Todo'], ['evento', 'Eventos'], ['archivo', 'Archivos'], ['foto', 'Fotos'], ['nota', 'Notas']].map(([k, n]) => `<button class="pastilla${U.filtro === k ? ' on' : ''}" data-a="filtroTablon" data-f="${k}">${n}</button>`).join('')}</div>
       <button class="btn3" style="min-height:40px;padding:0 12px;flex:none" data-a="vistaTablon">${U.vista === 'corcho' ? 'Ver ordenado' : 'Ver tablón'}</button></div>`;
-    const vacio = `<p class="peq vacio-corcho">${DB.puedeFijar(t) ? 'Todavía no hay nada aquí.<br>Toca el botón amarillo para fijar algo.' : 'Aquí aparecerá lo que publique la universidad.'}</p>`;
+    const vacio = `<p class="peq vacio-corcho">${DB.puedeFijar(t) ? 'Todavía no hay nada aquí.' : 'Aquí aparecerá lo que publique la universidad.'}</p>`;
     const cuerpo = U.vista === 'corcho' ? corcho(items, vacio) : `<div class="pila" style="gap:10px">${items.map(filaTablon).join('') || '<p class="vacio">Todavía no hay nada aquí.</p>'}</div>`;
-    return `<div class="pila">${t.chat ? `<a class="insignia i-morado" style="align-self:flex-start;text-decoration:none" href="#/chat/${t.chat}">Tablón del grupo · solo lo ven sus integrantes</a>` : ''}${barra}${cuerpo}
+    return `<div class="pila">${DB.puedeFijar(t) ? `<button class="btn ancho" data-a="nuevoEnTablon" data-t="${t.id}">${icono('mas', 18)}Fijar algo en este tablón</button>` : ''}${t.chat ? `<a class="insignia i-morado" style="align-self:flex-start;text-decoration:none" href="#/chat/${t.chat}">Tablón del grupo · solo lo ven sus integrantes</a>` : ''}${barra}${cuerpo}
       ${DB.puedeFijar(t) ? `<button class="fab-tablon" data-a="nuevoEnTablon" data-t="${t.id}" aria-label="Fijar algo en el tablón">${icono('mas', 26)}</button>` : ''}</div>`;
   },
   montar() { cargarArchivosTablon(); }
@@ -26,8 +26,8 @@ VISTAS.tablon = {
 function listaTablones() {
   const ts = DB.misTablones(), fijos = ['tb_uni', 'tb_eventos', 'tb_general'];
   return `<div class="pila" style="gap:22px">${ts.map(t => { const its = DB.itemsTablon(t.id), n = its.length;
-    return `<section class="pila" style="gap:8px"><div class="entre"><span><h2 style="font-size:19px">${esc(t.nombre)}${t.oficial ? ' <span class="insignia i-morado" style="vertical-align:middle">Oficial</span>' : ''}</h2><span class="mini gris">${esc(t.desc || (t.chat ? 'Tablón de tu grupo' : ''))}${n ? ` · ${n} ${n === 1 ? 'cosa' : 'cosas'}` : ''}</span></span>${fijos.includes(t.id) ? '' : botonEliminar('tablon', t.id)}</div>
-      <a href="#/tablon/${t.id}" class="vista-corcho" aria-label="Abrir el tablón ${esc(t.nombre)}">${corcho(its.slice(0, 4), `<span class="peq vacio-corcho">${t.oficial && !DB.esAdmin() ? 'Aquí aparecerá lo que publique la universidad.' : 'Vacío. Toca para fijar lo primero.'}</span>`, true)}${n > 4 ? `<span class="mas-corcho">Ver las ${n} →</span>` : ''}</a></section>`; }).join('')}
+    return `<section class="pila" style="gap:8px"><div class="entre"><span><h2 style="font-size:19px">${esc(t.nombre)}${t.oficial ? ' <span class="insignia i-morado" style="vertical-align:middle">Oficial</span>' : ''}</h2><span class="mini gris">${esc(t.desc || (t.chat ? 'Tablón de tu grupo' : ''))}${n ? ` · ${n} ${n === 1 ? 'cosa' : 'cosas'}` : ''}</span></span><span class="fila" style="flex-wrap:nowrap;gap:4px">${DB.puedeFijar(t) ? `<button class="btn" style="min-height:40px;padding:0 12px" data-a="nuevoEnTablon" data-t="${t.id}">${icono('mas', 16)}Fijar</button>` : ''}${fijos.includes(t.id) ? '' : botonEliminar('tablon', t.id)}</span></div>
+      <a href="#/tablon/${t.id}" class="vista-corcho" aria-label="Abrir el tablón ${esc(t.nombre)}">${corcho(its.slice(0, 4), `<span class="peq vacio-corcho">${t.oficial && !DB.esAdmin() ? 'Aquí aparecerá lo que publique la universidad.' : 'Vacío. Sé el primero en fijar algo.'}</span>`, true)}${n > 4 ? `<span class="mas-corcho">Ver las ${n} →</span>` : ''}</a></section>`; }).join('')}
     <button class="btn3 ancho" data-a="nuevoTablon">${icono('mas', 18)}Nuevo tablón</button></div>`;
 }
 function corcho(items, vacio, preview) {

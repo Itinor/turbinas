@@ -16,7 +16,7 @@ VISTAS.inicio = {
       <form class="tarjeta pila" data-form="publicar" style="gap:10px">
         <label class="campo" for="nuevoPost" style="font-family:Sora,sans-serif;font-size:17px;margin:0">¿Qué está pasando?</label>
         <textarea id="nuevoPost" name="texto" maxlength="1000" placeholder="Comparte algo con tu comunidad…" style="min-height:70px"></textarea>
-        <div class="fila"><button class="btn">Publicar</button><a class="btn3" href="#/propuestas/nueva">Propuesta</a><a class="btn3" href="#/rankings/nuevo">Ranking</a></div>
+        <div class="fila"><button class="btn">Publicar</button><a class="btn3" href="#/propuestas">Propuestas</a><a class="btn3" href="#/rankings" data-a="irRankComunidad">Rankings</a></div>
       </form>
       <div class="rejilla4">${accesos.map(([i, t, h, c]) => `<a href="${h}" class="tarjeta" style="padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:inherit;font-size:12px;font-weight:700">${icono(i, 22, `style="color:${c}"`)}${t}</a>`).join('')}</div>
       ${pred ? tarjetaPrediccionMini(pred) : ''}
@@ -69,3 +69,5 @@ ACC.abrirReporte = b => {
 ACC.enviarReporte = b => { DB.reportar(b.dataset.tipo, b.dataset.ref, b.dataset.m); abrirHoja(`<div class="pila" style="align-items:center;text-align:center"><span style="width:56px;height:56px;border-radius:50%;background:var(--okBg);color:var(--okTxt);display:grid;place-items:center">${icono('ok', 26)}</span><h2>Gracias por avisar</h2><p class="gris" style="margin:0">Lo revisamos. ${b.dataset.quien ? esc(nombreVisible(b.dataset.quien)) + ' no sabrá que fuiste tú.' : ''}</p><button class="btn2 ancho" data-a="cerrarHoja">Listo</button></div>`); };
 ACC.bloquear = b => { DB.bloquear(b.dataset.u); cerrarHoja(); aviso('Bloqueaste a ' + nombreVisible(b.dataset.u)); refrescar(); };
 ACC.silenciar = b => { DB.silenciar(b.dataset.u); cerrarHoja(); aviso('Ya no verás lo que publica ' + nombreVisible(b.dataset.u)); refrescar(); };
+
+ACC.irRankComunidad = () => { UI.rkTab = 'comunidad'; ir('#/rankings'); };

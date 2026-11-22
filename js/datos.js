@@ -29,9 +29,10 @@ const CONFIG = {
     { id: 'u_alejandra', usuario: 'alejandra', nombre: 'Alejandra' },
     { id: 'u_pedro', usuario: 'pedro', nombre: 'Pedro' },
     { id: 'u_lisa', usuario: 'lisa', nombre: 'Lisa' },
-    { id: 'u_raimundo', usuario: 'raimundo', nombre: 'Raimundo' },
-    { id: 'u_eric', usuario: 'eric', nombre: 'Eric' },
-    { id: 'u_alexis', usuario: 'alexis', nombre: 'Alexis' }
+    { id: 'u_raimundo', usuario: 'raymundo', nombre: 'Raymundo' },
+    { id: 'u_eric', usuario: 'erick', nombre: 'Erick' },
+    { id: 'u_alexis', usuario: 'alexis', nombre: 'Alexis' },
+    { id: 'u_brisa', usuario: 'brisa', nombre: 'Brisa' }
   ],
   claveAdmin: 'castor-admin',
   dineroReal: false,
