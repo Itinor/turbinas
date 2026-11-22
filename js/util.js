@@ -31,8 +31,11 @@ function cierreBonito(c) { return String(c).length === 10 ? fechaBonita(c) : new
 const ARCHIVOS = {
   _db: null,
   abrir() { return this._db || (this._db = new Promise((ok, mal) => { const r = indexedDB.open('cdu_archivos', 1); r.onupgradeneeded = () => r.result.createObjectStore('a'); r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error); })); },
-  async guardar(clave, blob) { const db = await this.abrir(); return new Promise((ok, mal) => { const t = db.transaction('a', 'readwrite'); t.objectStore('a').put(blob, clave); t.oncomplete = () => ok(clave); t.onerror = () => mal(t.error); }); },
-  async leer(clave) { const db = await this.abrir(); return new Promise((ok, mal) => { const r = db.transaction('a').objectStore('a').get(clave); r.onsuccess = () => ok(r.result || null); r.onerror = () => mal(r.error); }); }
+  async guardarLocal(clave, blob) { const db = await this.abrir(); return new Promise((ok, mal) => { const t = db.transaction('a', 'readwrite'); t.objectStore('a').put(blob, clave); t.oncomplete = () => ok(clave); t.onerror = () => mal(t.error); }); },
+  async guardar(clave, blob) { await this.guardarLocal(clave, blob); if (typeof SYNC !== 'undefined' && SYNC.activo) SYNC.subirArchivo(clave, blob); return clave; },
+  async leerLocal(clave) { const db = await this.abrir(); return new Promise((ok, mal) => { const r = db.transaction('a').objectStore('a').get(clave); r.onsuccess = () => ok(r.result || null); r.onerror = () => mal(r.error); }); },
+  /* primero lo busca en este celular; si no está, lo baja del servidor y lo guarda */
+  async leer(clave) { const l = await this.leerLocal(clave).catch(() => null); if (l) return l; if (typeof SYNC === 'undefined' || !SYNC.activo) return null; const b = await SYNC.bajarArchivo(clave); if (b) this.guardarLocal(clave, b).catch(() => {}); return b; }
 };
 /* reduce una imagen a un cuadrado de `lado` px y la devuelve como dataURL (jpg) */
 function reducirImagen(archivo, lado = 256) {

@@ -72,7 +72,7 @@ function subNombre(id) { const u = DB.usuario(id); if (!u) return ''; return (DB
 function avatar(id, grande = false) { const u = DB.usuario(id); const ini = (u?.usuario || '?')[0].toUpperCase(); const col = ['#DCE8FB:#174EAD', '#F3EFFA:#4B1F7A', '#FFF6DA:#6B4700', '#DCF5E3:#14632F'][(u?.usuario.charCodeAt(0) || 0) % 4].split(':'); const foto = u?.foto && /^data:image\/(jpeg|png|webp);base64,/.test(u.foto) ? u.foto : null; return `<a class="avatar${grande ? ' g' : ''}" href="#/perfil/${esc(u?.usuario || '')}" style="${foto ? `background:#DDD6EA url('${foto}') center/cover` : `background:${col[0]};color:${col[1]}`}" aria-label="Perfil de ${esc(nombreVisible(id))}">${foto ? '' : esc(ini)}</a>`; }
 function rangoReputacion(p) { return p >= 15 ? ['Diamante', 'linear-gradient(135deg,#0891B2,#67E8F9,#E0F2FE)'] : p >= 8 ? ['Oro', 'linear-gradient(135deg,#B45309,#F59E0B,#FDE68A)'] : p >= 4 ? ['Plata', 'linear-gradient(135deg,#64748B,#CBD5E1,#F8FAFC)'] : ['Bronce', 'linear-gradient(135deg,#92400E,#D97706,#FBBF24)']; }
 
-document.addEventListener('DOMContentLoaded', () => { DB.cargar(); DB.alEntrar(); pintar(); });
+document.addEventListener('DOMContentLoaded', () => { DB.cargar(); DB.alEntrar(); pintar(); SYNC.iniciar(); });
 
 /* actualiza solo el número de ramitas de la barra (lo usan los juegos dentro de un iframe) */
 function actualizarChip() { const c = $('.chip-ramitas'); if (c && c.firstChild) c.firstChild.nodeValue = numero(DB.saldo()); }

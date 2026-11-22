@@ -10,6 +10,9 @@
      (se devuelve lo apostado). Cuando haya dinero de por medio, ponlo en true y quedan protegidas.
    propuestasDemo: false = las propuestas arrancan en cero (sin las de ejemplo). */
 const CONFIG = {
+  /* servidor: con esto todos los celulares ven lo mismo. La clave publicable es pública por diseño (va en la página).
+     NUNCA pongas aquí la clave secreta (service_role / secret). */
+  supabase: { url: 'https://rsljgvsnxbpxzgmdyxkb.supabase.co', clave: 'sb_publishable_YjV2xTH6h_D-Mev9BbQWrA_eKvzrl85' },
   entrarDirecto: null,
   modoPrueba: false,
   /* cuentas del equipo de prueba: en la bienvenida pulsan "Soy admin", ponen la clave y eligen su cuenta.

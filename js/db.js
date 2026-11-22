@@ -2,18 +2,24 @@
    Hoy guarda todo en el navegador (localStorage). Para pasar a un servidor (Supabase, Firebase…)
    solo hay que reescribir este archivo: las pantallas llaman a DB.* y no tocan el almacenamiento. */
 'use strict';
-const CLAVE = 'cosasdelauni_v7';
+const CLAVE = 'cosasdelauni_v8';
 let E = null;
 
 const DB = {
   cargar() {
     try { E = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { E = null; }
-    if (!E || E.version !== 7) { E = datosIniciales(); E.version = 7; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); this.guardar(); }
-    E.bitacora = E.bitacora || []; asegurarEquipo();
-    E.lugares = E.lugares || []; E.lugaresPend = E.lugaresPend || []; E.profesPend = E.profesPend || []; E.tablones = E.tablones || []; E.tablonItems = E.tablonItems || []; asegurarTablones();
+    if (!E || E.version !== this.VERSION) { E = datosIniciales(); E.version = this.VERSION; sembrarLibro(); if (!CONFIG.propuestasDemo) limpiarPropuestas(); if (!CONFIG.datosDemo) vaciarDemo(); try { localStorage.removeItem('cdu_sync_v1'); } catch {} this.guardarSoloLocal(); }
+    this.completar();
     return E;
   },
-  guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
+  VERSION: 8,
+  /* rellena lo que falte (cuentas del equipo, tablones fijos, listas vacías) */
+  completar() {
+    ['bitacora', 'jugadas', 'lugares', 'lugaresPend', 'profesPend', 'tablones', 'tablonItems', 'notifs', 'reportes', 'libro', 'posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes'].forEach(k => { if (!Array.isArray(E[k])) E[k] = []; });
+    E.usuarios = E.usuarios || {}; asegurarEquipo(); asegurarTablones();
+  },
+  guardarSoloLocal() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
+  guardar() { this.guardarSoloLocal(); if (typeof SYNC !== 'undefined') SYNC.programar(); },
   reiniciar() { localStorage.removeItem(CLAVE); E = null; this.cargar(); },
   get estado() { return E; },
 
@@ -45,7 +51,7 @@ const DB = {
   },
   alEntrar() { this.revisarArbitrajes();
     const u = this.yo(); if (!u) return;
-    if (u.diarios.regalo !== fechaLocal()) { u.diarios.regalo = fechaLocal(); mover(u.id, REGLAS.regaloDiario, 'diario', 'regalo del día'); }
+    if (u.diarios.regalo !== fechaLocal()) { u.diarios.regalo = fechaLocal(); mover(u.id, REGLAS.regaloDiario, 'diario', 'regalo del día', null, `diario_${u.id}_${fechaLocal()}`); }
     this.miAgenda().forEach(a => { const d = diasHasta(a.fecha); if ([7, 3, 1, 0].includes(d) && !(a.hechoPor || {})[u.id]) { a.avisos = a.avisos || {}; const k = u.id + ':' + d; if (!a.avisos[k]) { a.avisos[k] = true; notificar(u.id, d === 0 ? `Hoy: ${a.titulo}` : `Faltan ${d} ${d === 1 ? 'día' : 'días'}: ${a.titulo}`, '#/agenda'); } } });
     this.guardar();
     if (u.ajustes.oscuro) document.documentElement.dataset.tema = 'oscuro'; else delete document.documentElement.dataset.tema;
@@ -456,8 +462,9 @@ const DB = {
 };
 
 /* ---------- funciones internas ---------- */
-function mover(u, monto, tipo, ref, fecha) {
-  E.libro.push({ id: uid('m'), f: fecha || new Date().toISOString(), u, monto, tipo, ref: ref || '', disp: E.usuarios[u]?.dispositivo || '' });
+function mover(u, monto, tipo, ref, fecha, id) {
+  if (id && E.libro.some(m => m.id === id)) return;
+  E.libro.push({ id: id || uid('m'), f: fecha || new Date().toISOString(), u, monto, tipo, ref: ref || '', disp: E.usuarios[u]?.dispositivo || '' });
 }
 function notificar(u, texto, link, extra) { if (!E.usuarios[u]) return; E.notifs.push({ id: uid('n'), u, texto, link, fecha: new Date().toISOString(), leida: false, ...extra }); }
 function avisarAdmins(texto, link) { Object.values(E.usuarios).filter(u => u.rol === 'admin').forEach(u => notificar(u.id, texto, link)); }
@@ -499,7 +506,7 @@ function asegurarEquipo() {
     E.usuarios[c.id] = { ...JSON.parse(JSON.stringify(base)), id: c.id, usuario: c.usuario, nombre: c.nombre, nombreVis: 'todos', nombreElegidos: [], carrera: 'Sin carrera', gen: null, semestre: null,
       verificado: 'no', documento: null, contacto: 'equipo de prueba', rol: c.admin ? 'admin' : 'estudiante', bio: '', cancion: null, playlists: [], insignias: [], ocultas: [],
       amigos: [], bloqueados: [], silenciados: [], horario: [], racha: { dias: 0, ultimo: null, semana: [] }, diarios: { fecha: null }, limites: { fecha: null }, reputacion: 0, creado: new Date().toISOString(), suspendido: false, equipo: true, dispositivo: 'equipo-' + c.id };
-    mover(c.id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida'); cambio = true;
+    mover(c.id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida', null, 'bienv_' + c.id); cambio = true;
   });
   if (cambio) DB.guardar();
 }
@@ -517,7 +524,7 @@ function vaciarDemo() {
   Object.values(E.usuarios).forEach(u => { u.amigos = []; });
   Object.assign(E, { posts: [], propuestas: [], rankings: [], eventos: [], ventas: [], chats: [], agenda: [], profes: [], profesPend: [], notifs: [], reportes: [], libro: [], bitacora: [], interesEventos: {}, alertasCerradas: {}, lugaresPend: [] });
   E.niveles = E.niveles.filter(n => n.oficial).map(n => ({ ...n, likes: 0, likers: [], jugadas: 0, mejores: [] }));
-  Object.keys(E.usuarios).forEach(id => mover(id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida'));
+  Object.keys(E.usuarios).forEach(id => mover(id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida', null, 'bienv_' + id));
 }
 
 /* tablones fijos: Universidad (solo el equipo publica), Eventos de alumnos y General */
