@@ -65,6 +65,7 @@ function pedirVerificacion() {
     <div class="pila"><a class="btn ancho" href="#/verificar">Verificarme</a><button class="btn3 ancho" data-a="cerrarHoja">Ahora no</button></div>`);
 }
 ACC.cerrarHoja = () => cerrarHoja();
+ACC.agregarOpcion = b => { const l = b.parentElement.querySelector('.lista-opciones'), n = l.querySelectorAll('input').length; if (n >= MAX_OPCIONES) return aviso(`Máximo ${MAX_OPCIONES} opciones.`); l.insertAdjacentHTML('beforeend', inputOpcion(b.dataset.pref, n)); l.querySelector(`#${b.dataset.pref}${n}`).focus(); if (n + 1 >= MAX_OPCIONES) b.remove(); };
 
 /* utilidades de vista */
 function nombreVisible(id) { const u = DB.usuario(id); if (!u) return 'Alguien'; return '@' + u.usuario; }

@@ -51,7 +51,7 @@ function formNuevaPropuesta() {
     <div class="rejilla3">${[['prediccion', 'Predicción'], ['votacion', 'Votación'], ['actividad', 'Actividad']].map(([k, n]) => `<button type="button" class="pastilla${t === k ? ' on' : ''}" data-a="nuevaTipo" data-t="${k}">${n}</button>`).join('')}</div>
     <p class="peq gris" style="margin:0">${t === 'prediccion' ? 'Algo que pasará y todos podrán comprobar: un torneo, un evento, cuántos van a la posada.' : t === 'votacion' ? 'Pregunta a la comunidad. Sin ramitas de por medio.' : 'Arma algo y busca gente: un partido, un grupo de estudio, una salida.'}</p>
     <div><label class="campo" for="pt">${t === 'actividad' ? '¿Qué quieres organizar?' : 'La pregunta'}</label><input id="pt" name="titulo" required maxlength="140" placeholder="${t === 'actividad' ? 'Fut 7 el viernes después de clases' : '¿Quién gana el torneo de…?'}"></div>
-    ${t !== 'actividad' ? `<div><span class="campo">Opciones</span><div class="pila" style="gap:6px">${[0, 1, 2, 3].map(i => `<label class="oculto" for="op${i}">Opción ${i + 1}</label><input id="op${i}" name="op${i}" maxlength="60" placeholder="Opción ${i + 1}${i > 1 ? ' (opcional)' : ''}" ${i < 2 ? 'required' : ''}>`).join('')}</div></div>`
+    ${t !== 'actividad' ? campoOpciones('op')
       : `<div><label class="campo" for="cu">¿Cuántas personas?</label><input id="cu" name="cupo" type="number" min="2" max="100" value="10"></div>`}
     ${campoDuracion(t, null)}
     <button class="btn ancho">Publicar</button><a class="btn3 ancho" href="#/propuestas">Cancelar</a></form>`;
@@ -64,7 +64,7 @@ ACC.apostar = b => { const id = b.dataset.id, s = UI.apuesta[id] || { op: 0, mon
 ACC.votar = b => { const r = DB.votar(b.dataset.id, +b.dataset.op); if (r.error === 'verificar') return pedirVerificacion(); refrescar(); };
 ACC.apuntarse = b => { DB.apuntarse(b.dataset.id); refrescar(); };
 FORMS.nuevaPropuesta = d => {
-  const r = DB.crearPropuesta({ tipo: UI.nuevaTipo || 'prediccion', titulo: d.titulo, opciones: [d.op0, d.op1, d.op2, d.op3], ...leerDuracion(d), cupo: d.cupo });
+  const r = DB.crearPropuesta({ tipo: UI.nuevaTipo || 'prediccion', titulo: d.titulo, opciones: leerOpciones(d), ...leerDuracion(d), cupo: d.cupo });
   if (r.error) return aviso(r.error);
   aviso(r.nota || 'Publicado'); UI.propTab = 'todas'; ir('#/propuestas');
 };
@@ -102,7 +102,7 @@ function formEditarPropuesta(id) {
   const p = DB.estado.propuestas.find(x => x.id === id); if (!DB.puedeEditar(p)) return '<p class="vacio">Esta propuesta ya no se puede editar. <a href="#/propuestas">Volver</a></p>';
   return `<form class="pila" data-form="editarProp"><input type="hidden" name="id" value="${p.id}"><h1>Editar propuesta</h1><p class="peq gris" style="margin:0">Puedes cambiarla mientras nadie haya participado.</p>
     <div><label class="campo" for="ept">La pregunta</label><input id="ept" name="titulo" required maxlength="140" value="${esc(p.titulo)}"></div>
-    ${p.tipo !== 'actividad' ? `<div><span class="campo">Opciones</span><div class="pila" style="gap:6px">${[0, 1, 2, 3].map(i => `<label class="oculto" for="eop${i}">Opción ${i + 1}</label><input id="eop${i}" name="op${i}" maxlength="60" value="${esc(p.opciones[i] || '')}" placeholder="Opción ${i + 1}${i > 1 ? ' (opcional)' : ''}" ${i < 2 ? 'required' : ''}>`).join('')}</div></div>`
+    ${p.tipo !== 'actividad' ? campoOpciones('eop', p.opciones)
       : `<div><label class="campo" for="ecu">¿Cuántas personas?</label><input id="ecu" name="cupo" type="number" min="2" max="100" value="${p.cupo}"></div>`}
     <p class="peq gris" style="margin:0">Ahora cierra: ${cierreBonito(p.cierre)}</p>${campoDuracion(p.tipo, p)}
     <button class="btn ancho">Guardar cambios</button><a class="btn3 ancho" href="#/propuestas">Cancelar</a></form>`;

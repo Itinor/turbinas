@@ -43,6 +43,15 @@ function reducirImagen(archivo, lado = 256) {
     img.onload = () => { const c = document.createElement('canvas'); c.width = c.height = lado; const m = Math.min(img.width, img.height); c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, lado, lado); URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.85)); };
     img.onerror = () => { URL.revokeObjectURL(url); mal(new Error('imagen')); }; img.src = url; });
 }
+/* opciones que se pueden ir agregando (rankings, predicciones, votaciones) */
+const MAX_OPCIONES = 12;
+function campoOpciones(pref, valores = []) {
+  const n = Math.max(4, valores.length);
+  return `<div><span class="campo">Opciones</span><div class="pila lista-opciones" style="gap:6px">${Array.from({ length: n }, (_, i) => inputOpcion(pref, i, valores[i])).join('')}</div>
+    <button type="button" class="btn3" style="margin-top:8px;min-height:40px" data-a="agregarOpcion" data-pref="${pref}">${icono('mas', 16)}Agregar opción</button></div>`;
+}
+function inputOpcion(pref, i, v = '') { return `<label class="oculto" for="${pref}${i}">Opción ${i + 1}</label><input id="${pref}${i}" name="op${i}" maxlength="60" value="${esc(v || '')}" placeholder="Opción ${i + 1}${i > 1 ? ' (opcional)' : ''}" ${i < 2 ? 'required' : ''}>`; }
+function leerOpciones(d) { return Object.keys(d).filter(k => /^op\d+$/.test(k)).sort((a, b) => +a.slice(2) - +b.slice(2)).map(k => d[k]); }
 function fechaBonita(f) { return new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }); }
 function inicioSemana(d = new Date()) { const x = new Date(d); const dia = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dia); x.setHours(0, 0, 0, 0); return x; }
 const numero = n => new Intl.NumberFormat('es-MX').format(n);

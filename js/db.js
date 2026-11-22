@@ -113,7 +113,7 @@ const DB = {
     else if (cierre && cierreMs(cierre) - Date.now() < REGLAS.duracionMin * 6e4) return { error: `Tiene que cerrar al menos en ${REGLAS.duracionMin} minutos.` };
     const L = this.limites();
     if (L.propuestas >= REGLAS.limitePropuestasDia) return { error: `Ya propusiste ${REGLAS.limitePropuestasDia} hoy. Mañana puedes más.` };
-    titulo = titulo.trim().slice(0, 140); opciones = (opciones || []).map(o => String(o || '').trim()).filter(Boolean).slice(0, 6);
+    titulo = titulo.trim().slice(0, 140); opciones = (opciones || []).map(o => String(o || '').trim()).filter(Boolean).slice(0, MAX_OPCIONES);
     if (titulo.length < 6) return { error: 'Escribe la pregunta completa.' };
     let nota = '';
     if (tipo === 'prediccion' && TEMAS_PRIVILEGIADOS.test(titulo)) { tipo = 'votacion'; nota = 'Como trata de algo que alguien de dentro podría saber, la publicamos como votación (sin ramitas).'; }
@@ -216,7 +216,7 @@ const DB = {
     const p = E.propuestas.find(x => x.id === id); if (!this.puedeEditar(p)) return { error: 'Ya participó alguien: solo puedes agregar una aclaración.' };
     const titulo = d.titulo.trim().slice(0, 140); if (titulo.length < 6) return { error: 'Escribe la pregunta completa.' };
     if (p.tipo === 'prediccion' && TEMAS_PRIVILEGIADOS.test(titulo)) return { error: 'Ese tema es de información privilegiada: publícalo como votación.' };
-    if (p.tipo !== 'actividad') { const ops = [d.op0, d.op1, d.op2, d.op3].map(o => String(o || '').trim()).filter(Boolean).slice(0, 6); if (ops.length < 2) return { error: 'Pon al menos dos opciones.' }; p.opciones = ops; }
+    if (p.tipo !== 'actividad') { const ops = leerOpciones(d).map(o => String(o || '').trim()).filter(Boolean).slice(0, MAX_OPCIONES); if (ops.length < 2) return { error: 'Pon al menos dos opciones.' }; p.opciones = ops; }
     else p.cupo = Math.max(2, Number(d.cupo) || p.cupo);
     if (d.minutos) { const m = Math.round(Number(d.minutos)); if (!(m >= REGLAS.duracionMin)) return { error: `La duración mínima es de ${REGLAS.duracionMin} minutos.` }; p.cierre = new Date(Date.now() + Math.min(m, REGLAS.duracionMax) * 6e4).toISOString(); }
     else if (d.cierre && cierreMs(d.cierre) - Date.now() >= REGLAS.duracionMin * 6e4) p.cierre = d.cierre;
@@ -245,7 +245,7 @@ const DB = {
     return this.sonAmigos(r.autor, quien) || (!a.amigos.length && a.carrera === q.carrera && a.gen === q.gen);
   },
   crearRanking(titulo, opciones, nombrados) {
-    titulo = titulo.trim().slice(0, 140); opciones = opciones.map(o => String(o || '').trim()).filter(Boolean).slice(0, 8);
+    titulo = titulo.trim().slice(0, 140); opciones = opciones.map(o => String(o || '').trim()).filter(Boolean).slice(0, MAX_OPCIONES);
     if (titulo.length < 6 || opciones.length < 2) return { error: 'Escribe la pregunta y al menos dos opciones.' };
     const ids = [...new Set(nombrados.map(n => this.porUsuario(n)?.id).filter(Boolean))];
     const r = { id: uid('rk'), titulo, autor: E.sesion, oficial: this.esAdmin(), opciones, votos: {}, nombrados: ids, consentimiento: {}, fecha: new Date().toISOString(), estado: 'aprobado' };

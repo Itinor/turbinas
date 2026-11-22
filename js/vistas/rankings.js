@@ -34,7 +34,7 @@ VISTAS.rankings = {
 function formNuevoRanking() {
   return `<form class="pila" data-form="nuevoRanking"><h1>Proponer un ranking</h1>
     <div><label class="campo" for="rt">La pregunta</label><input id="rt" name="titulo" required maxlength="140" placeholder="¿Quién es el más fiestero de la generación?"></div>
-    <div><span class="campo">Opciones</span><div class="pila" style="gap:6px">${[0, 1, 2, 3].map(i => `<label class="oculto" for="ro${i}">Opción ${i + 1}</label><input id="ro${i}" name="op${i}" maxlength="60" placeholder="Opción ${i + 1}${i > 1 ? ' (opcional)' : ''}" ${i < 2 ? 'required' : ''}>`).join('')}</div></div>
+    ${campoOpciones('ro')}
     <div><label class="campo" for="rm">¿Mencionas a alguien de la red?</label><input id="rm" name="nombrados" placeholder="@pedro.g, @vale.a" autocomplete="off"><p class="mini gris">Les llegará un aviso para que acepten aparecer.</p></div>
     <button class="btn ancho">Publicar</button><a class="btn3 ancho" href="#/rankings">Cancelar</a></form>`;
 }
@@ -42,7 +42,7 @@ ACC.rkTab = b => { UI.rkTab = b.dataset.t; refrescar(); };
 ACC.rkArea = b => { UI.rkArea = b.dataset.a2; refrescar(); };
 ACC.votarRanking = b => { const r = DB.votarRanking(b.dataset.id, +b.dataset.op); if (r.error === 'verificar') return pedirVerificacion(); refrescar(); };
 FORMS.nuevoRanking = d => {
-  const r = DB.crearRanking(d.titulo, [d.op0, d.op1, d.op2, d.op3], (d.nombrados || '').split(/[,\s]+/).filter(Boolean));
+  const r = DB.crearRanking(d.titulo, leerOpciones(d), (d.nombrados || '').split(/[,\s]+/).filter(Boolean));
   if (r.error) return aviso(r.error);
   aviso(r.ok.estado === 'aprobado' ? 'Publicado. Primero lo verán tus amigos.' : r.ok.estado === 'revision' ? 'Lo revisará el equipo antes de publicarse.' : 'Publicado en cuanto acepten las personas mencionadas.');
   UI.rkTab = 'comunidad'; ir('#/rankings');
