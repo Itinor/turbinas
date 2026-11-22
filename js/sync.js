@@ -22,7 +22,7 @@ const SYNC = (() => {
     rankings: { votos: 'm' },
     profes: { opiniones: 'a' },
     tablonItems: { apuntados: 'p' },
-    usuarios: { amigos: 'p' }
+    usuarios: { amigos: 'p', solicitudes: 'p' }
   };
   let meta = { url: '', cursor: 0, hechos: {} }, listo = false, subiendo = false, otraVez = false, temporizador = null, sondeo = null, pendientes = {}, pintarLuego = false;
 

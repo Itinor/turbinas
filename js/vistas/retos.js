@@ -39,7 +39,19 @@ VISTAS.retos = {
   },
   montar() { detenerTemporizadores(); const R = UI.reto; if (R.eleg !== null || !$('#reloj')) return; temporizador(() => { R.seg--; const b = $('#reloj span'); if (b) b.style.width = Math.max(0, R.seg / REGLAS.segundosPorPregunta * 100) + '%'; if (R.seg <= 0) { detenerTemporizadores(); responderReto(-1); } }, 1000); }
 };
-function nuevoReto() { const R = UI.reto, pool = R.dif === 'Aleatorio' ? T : T.filter(t => t.nivel === R.dif), t = pool[Math.floor(Math.random() * pool.length)]; R.p = crear(t.id, Math.floor(Math.random() * 1e9)); R.eleg = null; R.seg = REGLAS.segundosPorPregunta; }
+/* no repite ejercicios: recuerda los últimos 600 que viste y evita la misma plantilla dos veces seguidas */
+function nuevoReto() {
+  const R = UI.reto, pool = R.dif === 'Aleatorio' ? T : T.filter(t => t.nivel === R.dif), clave = 'cdu_vistos_' + (DB.yo()?.id || '');
+  let vistos = []; try { vistos = JSON.parse(localStorage.getItem(clave) || '[]'); } catch {}
+  const set = new Set(vistos), firma = p => hashTexto(p.pregunta + '|' + p.expr);
+  let p = null;
+  for (let i = 0; i < 60; i++) {
+    const opciones = pool.length > 1 ? pool.filter(t => t.id !== R.p?.plantilla) : pool, t = opciones[Math.floor(Math.random() * opciones.length)];
+    p = crear(t.id, Math.floor(Math.random() * 1e9)); if (!set.has(firma(p))) break;
+  }
+  vistos.push(firma(p)); try { localStorage.setItem(clave, JSON.stringify(vistos.slice(-600))); } catch {}
+  R.p = p; R.eleg = null; R.seg = REGLAS.segundosPorPregunta;
+}
 function tarjetaProblema(extra) {
   const R = UI.reto, p = R.p, r = R.eleg !== null, ok = R.eleg === p.correcta;
   return `<section class="problema aparece" aria-live="polite"><div class="entre peq" style="font-weight:700"><span>${esc(p.tema)} · ${esc(p.titulo)}</span>${insigniaDif(p.nivel)}</div>${extra}

@@ -77,6 +77,13 @@ const DB = {
     const d = E.usuarios[dueno]; if (!d || dueno === quien || this.bloqueo(dueno, quien)) return false;
     return d.privacidad.escribir === 'todos' || (d.privacidad.escribir === 'amigos' && this.sonAmigos(dueno, quien));
   },
+  /* ---------- Amigos con solicitud ---------- */
+  estadoAmistad(id) { const yo = this.yo(), o = E.usuarios[id]; if (!o || id === yo.id) return 'yo'; if (yo.amigos.includes(id)) return 'amigos'; if ((yo.solicitudes || []).includes(id)) return 'recibida'; if ((o.solicitudes || []).includes(yo.id)) return 'enviada'; return 'nada'; },
+  pedirAmistad(id) { const yo = this.yo(), o = E.usuarios[id], e = this.estadoAmistad(id); if (e === 'recibida') return this.aceptarAmistad(id); if (e !== 'nada') return; o.solicitudes = o.solicitudes || []; o.solicitudes.push(yo.id); notificar(id, `@${yo.usuario} quiere ser tu amigo`, '#/amigos'); this.guardar(); },
+  aceptarAmistad(id) { const yo = this.yo(), o = E.usuarios[id]; if (!o) return; yo.solicitudes = (yo.solicitudes || []).filter(x => x !== id); if (!yo.amigos.includes(id)) yo.amigos.push(id); if (!o.amigos.includes(yo.id)) o.amigos.push(yo.id); notificar(id, `@${yo.usuario} aceptó tu solicitud de amistad`, '#/perfil/' + yo.usuario); this.guardar(); },
+  rechazarAmistad(id) { const yo = this.yo(); yo.solicitudes = (yo.solicitudes || []).filter(x => x !== id); this.guardar(); },
+  cancelarSolicitud(id) { const o = E.usuarios[id]; if (o) o.solicitudes = (o.solicitudes || []).filter(x => x !== E.sesion); this.guardar(); },
+  quitarAmigo(id) { const yo = this.yo(), o = E.usuarios[id]; yo.amigos = yo.amigos.filter(x => x !== id); if (o) o.amigos = o.amigos.filter(x => x !== yo.id); this.guardar(); },
   alternarAmigo(id) { const yo = this.yo(), o = E.usuarios[id]; if (yo.amigos.includes(id)) { yo.amigos = yo.amigos.filter(x => x !== id); o.amigos = o.amigos.filter(x => x !== yo.id); } else { yo.amigos.push(id); o.amigos.push(yo.id); notificar(id, `@${yo.usuario} te agregó como amigo`, '#/perfil/' + yo.usuario); } this.guardar(); },
   bloquear(id) { const yo = this.yo(); if (!yo.bloqueados.includes(id)) yo.bloqueados.push(id); yo.amigos = yo.amigos.filter(x => x !== id); E.usuarios[id].amigos = E.usuarios[id].amigos.filter(x => x !== yo.id); this.guardar(); },
   desbloquear(id) { const yo = this.yo(); yo.bloqueados = yo.bloqueados.filter(x => x !== id); this.guardar(); },

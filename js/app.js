@@ -6,7 +6,7 @@ const FORMS = {};    // formularios: data-form="nombre"
 const UI = {};       // estado temporal de las pantallas (pestaña elegida, etc.)
 
 const NAV_MOVIL = [['inicio', 'Inicio', '#/inicio'], ['propuestas', 'Propuestas', '#/propuestas'], ['juegos', 'Juegos', '#/juegos'], ['chat', 'Chat', '#/chat'], ['perfil', 'Perfil', '#/perfil']];
-const NAV_LADO = [['inicio', 'Inicio', '#/inicio'], ['explorar', 'Explorar', '#/explorar'], ['propuestas', 'Propuestas', '#/propuestas'], ['rankings', 'Rankings', '#/rankings'], ['agenda', 'Agenda', '#/agenda'], ['chat', 'Chat', '#/chat'], ['juegos', 'Juegos', '#/juegos'], ['herramientas', 'Herramientas', '#/herramientas'], ['tienda', 'Compraventa', '#/compraventa'], ['tablon', 'Tablón', '#/tablon'], ['perfil', 'Perfil', '#/perfil']];
+const NAV_LADO = [['inicio', 'Inicio', '#/inicio'], ['explorar', 'Explorar', '#/explorar'], ['propuestas', 'Propuestas', '#/propuestas'], ['rankings', 'Rankings', '#/rankings'], ['agenda', 'Agenda', '#/agenda'], ['chat', 'Chat', '#/chat'], ['juegos', 'Juegos', '#/juegos'], ['herramientas', 'Herramientas', '#/herramientas'], ['tienda', 'Compraventa', '#/compraventa'], ['tablon', 'Tablón', '#/tablon'], ['amigos', 'Amigos', '#/amigos'], ['perfil', 'Perfil', '#/perfil']];
 
 function ruta() { const h = location.hash.replace(/^#\/?/, '') || 'inicio'; const [nombre, ...params] = h.split('/').map(decodeURIComponent); return { nombre, params }; }
 function ir(h) { if (location.hash === h) pintar(); else location.hash = h; }

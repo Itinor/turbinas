@@ -14,7 +14,7 @@ VISTAS.perfil = {
     if (!DB.verPerfil(u.id)) return `<div class="tarjeta" style="text-align:center">${avatar(u.id, true)}<h2 style="margin-top:10px">@${esc(u.usuario)}</h2><p class="gris">Este perfil es privado.</p></div>`;
     const [rango, grad] = rangoReputacion(u.reputacion), amigo = DB.sonAmigos(u.id, yo.id) && !mio;
     const ins = u.insignias.filter(i => !u.ocultas.includes(i));
-    const stats = [[E_aportes(u), 'Aportes'], [u.amigos.length, 'Amigos'], [u.racha.dias || 0, 'Racha']];
+    const stats = [[E_aportes(u), 'Aportes', ''], [u.amigos.length, 'Amigos', mio ? '#/amigos' : ''], [u.racha.dias || 0, 'Racha', '']];
     return `<div class="pila">
       <section class="tarjeta" style="text-align:center;padding:0;overflow:hidden">
         <div style="height:56px;background:var(--g-banda);position:relative">${mio ? `<a class="icono-btn" href="#/ajustes" aria-label="Ajustes" style="position:absolute;right:4px;top:4px;color:#fff;min-width:44px;min-height:44px">${icono('ajustes', 20)}</a>` : ''}</div>
@@ -22,14 +22,14 @@ VISTAS.perfil = {
         <div style="padding:8px 16px 18px"><h2 style="font-size:22px">@${esc(u.usuario)}</h2><p class="peq gris" style="margin:4px 0 0">${esc(subNombre(u.id))}</p>
           ${u.bio ? `<p style="margin:10px 0 0">${esc(u.bio)}</p>` : ''}
           <span class="insignia i-morado" style="margin-top:10px">Reputación ${rango} · ${u.reputacion} pts</span>
-          <div class="fila" style="justify-content:center;margin-top:12px">${mio ? '<a class="btn3" href="#/editar-perfil">Editar perfil</a>' : `<button class="${amigo ? 'btn3' : 'btn2'}" data-a="amigo" data-u="${u.id}">${amigo ? 'Amigos' : 'Agregar amigo'}</button>${DB.puedeEscribir(u.id) ? `<button class="btn3" data-a="escribirA" data-u="${u.id}">Escribir</button>` : ''}<button class="icono-btn" data-a="menuPerfil" data-u="${u.id}" aria-label="Más opciones">${icono('puntos')}</button>`}</div></div></section>
+          <div class="fila" style="justify-content:center;margin-top:12px">${mio ? '<a class="btn3" href="#/editar-perfil">Editar perfil</a>' : `${botonAmistad(u.id)}${DB.puedeEscribir(u.id) ? `<button class="btn3" data-a="escribirA" data-u="${u.id}">Escribir</button>` : ''}<button class="icono-btn" data-a="menuPerfil" data-u="${u.id}" aria-label="Más opciones">${icono('puntos')}</button>`}</div></div></section>
       ${ins.length ? `<div class="fila">${ins.map(i => `<span class="insignia ${INSIGNIAS[i].clase}">${INSIGNIAS[i].texto}</span>`).join('')}</div>` : ''}
       ${seccionCanciones(u, mio)}
       ${seccionDestacados(u, mio)}
       ${(() => { const R = u.redes || {}, filas = [['instagram', 'Instagram', R.instagram], ['tiktok', 'TikTok', R.tiktok], ['youtube', 'YouTube', R.youtube && (R.youtube.match(/\/(@[\w.-]+)/)?.[1]?.slice(1) || 'canal')]].filter(x => x[2]); if (!filas.length) return '';
         return `<section class="tarjeta"><h2 style="margin-bottom:8px">${mio ? 'Mis redes' : 'Sus redes'}</h2><div class="pila" style="gap:8px">${filas.map(([k, n, h]) => { const nd = (R.destacadas || []).filter(x => embedRed(x)?.red === k).length; return `<a href="#/redes/${esc(u.usuario)}/${k}" class="fila" style="flex-wrap:nowrap;min-height:56px;padding:8px 12px;border-radius:14px;border:1px solid var(--linea);text-decoration:none;color:inherit"><span style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:${k === 'instagram' ? 'var(--suave);color:var(--moradoTxt)' : k === 'youtube' ? '#FFE1E1;color:#B42318' : '#DCE8FB;color:#174EAD'}">${icono(k, 22)}</span><span style="flex:1"><b>${n}</b><br><span class="mini gris">@${esc(h)}${nd ? ` · ${nd} destacada${nd > 1 ? 's' : ''}` : ''}</span></span>${icono('atras', 18, 'style="transform:rotate(180deg);color:var(--gris)"')}</a>`; }).join('')}</div></section>`; })()}
       ${u.playlists.length ? `<section class="tarjeta"><h2 style="margin-bottom:8px">${mio ? 'Mis playlists' : 'Sus playlists'}</h2>${u.playlists.map(p => { const [, s, c] = servicioDe(p.url); const href = urlSegura(p.url); return `<a ${href ? `href="${esc(href)}" target="_blank" rel="noopener"` : ''} class="fila" style="flex-wrap:nowrap;padding:8px 0;border-bottom:1px solid var(--linea);text-decoration:none;color:inherit"><span style="width:40px;height:40px;border-radius:10px;background:var(--g-marca);flex:none"></span><b class="peq" style="flex:1">${esc(p.nombre)}</b><span class="insignia ${c}">${s}</span></a>`; }).join('')}</section>` : ''}
-      <div class="rejilla3">${stats.map(([v, t]) => `<div class="tarjeta" style="text-align:center;padding:12px 6px"><b style="font-family:Sora,sans-serif;font-size:22px">${v}</b><br><span class="mini gris">${t}</span></div>`).join('')}</div>
+      <div class="rejilla3">${stats.map(([v, t, h]) => `<${h ? `a href="${h}"` : 'div'} class="tarjeta" style="text-align:center;padding:12px 6px;text-decoration:none;color:inherit"><b style="font-family:Sora,sans-serif;font-size:22px">${v}</b><br><span class="mini gris">${t}${h ? ' ›' : ''}</span></${h ? 'a' : 'div'}>`).join('')}</div>
       ${mio ? `<a href="#/ramitas" class="tarjeta entre" style="text-decoration:none;color:inherit"><span><h2>Tus ramitas</h2><span class="mini gris">Ver movimientos</span></span><b style="font-family:Sora,sans-serif;font-size:28px;color:var(--moradoTxt)">${numero(DB.saldo())}</b></a>
         ${yo.verificado !== 'si' ? `<a href="#/verificar" class="tarjeta fila" style="flex-wrap:nowrap;text-decoration:none;color:inherit;border:2px solid var(--azul)">${icono('ok', 22, 'style="color:var(--azulTxt)"')}<span><b>${yo.verificado === 'pendiente' ? 'Revisando tu documento' : 'Verifica que eres estudiante'}</b><br><span class="mini gris">Para votar, opinar y usar predicciones</span></span></a>` : ''}` : ''}</div>`;
   },
@@ -41,7 +41,22 @@ VISTAS.perfil = {
 function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).length + DB.estado.propuestas.filter(p => p.autor === u.id).length + DB.estado.rankings.filter(r => r.autor === u.id).length; }
 function reproducir(src, auto, dueno) { const u = DB.usuario(dueno) || Object.values(DB.estado.usuarios).find(x => DB.canciones(x).some(c => c.archivo === src)); const c = u && DB.canciones(u).find(x => x.archivo === src); return REPRO.alternar(c || { archivo: src, titulo: 'Canción' }, u?.id, auto); }
 ACC.playPerfil = b => reproducir(b.dataset.src, false, b.dataset.u);
-ACC.amigo = b => { DB.alternarAmigo(b.dataset.u); refrescar(); };
+function botonAmistad(id) {
+  const e = DB.estadoAmistad(id);
+  if (e === 'amigos') return `<button class="btn3" data-a="amistad" data-que="menu" data-u="${id}">${icono('ok', 16)}Amigos</button>`;
+  if (e === 'enviada') return `<button class="btn3" data-a="amistad" data-que="cancelar" data-u="${id}">Solicitud enviada</button>`;
+  if (e === 'recibida') return `<button class="btn" data-a="amistad" data-que="aceptar" data-u="${id}">Aceptar solicitud</button>`;
+  return `<button class="btn2" data-a="amistad" data-que="pedir" data-u="${id}">${icono('mas', 16)}Agregar amigo</button>`;
+}
+ACC.amistad = b => { const id = b.dataset.u, q = b.dataset.que;
+  if (q === 'pedir') { DB.pedirAmistad(id); aviso(DB.estadoAmistad(id) === 'amigos' ? 'Ahora son amigos' : 'Solicitud enviada'); }
+  else if (q === 'aceptar') { DB.aceptarAmistad(id); aviso('Ahora son amigos'); }
+  else if (q === 'rechazar') DB.rechazarAmistad(id);
+  else if (q === 'cancelar') { DB.cancelarSolicitud(id); aviso('Solicitud cancelada'); }
+  else if (q === 'menu') return abrirHoja(`<h2>@${esc(DB.usuario(id).usuario)}</h2><div class="pila"><button class="btn-peligro ancho" data-a="amistad" data-que="quitar" data-u="${id}">Quitar de amigos</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
+  else if (q === 'quitar') { cerrarHoja(); DB.quitarAmigo(id); aviso('Ya no son amigos'); }
+  refrescar(); };
+ACC.amigo = b => ACC.amistad({ dataset: { u: b.dataset.u, que: 'pedir' } });
 ACC.menuPerfil = b => abrirHoja(`<div class="pila" style="gap:8px">${DB.esAdmin() ? `<button class="btn-peligro ancho" data-a="suspender" data-u="${b.dataset.u}">${DB.usuario(b.dataset.u).suspendido ? 'Reactivar cuenta' : 'Suspender cuenta (admin)'}</button>` : ''}<button class="btn3 ancho" style="color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${b.dataset.u}" data-quien="${b.dataset.u}">${icono('bandera', 18)}Reportar perfil</button><button class="btn3 ancho" data-a="bloquear" data-u="${b.dataset.u}">${icono('bloquear', 18)}Bloquear</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
 
 /* ---------- Editar perfil (los cambios se marcan en amarillo) ---------- */
@@ -294,3 +309,23 @@ function seccionDestacados(u, mio) {
     return `<button class="fila" style="flex-wrap:nowrap;min-height:56px;padding:8px 12px;border-radius:14px;border:1px solid var(--linea);background:var(--tarjeta);text-align:left;font:inherit;color:inherit" data-a="abrirEmbed" data-k="${k}"><span style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:${e.red === 'instagram' ? 'var(--suave);color:var(--moradoTxt)' : '#DCE8FB;color:#174EAD'}">${icono(e.red, 22)}</span><span style="flex:1"><b>${e.red === 'instagram' ? 'Publicación de Instagram' : 'Video de TikTok'}</b><br><span class="mini gris">Toca para verla aquí</span></span>${icono('play', 18)}</button>`;
   }).join('')}</div></section>`;
 }
+
+/* ---------- Amigos ---------- */
+UI.amigosTab = 'amigos'; UI.buscaGente = '';
+VISTAS.amigos = {
+  titulo: 'Amigos', nav: 'perfil', atras: '#/perfil',
+  render() {
+    const yo = DB.yo(), recibidas = (yo.solicitudes || []).map(id => DB.usuario(id)).filter(Boolean), enviadas = Object.values(DB.estado.usuarios).filter(u => (u.solicitudes || []).includes(yo.id));
+    const tab = UI.amigosTab, fila = (u, acciones) => `<div class="fila" style="flex-wrap:nowrap;padding:10px 0;border-bottom:1px solid var(--linea)">${avatar(u.id)}<a href="#/perfil/${esc(u.usuario)}" style="flex:1;min-width:0;text-decoration:none;color:inherit"><b>${esc(nombreVisible(u.id))}</b><br><span class="mini gris">@${esc(u.usuario)}${u.carrera && u.carrera !== 'Sin carrera' ? ' · ' + esc(u.carrera) : ''}</span></a>${acciones}</div>`;
+    const tabs = `<div class="pestanas">${[['amigos', `Mis amigos (${yo.amigos.length})`], ['solicitudes', `Solicitudes${recibidas.length ? ` (${recibidas.length})` : ''}`], ['buscar', 'Buscar gente']].map(([k, n]) => `<button class="pastilla${tab === k ? ' on' : ''}" data-a="amigosTab" data-t="${k}">${n}</button>`).join('')}</div>`;
+    let cuerpo = '';
+    if (tab === 'amigos') cuerpo = yo.amigos.map(id => DB.usuario(id)).filter(Boolean).map(u => fila(u, DB.puedeEscribir(u.id) ? `<button class="icono-btn" data-a="escribirA" data-u="${u.id}" aria-label="Escribir a @${esc(u.usuario)}">${icono('chat', 20)}</button>` : '')).join('') || `<p class="vacio">Todavía no tienes amigos aquí. <button class="btn3" data-a="amigosTab" data-t="buscar">Buscar gente</button></p>`;
+    else if (tab === 'solicitudes') cuerpo = (recibidas.length ? '<h3 style="margin:4px 0">Te quieren agregar</h3>' + recibidas.map(u => fila(u, `<span class="fila" style="flex-wrap:nowrap;gap:6px"><button class="btn" style="min-height:40px;padding:0 12px" data-a="amistad" data-que="aceptar" data-u="${u.id}">Aceptar</button><button class="icono-btn" data-a="amistad" data-que="rechazar" data-u="${u.id}" aria-label="Rechazar">${icono('cerrar', 18)}</button></span>`)).join('') : '<p class="peq gris">No tienes solicitudes nuevas.</p>')
+      + (enviadas.length ? '<h3 style="margin:14px 0 4px">Enviadas</h3>' + enviadas.map(u => fila(u, `<button class="btn3" style="min-height:40px;padding:0 12px" data-a="amistad" data-que="cancelar" data-u="${u.id}">Cancelar</button>`)).join('') : '');
+    else { const q = UI.buscaGente.trim().toLowerCase().replace(/^@/, ''), gente = Object.values(DB.estado.usuarios).filter(u => u.id !== yo.id && u.id !== 'u_equipo' && !u.suspendido && !DB.bloqueo(u.id, yo.id) && (!q || [u.usuario, nombreVisible(u.id), u.carrera].some(x => String(x || '').toLowerCase().includes(q))));
+      cuerpo = `<label class="oculto" for="bg">Buscar</label><input id="bg" type="search" placeholder="Buscar por @usuario, nombre o carrera" value="${esc(UI.buscaGente)}" data-entrada="buscaGente" autocomplete="off"><div id="listaGente">${gente.slice(0, 50).map(u => fila(u, botonAmistad(u.id).replace(/class="(btn2|btn3|btn)"/, 'class="$1" style="min-height:40px;padding:0 12px"'))).join('') || '<p class="peq gris">Nadie coincide.</p>'}</div>`; }
+    return `<div class="pila">${tabs}<section class="tarjeta">${cuerpo}</section></div>`;
+  }
+};
+ACC.amigosTab = b => { UI.amigosTab = b.dataset.t; refrescar(); };
+ENTRADAS.buscaGente = el => { UI.buscaGente = el.value; const pos = el.selectionStart; refrescar(); const n = $('#bg'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
