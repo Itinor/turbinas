@@ -6,7 +6,7 @@ VISTAS.herramientas = {
   titulo: 'Herramientas', nav: 'herramientas',
   render(params) {
     if (params[0] === 'calculadora') return vistaCalculadora();
-    if (params[0] === 'metodos') return `<div class="pila">${pestanasHerr('metodos')}<iframe class="marco-juego" style="background:#fff;height:min(80vh,900px)" src="herramientas/metodos.html?v=202611211955" title="Métodos numéricos"></iframe><a class="btn3" href="herramientas/metodos.html?v=202611211955" target="_blank" rel="noopener">Abrir en pantalla completa</a></div>`;
+    if (params[0] === 'metodos') return `<div class="pila">${pestanasHerr('metodos')}<iframe class="marco-juego" style="background:#fff;height:min(80vh,900px)" src="herramientas/metodos.html?v=202611212001" title="Métodos numéricos"></iframe><a class="btn3" href="herramientas/metodos.html?v=202611212001" target="_blank" rel="noopener">Abrir en pantalla completa</a></div>`;
     const G = UI.graf;
     return `<div class="pila">
       ${pestanasHerr('')}
