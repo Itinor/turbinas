@@ -259,3 +259,10 @@ html.desplazando{scrollbar-color:rgba(75,31,122,.45) transparent}
 html.desplazando *::-webkit-scrollbar-thumb,html.desplazando::-webkit-scrollbar-thumb{background:rgba(75,31,122,.45)}
 *{scrollbar-width:thin;scrollbar-color:transparent transparent}
 html.desplazando *{scrollbar-color:rgba(75,31,122,.45) transparent}
+
+.mini-repro{overflow:hidden}
+.mini-pista{position:absolute;left:0;right:0;bottom:0;height:10px;cursor:pointer;display:block}
+.mini-pista::before{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.18)}
+#miniBarra{position:absolute;left:0;bottom:0;height:3px;width:0;background:#FFC93C;border-radius:0 3px 3px 0;transition:width .25s linear}
+#miniTiempo{opacity:.8;font-variant-numeric:tabular-nums}
+.medalla{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#1B1530;flex:none}.medalla.m1{background:#FFC93C}.medalla.m2{background:#D9D9E3}.medalla.m3{background:#E8B48A}

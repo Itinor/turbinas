@@ -91,10 +91,17 @@ ACC.plegarLado = () => { UI.ladoContraido = !UI.ladoContraido; try { localStorag
 const REPRO = {
   audio: null, src: null, cancion: null, dueno: null, cola: [], modo: (() => { try { return localStorage.getItem('cdu_modo') || 'aleatorio'; } catch { return 'aleatorio'; } })(),
   /* como una playlist: al terminar pasa a otra (al azar o en orden); en 'repetir' se queda en la misma */
-  siguiente(auto) { const c = this.cola; if (!c.length) return; let i = c.findIndex(x => x.archivo === this.src);
-    if (this.modo === 'aleatorio' && c.length > 1) { let j; do j = Math.floor(Math.random() * c.length); while (j === i); i = j; } else i = (i + 1) % c.length;
+  bolsa: [],
+  ordenada() { const c = this.cola.slice(); if (this.modo === 'subida') c.sort((a, b) => String(a.agregada || '').localeCompare(String(b.agregada || ''))); return c; },
+  siguiente(auto) { const c = this.ordenada(); if (!c.length) return; let i = c.findIndex(x => x.archivo === this.src);
+    if (this.modo === 'aleatorio' && c.length > 1) {
+      /* aleatorio de verdad: no repite hasta que suenen todas */
+      this.bolsa = this.bolsa.filter(a => c.some(x => x.archivo === a) && a !== this.src);
+      if (!this.bolsa.length) { this.bolsa = c.map(x => x.archivo).filter(a => a !== this.src); for (let k = this.bolsa.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [this.bolsa[k], this.bolsa[j]] = [this.bolsa[j], this.bolsa[k]]; } }
+      const sig = this.bolsa.shift(); i = c.findIndex(x => x.archivo === sig);
+    } else i = (i + 1) % c.length;
     const sig = c[i]; if (c.length === 1) { this.audio.currentTime = 0; this.audio.play().catch(() => {}); return; } this.src = null; this.alternar(sig, this.dueno, auto); },
-  cambiarModo() { const m = ['aleatorio', 'orden', 'repetir']; this.modo = m[(m.indexOf(this.modo) + 1) % 3]; try { localStorage.setItem('cdu_modo', this.modo); } catch {} if (this.audio) this.audio.loop = this.modo === 'repetir'; this.pintarMini(); aviso(this.modo === 'aleatorio' ? 'Aleatorio' : this.modo === 'orden' ? 'En orden' : 'Repetir esta canción'); },
+  cambiarModo() { const m = ['aleatorio', 'orden', 'subida', 'repetir']; this.modo = m[(Math.max(0, m.indexOf(this.modo)) + 1) % 4]; try { localStorage.setItem('cdu_modo', this.modo); } catch {} if (this.audio) this.audio.loop = this.modo === 'repetir'; this.pintarMini(); aviso(NOMBRE_MODO[this.modo]); },
   sonando(src) { return !!(this.audio && !this.audio.paused && (!src || this.src === src)); },
   async alternar(cancion, dueno, auto) {
     if (this.audio && this.src === cancion.archivo) { if (this.audio.paused) this.audio.play().catch(() => {}); else this.audio.pause(); return; }
@@ -104,13 +111,14 @@ const REPRO = {
     this.parar(true);
     const a = new Audio(real); a.loop = this.modo === 'repetir'; this.audio = a; this.src = cancion.archivo; this.cancion = cancion; this.dueno = dueno;
     this.cola = (DB.usuario(dueno) ? DB.canciones(DB.usuario(dueno)) : [cancion]).filter(c => c.archivo); if (!this.cola.some(c => c.archivo === cancion.archivo)) this.cola.unshift(cancion);
-    a.addEventListener('play', () => this.marcar()); a.addEventListener('pause', () => this.marcar()); a.addEventListener('ended', () => this.siguiente(true));
+    a.addEventListener('play', () => this.marcar()); a.addEventListener('pause', () => this.marcar()); a.addEventListener('ended', () => this.siguiente(true)); a.addEventListener('timeupdate', () => this.progreso()); a.addEventListener('loadedmetadata', () => this.progreso());
     this.ajustarVolumen();
-    a.play().then(() => this.pintarMini()).catch(() => { if (!auto) aviso('No se pudo reproducir la canción'); });
+    a.play().then(() => { this.pintarMini(); DB.registrarEscucha(dueno, cancion.archivo, cancion.titulo); }).catch(() => { if (!auto) aviso('No se pudo reproducir la canción'); });
   },
   parar(silencioso) { if (this.audio) { this.audio.pause(); if (this.audio.src.startsWith('blob:')) URL.revokeObjectURL(this.audio.src); } this.audio = null; this.src = null; this.cancion = null; this.dueno = null; if (!silencioso) { this.marcar(); this.pintarMini(); } },
   /* volumen normal en el perfil del dueño; más bajito en el resto de la app */
   ajustarVolumen() { if (!this.audio) return; const u = DB.usuario(this.dueno), r = ruta(); const enSuPerfil = r.nombre === 'perfil' && ((r.params[0] && u && r.params[0] === u.usuario) || (!r.params[0] && this.dueno === DB.yo()?.id)); this.audio.volume = enSuPerfil ? 1 : 0.35; },
+  progreso() { const a = this.audio, b = $('#miniBarra'), t = $('#miniTiempo'); if (!a || !b) return; const d = a.duration || 0, p = d ? a.currentTime / d : 0; b.style.width = (p * 100).toFixed(1) + '%'; if (t) t.textContent = d ? `${minSeg(a.currentTime)} / ${minSeg(d)}` : ''; },
   marcar() { const on = this.sonando(); $$('[data-vinilo]').forEach(v => v.classList.toggle('girando', on && v.dataset.vinilo === this.src)); $$('[data-repro]').forEach(b => b.innerHTML = icono(on && b.dataset.repro === this.src ? 'pausa' : 'play', b.classList.contains('mini-btn') ? 18 : 20)); const m = $('#miniRepro'); if (m) m.classList.toggle('pausado', !on); },
   pintarMini() { const m = $('#miniRepro'), html = miniReproductor(); if (m) m.outerHTML = html; else if (html) $('.principal')?.insertAdjacentHTML('beforeend', html); }
 };
@@ -119,11 +127,12 @@ function miniReproductor() {
   const c = R.cancion, ok = c.portada && /^data:image\/(jpeg|png|webp);base64,/.test(c.portada), u = DB.usuario(R.dueno);
   return `<div id="miniRepro" class="mini-repro${R.sonando() ? '' : ' pausado'}" role="region" aria-label="Reproductor">
     <span class="vinilo chico${R.sonando() ? ' girando' : ''}" data-vinilo="${esc(R.src)}" aria-hidden="true"><span class="etiqueta-disco" style="${ok ? `background:#4B1F7A url('${c.portada}') center/cover` : ''}"></span></span>
-    <a href="${u ? '#/perfil/' + esc(u.usuario) : '#/perfil'}" style="flex:1;min-width:0;text-decoration:none;color:inherit"><b class="peq" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.titulo || 'Canción')}</b><span class="mini" style="opacity:.75">${u ? '@' + esc(u.usuario) : ''}${c.artista ? ' · ' + esc(c.artista) : ''}</span></a>
-    <button class="icono-btn" data-a="miniModo" aria-label="Modo: ${R.modo === 'aleatorio' ? 'aleatorio' : R.modo === 'orden' ? 'en orden' : 'repetir'}" title="${R.modo === 'aleatorio' ? 'Aleatorio' : R.modo === 'orden' ? 'En orden' : 'Repetir'}" style="${R.modo === 'repetir' ? 'color:#FFC93C' : ''}">${icono(R.modo, 18)}</button>
+    <a href="${u ? '#/perfil/' + esc(u.usuario) : '#/perfil'}" style="flex:1;min-width:0;text-decoration:none;color:inherit"><b class="peq" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.titulo || 'Canción')}</b><span class="mini" style="opacity:.75">${u ? '@' + esc(u.usuario) : ''}${c.artista ? ' · ' + esc(c.artista) : ''} <span id="miniTiempo"></span></span></a>
+    <button class="icono-btn" data-a="miniModo" aria-label="Modo: ${NOMBRE_MODO[R.modo]}" title="${NOMBRE_MODO[R.modo]}" style="${R.modo === 'repetir' ? 'color:#FFC93C' : ''}">${icono(ICONO_MODO[R.modo] || 'aleatorio', 18)}</button>
     <button class="icono-btn mini-btn" data-repro="${esc(R.src)}" data-a="miniPlay" aria-label="Reproducir o pausar">${icono(R.sonando() ? 'pausa' : 'play', 18)}</button>
     ${R.cola.length > 1 ? `<button class="icono-btn" data-a="miniSiguiente" aria-label="Siguiente canción">${icono('siguiente', 18)}</button>` : ''}
-    <button class="icono-btn" data-a="miniCerrar" aria-label="Cerrar reproductor">${icono('cerrar', 18)}</button></div>`;
+    <button class="icono-btn" data-a="miniCerrar" aria-label="Cerrar reproductor">${icono('cerrar', 18)}</button>
+    <span class="mini-pista" data-a="miniBuscar" role="slider" aria-label="Avance de la canción" tabindex="0"><span id="miniBarra"></span></span></div>`;
 }
 ACC.miniPlay = () => { if (REPRO.audio) REPRO.audio.paused ? REPRO.audio.play().catch(() => {}) : REPRO.audio.pause(); };
 ACC.miniCerrar = () => REPRO.parar();
@@ -138,3 +147,8 @@ ACC.miniSiguiente = () => REPRO.siguiente();
 
 /* la barra de desplazamiento solo aparece mientras te mueves */
 (() => { let t = null; addEventListener('scroll', () => { document.documentElement.classList.add('desplazando'); clearTimeout(t); t = setTimeout(() => document.documentElement.classList.remove('desplazando'), 900); }, { capture: true, passive: true }); })();
+
+const NOMBRE_MODO = { aleatorio: 'Aleatorio', orden: 'En el orden que elegiste', subida: 'En el orden en que se subieron', repetir: 'Repetir esta canción' };
+const ICONO_MODO = { aleatorio: 'aleatorio', orden: 'orden', subida: 'subir', repetir: 'repetir' };
+function minSeg(s) { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+ACC.miniBuscar = (b, e) => { const a = REPRO.audio; if (!a || !a.duration) return; const r = b.getBoundingClientRect(), x = ((e?.clientX ?? r.left) - r.left) / r.width; a.currentTime = Math.max(0, Math.min(1, x)) * a.duration; REPRO.progreso(); };

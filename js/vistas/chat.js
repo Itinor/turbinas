@@ -29,7 +29,7 @@ function vistaConversacion(id) {
         : can.enlace ? `<a class="pastilla" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit" href="${esc(can.enlace)}" target="_blank" rel="noopener noreferrer">${icono('musica', 16)}<span>${esc(can.titulo)}</span></a>` : ''; })()}<button class="btn3" style="min-height:38px;padding:0 12px" data-a="menuChat" data-id="${c.id}">${icono('puntos', 18)}Opciones</button></div>
     ${fijado ? `<a href="#/agenda" class="insignia i-amarillo" style="align-self:center;text-decoration:none">Fijado: ${esc(fijado.titulo)} · ${fechaBonita(fijado.fecha)}</a>` : ''}
     <div id="mensajes" class="tarjeta pila" style="gap:8px;max-height:60vh;overflow-y:auto">${DB.visibles(c).map(m => { const mio = m.u === yo; if (m.sistema) return `<p class="mini gris" style="align-self:center;margin:0">${esc(nombreVisible(m.u))} salió del grupo</p>`; return `<div style="align-self:${mio ? 'flex-end' : 'flex-start'};max-width:80%">${!mio && c.tipo === 'grupo' ? `<div class="mini gris" style="margin:0 0 2px 6px">${esc(nombreVisible(m.u))}</div>` : ''}${m.borrado ? `<div style="border:1px dashed var(--linea);padding:8px 13px;border-radius:18px" class="peq gris"><i>Mensaje eliminado</i></div>` : `<div ${mio || DB.esAdmin() ? `data-a="menuMsg" data-id="${c.id}" data-i="${m.i}" role="button" tabindex="0" title="Opciones del mensaje" ` : ''}style="cursor:${mio || DB.esAdmin() ? 'pointer' : 'auto'};background:${mio ? 'var(--g-marca)' : 'var(--suave)'};color:${mio ? '#fff' : 'inherit'};padding:9px 13px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere">${m.adjunto ? burbujaAdjunto(m.adjunto, mio) : ''}${m.t ? esc(m.t) : ''}</div>`}<div class="mini gris" style="text-align:${mio ? 'right' : 'left'};margin:2px 6px 0">${hace(m.f)}</div></div>`; }).join('') || '<p class="vacio">Escribe el primer mensaje.</p>'}</div>
-    <form class="fila" style="flex-wrap:nowrap" data-form="enviarMsg"><input type="hidden" name="id" value="${c.id}"><label class="icono-btn" style="cursor:pointer;flex:none" title="Enviar foto o archivo" aria-label="Enviar foto o archivo">${icono('clip', 22)}<input type="file" class="oculto" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip" data-cambio="adjuntoChat" data-id="${c.id}"></label><label class="oculto" for="msg">Mensaje</label><input id="msg" name="t" maxlength="1000" placeholder="Escribe un mensaje…" autocomplete="off"><button class="btn2" aria-label="Enviar">${icono('enviar', 18)}</button></form>
+    <form class="fila" style="flex-wrap:nowrap" data-form="enviarMsg"><input type="hidden" name="id" value="${c.id}"><label class="icono-btn" style="cursor:pointer;flex:none" title="Enviar foto o archivo" aria-label="Enviar foto o archivo">${icono('clip', 22)}<input type="file" class="oculto" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip" multiple data-cambio="adjuntoChat" data-id="${c.id}"></label><label class="oculto" for="msg">Mensaje</label><input id="msg" name="t" maxlength="1000" placeholder="Escribe un mensaje…" autocomplete="off"><button class="btn2" aria-label="Enviar">${icono('enviar', 18)}</button></form>
     ${c.tipo === 'dm' ? `<button class="btn3" style="align-self:flex-start;color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${c.miembros.find(m => m !== yo)}" data-quien="${c.miembros.find(m => m !== yo)}">${icono('bandera', 16)}Reportar conversación</button>` : ''}</div>`;
 }
 FORMS.enviarMsg = d => { if (!d.t.trim()) return; DB.enviar(d.id, d.t); refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight; $('#msg')?.focus(); };
@@ -64,13 +64,17 @@ function burbujaAdjunto(a, mio) {
   return `<button class="adj-doc${mio ? ' mio' : ''}" data-a="abrirAdjunto" data-c="${esc(a.clave)}" data-n="${esc(a.nombre)}">${icono('archivo', 26)}<span style="min-width:0;text-align:left"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.nombre)}</b><span class="mini" style="opacity:.8">${pesoBonito(a.peso)} · Toca para abrir</span></span></button>`;
 }
 CAMBIOS.adjuntoChat = async el => {
-  const f = el.files[0], id = el.dataset.id; el.value = ''; if (!f) return; if (f.size > 10 * 1024 * 1024) return aviso('Máximo 10 MB.');
-  aviso('Enviando…');
-  try { const img = /^image\//.test(f.type), blob = img && !/gif/.test(f.type) ? await reducirFoto(f, 1600) : f, clave = 'chat_' + uid('f');
-    await ARCHIVOS.guardar(clave, blob);
-    const texto = $('#msg')?.value || ''; DB.enviar(id, texto, { clave, nombre: f.name.slice(0, 120), peso: blob.size, mime: blob.type || f.type });
-    if ($('#msg')) $('#msg').value = ''; refrescar(); }
-  catch { aviso('No se pudo enviar el archivo.'); }
+  const fs = [...el.files], id = el.dataset.id; el.value = ''; if (!fs.length) return;
+  if (fs.length > 5) return aviso('Máximo 5 archivos a la vez.');
+  if (fs.some(f => f.size > 10 * 1024 * 1024)) return aviso('Cada archivo puede pesar máximo 10 MB.');
+  aviso(fs.length > 1 ? `Enviando ${fs.length} archivos…` : 'Enviando…');
+  let texto = $('#msg')?.value || '';
+  for (const f of fs) {
+    try { const img = /^image\//.test(f.type), blob = img && !/gif/.test(f.type) ? await reducirFoto(f, 1600) : f, clave = 'chat_' + uid('f');
+      await ARCHIVOS.guardar(clave, blob); DB.enviar(id, texto, { clave, nombre: f.name.slice(0, 120), peso: blob.size, mime: blob.type || f.type }); texto = ''; }
+    catch { aviso('No se pudo enviar ' + f.name); }
+  }
+  if ($('#msg')) $('#msg').value = ''; refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight;
 };
 ACC.abrirAdjunto = async b => {
   const blob = await ARCHIVOS.leer(b.dataset.c).catch(() => null); if (!blob) return aviso('No se pudo abrir el archivo. Revisa tu internet.');

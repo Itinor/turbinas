@@ -5,7 +5,8 @@ VISTAS.rankings = {
   titulo: 'Rankings', nav: 'rankings',
   render(params) {
     if (params[0] === 'nuevo') return formNuevoRanking();
-    const tabs = `<div class="rejilla2" style="background:var(--suave);border-radius:14px;padding:4px">${[['profes', 'Profesores'], ['comunidad', 'Comunidad']].map(([k, t]) => `<button class="pastilla${UI.rkTab === k ? ' on' : ''}" style="border:0" data-a="rkTab" data-t="${k}">${t}</button>`).join('')}</div>`;
+    const tabs = `<div class="rejilla3" style="background:var(--suave);border-radius:14px;padding:4px">${[['profes', 'Profesores'], ['comunidad', 'Comunidad'], ['musica', 'Música']].map(([k, t]) => `<button class="pastilla${UI.rkTab === k ? ' on' : ''}" style="border:0" data-a="rkTab" data-t="${k}">${t}</button>`).join('')}</div>`;
+    if (UI.rkTab === 'musica') return `<div class="pila">${tabs}${rankingMusica()}</div>`;
     if (UI.rkTab === 'profes') {
       const lista = DB.estado.profes.filter(p => p.area === UI.rkArea && p.opiniones.length >= REGLAS.minOpinionesProfe).map(p => ({ p, c: DB.calificacion(p) })).sort((a, b) => b.c - a.c);
       const mejores = lista.filter(x => x.c >= 3.5).slice(0, 3), peores = lista.filter(x => x.c < 3.5).sort((a, b) => a.c - b.c).slice(0, 3);
@@ -69,3 +70,18 @@ ACC.nuevaArea = () => DB.esAdmin()
   : ACC.proponerProfe();
 FORMS.nuevaArea = d => { const r = DB.agregarArea(d.nombre); if (r.error) return aviso(r.error); UI.rkArea = r.ok; cerrarHoja(); aviso(r.ya ? 'Esa área ya existe' : 'Área agregada'); refrescar(); };
 ACC.quitarArea = b => { if (DB.quitarArea(b.dataset.n)) { if (UI.rkArea === b.dataset.n) UI.rkArea = DB.areas()[0]; cerrarHoja(); aviso('Área quitada'); refrescar(); } };
+
+/* ---------- Lo más escuchado: canciones y videos que sube la gente ---------- */
+UI.rkMusica = 'semana';
+function rankingMusica() {
+  const desde = UI.rkMusica === 'semana' ? Date.now() - 7 * 864e5 : 0, cuenta = new Map();
+  (DB.estado.escuchas || []).filter(e => new Date(e.f).getTime() >= desde && DB.usuario(e.dueno)).forEach(e => { const k = e.dueno + '|' + e.clave, x = cuenta.get(k) || { dueno: e.dueno, clave: e.clave, titulo: e.titulo, gente: new Set(), n: 0 }; x.gente.add(e.u); x.n++; cuenta.set(k, x); });
+  const lista = [...cuenta.values()].map(x => { const c = DB.canciones(DB.usuario(x.dueno)).find(c => c.archivo === x.clave || c.enlace === x.clave); return { ...x, c, titulo: c?.titulo || x.titulo || 'Canción' }; }).sort((a, b) => b.gente.size - a.gente.size || b.n - a.n).slice(0, 30);
+  const medalla = i => i < 3 ? `<span class="medalla m${i + 1}">${i + 1}</span>` : `<span style="width:30px;text-align:center;font-weight:800;color:var(--gris)">${i + 1}</span>`;
+  return `<div class="pestanas"><button class="pastilla${UI.rkMusica === 'semana' ? ' on' : ''}" data-a="rkMusica" data-v="semana">Esta semana</button><button class="pastilla${UI.rkMusica === 'siempre' ? ' on' : ''}" data-a="rkMusica" data-v="siempre">De siempre</button></div>
+    <section class="tarjeta"><h2 style="margin-bottom:6px">Lo más escuchado</h2>${lista.map((x, i) => { const u = DB.usuario(x.dueno);
+      return `<div class="fila" style="flex-wrap:nowrap;padding:10px 0;border-bottom:1px solid var(--linea)">${medalla(i)}${x.c?.archivo ? vinilo(x.c).replace('class="vinilo', 'style="width:44px;height:44px" class="vinilo') : `<span class="pastilla" style="display:grid;place-items:center;min-width:44px;height:44px;padding:0">${icono(/youtu/.test(x.clave) ? 'youtube' : 'musica', 18)}</span>`}
+        <a href="#/perfil/${esc(u.usuario)}" style="flex:1;min-width:0;text-decoration:none;color:inherit"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.titulo)}</b><span class="mini gris">@${esc(u.usuario)} · ${x.gente.size} ${x.gente.size === 1 ? 'persona' : 'personas'}</span></a>
+        ${x.c?.archivo ? `<button class="icono-btn" style="background:var(--amarillo);color:#1B1530;border-radius:50%" data-a="playPerfil" data-src="${esc(x.c.archivo)}" data-u="${u.id}" data-repro="${esc(x.c.archivo)}" aria-label="Escuchar">${icono(REPRO.sonando(x.c.archivo) ? 'pausa' : 'play', 18)}</button>` : ''}</div>`; }).join('') || '<p class="peq gris" style="margin:0">Todavía nadie ha escuchado canciones de otros. Entra a perfiles y dale play.</p>'}</section>`;
+}
+ACC.rkMusica = b => { UI.rkMusica = b.dataset.v; refrescar(); };

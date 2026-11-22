@@ -15,7 +15,7 @@ const DB = {
   VERSION: 8,
   /* rellena lo que falte (cuentas del equipo, tablones fijos, listas vacías) */
   completar() {
-    ['bitacora', 'jugadas', 'lugares', 'lugaresPend', 'profesPend', 'tablones', 'tablonItems', 'notifs', 'reportes', 'libro', 'posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes'].forEach(k => { if (!Array.isArray(E[k])) E[k] = []; });
+    ['escuchas', 'bitacora', 'jugadas', 'lugares', 'lugaresPend', 'profesPend', 'tablones', 'tablonItems', 'notifs', 'reportes', 'libro', 'posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes'].forEach(k => { if (!Array.isArray(E[k])) E[k] = []; });
     E.usuarios = E.usuarios || {}; asegurarEquipo(); asegurarTablones();
   },
   guardarSoloLocal() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
@@ -336,6 +336,13 @@ const DB = {
   quitarArea(nombre) { if (!this.esAdmin() || E.profes.some(p => p.area === nombre)) return false; E.areas = this.areas().filter(a => a !== nombre); this.guardar(); return true; },
   /* ---------- Tablón ---------- */
   puedeFijar(t) { return this.tablonVisible(t) && (!t.oficial || this.esAdmin()); },
+  /* una escucha por persona, canción y día (para el ranking de música) */
+  registrarEscucha(dueno, clave, titulo) {
+    const yo = E.sesion; if (!yo || !dueno || !clave || dueno === yo) return;
+    let h = 0; for (const c of clave) h = (Math.imul(h, 31) + c.charCodeAt(0)) | 0;
+    const id = `esc_${yo}_${(h >>> 0).toString(36)}_${fechaLocal()}`; E.escuchas = E.escuchas || [];
+    if (E.escuchas.some(x => x.id === id)) return; E.escuchas.push({ id, u: yo, dueno, clave, titulo: String(titulo || '').slice(0, 80), f: new Date().toISOString() }); this.guardar();
+  },
   verTablonItem(id) { const it = E.tablonItems.find(x => x.id === id); if (!it) return; it.vieron = it.vieron || []; if (!it.vieron.includes(E.sesion)) { it.vieron.push(E.sesion); this.guardar(); } },
   interaccion(it) { return (it.vieron || []).length + 3 * (it.apuntados || []).length + (it.fijado ? 5 : 0); },
   apuntarseTablon(id) { const it = E.tablonItems.find(x => x.id === id); if (!it) return; it.apuntados = it.apuntados || []; const i = it.apuntados.indexOf(E.sesion); if (i >= 0) it.apuntados.splice(i, 1); else { it.apuntados.push(E.sesion); if (it.autor !== E.sesion) notificar(it.autor, `@${this.yo().usuario} se apuntó a "${it.titulo}"`, '#/tablon/' + it.tablon); } this.guardar(); },

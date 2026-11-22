@@ -53,14 +53,45 @@ function admEconomia() {
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:130px">${dias.map(([f, d]) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="display:flex;gap:2px;align-items:flex-end;height:108px"><span style="width:12px;height:${Math.max(2, d.e / mx * 106)}px;background:#4B1F7A;border-radius:4px 4px 0 0"></span><span style="width:12px;height:${Math.max(2, d.s / mx * 106)}px;background:#F5B700;border-radius:4px 4px 0 0"></span></div><span class="mini gris">${new Date(f + 'T12:00').toLocaleDateString('es-MX', { weekday: 'short' }).slice(0, 2)}</span></div>`).join('')}</div></section>
     <section class="tarjeta"><h2 style="margin-bottom:6px">Reglas de equilibrio</h2>${[['Comisión del Fondo del castor', REGLAS.comisionFondo * 100 + '%'], ['Máximo por predicción', REGLAS.maxPorPrediccion], ['Máximo diario en predicciones', REGLAS.maxPrediccionDia], ['Regalo diario', REGLAS.regaloDiario], ['Tope diario en retos', REGLAS.topeRetosDia], ['Ramitas al casino por día', REGLAS.maxCasinoDia], ['Créditos por ramita', REGLAS.creditosPorRamita], ['Propuestas por día', REGLAS.limitePropuestasDia]].map(([t, v]) => `<div class="entre" style="padding:8px 0;border-bottom:1px solid var(--linea)"><span class="peq">${t}</span><b>${v}</b></div>`).join('')}</section>`;
 }
-function admRegistro() {
-  const l = DB.estado.libro.slice().reverse().slice(0, 150), sosp = new Set(Object.values(DB.estado.usuarios).filter(u => Object.values(DB.estado.usuarios).filter(v => v.dispositivo === u.dispositivo).length >= 3).map(u => u.id));
-  const bit = (DB.estado.bitacora || []).slice().reverse().slice(0, 200);
-  const seccionBit = `<section class="tarjeta"><h2>Bitácora de propuestas</h2><p class="mini gris" style="margin:2px 0 8px">Quién creó, editó, reportó, confirmó, disputó, resolvió, anuló o eliminó cada propuesta.</p>${bit.map(b => `<div style="padding:6px 0;border-bottom:1px solid var(--linea)" class="peq"><b>@${esc(DB.usuario(b.u)?.usuario || 'sistema')}</b> ${esc(b.accion)} <i>${esc(b.titulo)}</i>${b.extra ? ` <span class="gris">· ${esc(b.extra)}</span>` : ''}<br><span class="mini gris">${new Date(b.f).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span></div>`).join('') || '<p class="peq gris">Sin movimientos todavía.</p>'}</section>`;
-  return seccionBit + `<section class="tarjeta"><div class="entre"><h2>Registro de movimientos</h2><span class="mini gris">Solo se agregan; nunca se editan ni borran</span></div>
-    <div class="tabla" style="margin-top:8px"><table><thead><tr><th>Cuándo</th><th>Cuenta</th><th>Tipo</th><th class="num">Ramitas</th><th>Referencia</th><th>Dispositivo</th></tr></thead><tbody>${l.map(m => `<tr style="${sosp.has(m.u) && m.tipo === 'apuesta' ? 'background:var(--avisoBg)' : ''}"><td class="mini">${hace(m.f)}</td><td>${m.u === 'FONDO' ? 'Fondo' : '@' + esc(DB.usuario(m.u)?.usuario || m.u)}</td><td>${esc(NOMBRE_MOV[m.tipo] || m.tipo)}</td><td class="num" style="color:${m.monto >= 0 ? 'var(--okTxt)' : 'var(--malTxt)'}">${m.monto}</td><td class="mini">${esc(DB.estado.propuestas.find(p => p.id === m.ref)?.titulo?.slice(0, 40) || m.ref)}</td><td class="mini gris">${esc(m.disp)}</td></tr>`).join('')}</tbody></table></div>
-    <button class="btn3" style="margin-top:10px" data-a="copiarRegistro">Copiar registro (CSV)</button></section>`;
+/* ---------- Registro por días, con filtros ---------- */
+UI.reg = UI.reg || {}; Object.assign(UI, { regDia: 'hoy', regTipo: 'todo', regQuien: '' });
+const TIPOS_REG = [['todo', 'Todo'], ['ramitas', 'Ramitas'], ['propuestas', 'Propuestas'], ['publicaciones', 'Publicaciones'], ['tablon', 'Tablón'], ['casino', 'Casino'], ['musica', 'Música'], ['reportes', 'Reportes'], ['cuentas', 'Cuentas']];
+function eventosRegistro() {
+  const S = DB.estado, ev = [], nom = id => id === 'FONDO' ? 'Fondo' : '@' + (DB.usuario(id)?.usuario || '?');
+  S.libro.forEach(m => ev.push({ f: m.f, tipo: 'ramitas', u: m.u, txt: `${(typeof NOMBRE_MOV !== 'undefined' && NOMBRE_MOV[m.tipo]) || m.tipo}${m.ref ? ' · ' + m.ref : ''}`, monto: m.monto, disp: m.disp }));
+  (S.bitacora || []).forEach(b => ev.push({ f: b.f, tipo: 'propuestas', u: b.u, txt: `${b.accion} “${b.titulo}”${b.extra ? ' · ' + b.extra : ''}` }));
+  S.posts.forEach(p => { ev.push({ f: p.fecha, tipo: 'publicaciones', u: p.autor, txt: `publicó: “${String(p.texto || '').slice(0, 80)}”` }); (p.comentarios || []).forEach(c => ev.push({ f: c.fecha || p.fecha, tipo: 'publicaciones', u: c.autor, txt: `comentó: “${String(c.texto || '').slice(0, 60)}”` })); });
+  (S.tablonItems || []).forEach(t => ev.push({ f: t.fecha, tipo: 'tablon', u: t.autor, txt: `fijó ${t.tipo === 'nota' ? 'una nota' : t.tipo === 'evento' ? 'el evento “' + t.titulo + '”' : '“' + (t.titulo || t.archivo?.nombre || '') + '”'} en ${(S.tablones.find(x => x.id === t.tablon) || {}).nombre || 'un tablón'}` }));
+  (S.jugadas || []).forEach(j => ev.push({ f: j.f, tipo: 'casino', u: j.u, txt: `${j.juego}: apostó ${j.apuesta} y le pagó ${j.pago}`, monto: j.pago - j.apuesta, unidad: 'cr.' }));
+  (S.escuchas || []).forEach(e => ev.push({ f: e.f, tipo: 'musica', u: e.u, txt: `escuchó “${e.titulo}” de ${nom(e.dueno)}` }));
+  S.reportes.forEach(r => ev.push({ f: r.fecha, tipo: 'reportes', u: r.por, txt: `reportó ${r.tipo}: ${r.motivo} (${r.estado})` }));
+  Object.values(S.usuarios).forEach(u => u.creado && ev.push({ f: u.creado, tipo: 'cuentas', u: u.id, txt: `se creó la cuenta (${u.contacto || ''})` }));
+  return ev.filter(e => e.f).sort((a, b) => b.f.localeCompare(a.f));
 }
+function filtrarRegistro() {
+  const hoy = fechaLocal(), ayer = sumarDias(hoy, -1), d = UI.regDia, q = UI.regQuien.trim().toLowerCase().replace(/^@/, '');
+  return eventosRegistro().filter(e => { const dia = fechaLocal(new Date(e.f));
+    if (d === 'hoy' && dia !== hoy) return false; if (d === 'ayer' && dia !== ayer) return false; if (d === '7' && dia < sumarDias(hoy, -6)) return false; if (/^\d{4}-\d{2}-\d{2}$/.test(d) && dia !== d) return false;
+    if (UI.regTipo !== 'todo' && e.tipo !== UI.regTipo) return false;
+    if (q && !String(DB.usuario(e.u)?.usuario || e.u).toLowerCase().includes(q)) return false; return true; });
+}
+function admRegistro() {
+  const l = filtrarRegistro(), sosp = new Set(Object.values(DB.estado.usuarios).filter(u => Object.values(DB.estado.usuarios).filter(v => v.dispositivo === u.dispositivo).length >= 3).map(u => u.id));
+  const dias = new Map(); l.slice(0, 400).forEach(e => { const k = fechaLocal(new Date(e.f)); if (!dias.has(k)) dias.set(k, []); dias.get(k).push(e); });
+  const etiquetaDia = k => k === fechaLocal() ? 'Hoy' : k === sumarDias(fechaLocal(), -1) ? 'Ayer' : new Date(k + 'T12:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+  const color = { ramitas: 'i-amarillo', propuestas: 'i-morado', publicaciones: 'i-azul', tablon: 'i-naranja', casino: 'i-rojo', musica: 'i-verde', reportes: 'i-rojo', cuentas: 'i-morado' };
+  return `<section class="tarjeta pila" style="gap:10px"><h2>Registro de actividad</h2>
+    <div class="pestanas">${[['hoy', 'Hoy'], ['ayer', 'Ayer'], ['7', '7 días'], ['todo', 'Todo']].map(([k, n]) => `<button class="pastilla${UI.regDia === k ? ' on' : ''}" data-a="regFiltro" data-k="regDia" data-v="${k}">${n}</button>`).join('')}<label class="oculto" for="regFecha">Día</label><input id="regFecha" type="date" max="${fechaLocal()}" value="${/^\d{4}/.test(UI.regDia) ? UI.regDia : ''}" data-cambio="regFecha" style="max-width:160px;min-height:38px"></div>
+    <div class="pestanas">${TIPOS_REG.map(([k, n]) => `<button class="pastilla${UI.regTipo === k ? ' on' : ''}" data-a="regFiltro" data-k="regTipo" data-v="${k}">${n}</button>`).join('')}</div>
+    <label class="oculto" for="regQuien">Persona</label><input id="regQuien" type="search" placeholder="Filtrar por @usuario" value="${esc(UI.regQuien)}" data-cambio="regQuien" autocomplete="off">
+    <p class="mini gris" style="margin:0">${l.length} movimiento${l.length === 1 ? '' : 's'}${l.length > 400 ? ' (se muestran los 400 más recientes)' : ''} · Solo se agregan; nunca se editan ni borran. Los mensajes privados no aparecen.</p></section>
+    ${[...dias.entries()].map(([k, evs]) => `<section class="tarjeta"><div class="entre"><h3 style="margin:0;text-transform:capitalize">${etiquetaDia(k)}</h3><span class="mini gris">${evs.length}</span></div>
+      ${evs.map(e => `<div class="fila" style="flex-wrap:nowrap;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--linea);${sosp.has(e.u) && e.tipo === 'ramitas' && e.monto < 0 ? 'background:var(--avisoBg)' : ''}"><span class="mini gris" style="min-width:44px">${new Date(e.f).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span><span class="peq" style="flex:1;min-width:0"><b>${e.u === 'FONDO' ? 'Fondo' : '@' + esc(DB.usuario(e.u)?.usuario || '?')}</b> ${esc(e.txt)} <span class="insignia ${color[e.tipo] || ''}" style="font-size:10px">${e.tipo}</span></span>${e.monto != null ? `<b class="peq" style="white-space:nowrap;color:${e.monto >= 0 ? 'var(--okTxt)' : 'var(--malTxt)'}">${e.monto >= 0 ? '+' : MENOS}${numero(Math.abs(e.monto))}${e.unidad ? ' ' + e.unidad : ''}</b>` : ''}</div>`).join('')}</section>`).join('') || '<p class="vacio">No hay movimientos con estos filtros.</p>'}
+    <button class="btn3" data-a="copiarRegistro">Copiar lo filtrado (CSV)</button>`;
+}
+ACC.regFiltro = b => { UI[b.dataset.k] = b.dataset.v; refrescar(); };
+CAMBIOS.regFecha = el => { if (el.value) { UI.regDia = el.value; refrescar(); } };
+CAMBIOS.regQuien = el => { UI.regQuien = el.value; refrescar(); };
 ACC.admTab = b => { UI.admTab = b.dataset.t; refrescar(); };
 ACC.moderar = b => { DB.moderarRanking(b.dataset.id, b.dataset.e); refrescar(); };
 ACC.resolverRep = b => { DB.resolverReporte(b.dataset.id, b.dataset.e); refrescar(); };
@@ -73,7 +104,7 @@ ACC.congelarPred = b => { DB.congelar(b.dataset.id); aviso('Listo'); refrescar()
 ACC.cerrarAlerta = b => { DB.cerrarAlerta(b.dataset.id); refrescar(); };
 ACC.verUsuarioAdm = b => { UI.admUsuario = b.dataset.u || null; refrescar(); $('#fichaUsuario')?.scrollIntoView({ behavior: 'smooth' }); };
 ACC.verUsuarioAdmTab = b => { UI.admTab = 'predicciones'; UI.admUsuario = b.dataset.u; pintar(); $('#fichaUsuario')?.scrollIntoView({ behavior: 'smooth' }); };
-ACC.copiarRegistro = () => { const csv = 'fecha,cuenta,tipo,monto,referencia,dispositivo\n' + DB.estado.libro.map(m => [m.f, m.u, m.tipo, m.monto, m.ref, m.disp].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n'); navigator.clipboard?.writeText(csv).then(() => aviso('Registro copiado'), () => aviso('No se pudo copiar')); };
+ACC.copiarRegistro = () => { const csv = 'fecha,cuenta,tipo,detalle,monto\n' + filtrarRegistro().map(e => [e.f, DB.usuario(e.u)?.usuario || e.u, e.tipo, e.txt, e.monto ?? ''].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n'); navigator.clipboard?.writeText(csv).then(() => aviso('Copiado: pégalo en Excel o Sheets'), () => aviso('No se pudo copiar')); };
 
 ACC.moderarLugar = b => { DB.moderarLugar(b.dataset.id, b.dataset.ok === '1'); refrescar(); };
 

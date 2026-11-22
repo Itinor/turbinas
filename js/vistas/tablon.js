@@ -73,7 +73,7 @@ ACC.vistaTablon = () => { UI.tablon.vista = UI.tablon.vista === 'corcho' ? 'list
 ACC.nuevoTablon = () => abrirHoja(`<form class="pila" data-form="nuevoTablon"><h2>Nuevo tablón</h2><label class="oculto" for="ntb">Nombre</label><input id="ntb" name="nombre" required maxlength="50" placeholder="Ej. Física II · Grupo 3"><button class="btn ancho">Crear</button></form>`);
 FORMS.nuevoTablon = d => { const r = DB.crearTablon(d.nombre); if (r.error) return aviso(r.error); cerrarHoja(); ir('#/tablon/' + r.ok.id); };
 UI.nuevoTab = { tipo: 'archivo', color: 'amarillo' };
-ACC.nuevoEnTablon = b => { const t = DB.estado.tablones.find(x => x.id === b.dataset.t); UI.nuevoTab.tablon = t.id; UI.nuevoTab.archivo = null; if (t.tipoDefecto) UI.nuevoTab.tipo = t.tipoDefecto; hojaNuevoTablon(); };
+ACC.nuevoEnTablon = b => { const t = DB.estado.tablones.find(x => x.id === b.dataset.t); UI.nuevoTab.tablon = t.id; UI.nuevoTab.archivo = null; UI.nuevoTab.archivos = []; if (t.tipoDefecto) UI.nuevoTab.tipo = t.tipoDefecto; hojaNuevoTablon(); };
 function hojaNuevoTablon() {
   const N = UI.nuevoTab;
   abrirHoja(`<form class="pila" data-form="fijarTablon"><h2>Fijar en el tablón</h2>
@@ -83,24 +83,29 @@ function hojaNuevoTablon() {
       <div><label class="campo" for="ted">Detalles <span class="mini gris">(opcional)</span></label><textarea id="ted" name="texto" maxlength="400" rows="3"></textarea></div>`
       : N.tipo === 'nota' ? `<label class="oculto" for="tnt">Nota</label><textarea id="tnt" name="texto" required maxlength="400" rows="4" placeholder="Ej. Entrega del reporte el viernes"></textarea>
       <div class="fila">${Object.entries(COLORES_NOTA).map(([k, c]) => `<button type="button" class="pastilla${N.color === k ? ' on' : ''}" style="${N.color === k ? '' : `background:${c}`}" data-a="colorTablon" data-c="${k}">${k}</button>`).join('')}</div>`
-      : `<label class="tarjeta" style="border:2px dashed var(--linea);display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;cursor:pointer;text-align:center">${icono(N.tipo === 'foto' ? 'camara' : 'subir', 28)}<b style="color:var(--moradoTxt)" id="tabArchivo">${N.archivo ? esc(N.archivo.nombre) : N.tipo === 'foto' ? 'Elegir foto' : 'Elegir archivo (PDF, Word, etc.)'}</b><span class="mini gris">Hasta 10 MB</span><input type="file" class="oculto" accept="${N.tipo === 'foto' ? 'image/*' : '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,image/*'}" data-cambio="archivoTablon"></label>
+      : `<label class="tarjeta" style="border:2px dashed var(--linea);display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;cursor:pointer;text-align:center">${icono(N.tipo === 'foto' ? 'camara' : 'subir', 28)}<b style="color:var(--moradoTxt)" id="tabArchivo">${N.archivos?.length ? N.archivos.map(a => esc(a.nombre)).join(', ') : N.tipo === 'foto' ? 'Elegir foto' : 'Elegir archivo (PDF, Word, etc.)'}</b><span class="mini gris">Hasta 5 a la vez · 10 MB cada uno</span><input type="file" class="oculto" multiple accept="${N.tipo === 'foto' ? 'image/*' : '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,image/*'}" data-cambio="archivoTablon"></label>
       <div><label class="campo" for="ttt">Título <span class="mini gris">(opcional)</span></label><input id="ttt" name="titulo" maxlength="80" placeholder="${N.tipo === 'foto' ? 'Lo que vimos el martes' : 'Práctica 4 · Ley de Ohm'}"></div>`}
     <button class="btn ancho">Fijar</button></form>`);
 }
-ACC.tipoTablon = b => { UI.nuevoTab.tipo = b.dataset.t; UI.nuevoTab.archivo = null; hojaNuevoTablon(); };
+ACC.tipoTablon = b => { UI.nuevoTab.tipo = b.dataset.t; UI.nuevoTab.archivo = null; UI.nuevoTab.archivos = []; hojaNuevoTablon(); };
 ACC.colorTablon = b => { UI.nuevoTab.color = b.dataset.c; const t = $('#tnt')?.value; hojaNuevoTablon(); if (t) $('#tnt').value = t; };
 CAMBIOS.archivoTablon = async el => {
-  const f = el.files[0]; if (!f) return; if (f.size > 10 * 1024 * 1024) return aviso('Máximo 10 MB.');
-  const N = UI.nuevoTab, et = $('#tabArchivo'); if (et) et.textContent = 'Cargando…';
-  try {
-    const blob = N.tipo === 'foto' ? await reducirFoto(f) : f, clave = 'tab_' + uid('f');
-    await ARCHIVOS.guardar(clave, blob);
-    N.archivo = { clave, nombre: f.name.slice(0, 120), peso: blob.size, mime: blob.type || f.type };
-    if (/^image\//.test(N.archivo.mime)) { try { const bm = await createImageBitmap(blob); N.archivo.w = bm.width; N.archivo.h = bm.height; bm.close?.(); } catch {} }
-    if (et) et.textContent = f.name;
-  } catch { aviso('No pudimos leer ese archivo.'); if (et) et.textContent = 'Elegir de nuevo'; }
+  const fs = [...el.files]; if (!fs.length) return; if (fs.length > 5) return aviso('Máximo 5 a la vez.'); if (fs.some(f => f.size > 10 * 1024 * 1024)) return aviso('Cada uno puede pesar máximo 10 MB.');
+  const N = UI.nuevoTab, et = $('#tabArchivo'); if (et) et.textContent = 'Cargando…'; N.archivos = [];
+  for (const f of fs) {
+    try {
+      const esImg = /^image\//.test(f.type), blob = N.tipo === 'foto' || (esImg && !/gif/.test(f.type)) ? await reducirFoto(f) : f, clave = 'tab_' + uid('f');
+      await ARCHIVOS.guardar(clave, blob);
+      const a = { clave, nombre: f.name.slice(0, 120), peso: blob.size, mime: blob.type || f.type };
+      if (/^image\//.test(a.mime)) { try { const bm = await createImageBitmap(blob); a.w = bm.width; a.h = bm.height; bm.close?.(); } catch {} }
+      N.archivos.push(a);
+    } catch { aviso('No pudimos leer ' + f.name); }
+  }
+  N.archivo = N.archivos[0] || null; if (et) et.textContent = N.archivos.map(a => a.nombre).join(', ') || 'Elegir de nuevo';
 };
-FORMS.fijarTablon = d => { const N = UI.nuevoTab; const r = DB.fijarEnTablon({ tablon: N.tablon, tipo: N.tipo, titulo: d.titulo, texto: d.texto, color: N.color, archivo: N.archivo, cuando: d.cuando ? new Date(d.cuando).toISOString() : null, lugar: d.lugar }); if (r.error) return aviso(r.error); N.archivo = null; cerrarHoja(); aviso('Fijado'); refrescar(); };
+FORMS.fijarTablon = d => { const N = UI.nuevoTab, lista = (N.tipo === 'archivo' || N.tipo === 'foto') ? (N.archivos?.length ? N.archivos : [null]) : [null]; let r;
+  for (const arch of lista) { r = DB.fijarEnTablon({ tablon: N.tablon, tipo: N.tipo, titulo: d.titulo, texto: d.texto, color: N.color, archivo: arch, cuando: d.cuando ? new Date(d.cuando).toISOString() : null, lugar: d.lugar }); if (r.error) return aviso(r.error); }
+  N.archivo = null; N.archivos = []; cerrarHoja(); aviso(lista.length > 1 ? `${lista.length} fijados` : 'Fijado'); refrescar(); };
 ACC.verTablonItem = b => {
   DB.verTablonItem(b.dataset.id);
   const it = DB.estado.tablonItems.find(x => x.id === b.dataset.id); if (!it) return; const mio = it.autor === DB.yo().id || DB.esAdmin();
