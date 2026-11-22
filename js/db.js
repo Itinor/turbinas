@@ -138,7 +138,7 @@ const DB = {
     p.apuestas.push({ u: u.id, op, monto, f: new Date().toISOString() }); L.apostado += monto;
     mover(u.id, -monto, 'apuesta', p.id); this.guardar(); return { ok: true };
   },
-  votar(id, op) { const p = E.propuestas.find(x => x.id === id); if (this.yo().verificado !== 'si') return { error: 'verificar' }; if (yaCerro(p)) return { error: 'Esta votación ya cerró.' }; p.votos[E.sesion] = op; this.guardar(); return { ok: true }; },
+  votar(id, op) { const p = E.propuestas.find(x => x.id === id); if (yaCerro(p)) return { error: 'Esta votación ya cerró.' }; p.votos[E.sesion] = op; this.guardar(); return { ok: true }; },
   apuntarse(id) { const p = E.propuestas.find(x => x.id === id); const i = p.apuntados.indexOf(E.sesion); if (i >= 0) p.apuntados.splice(i, 1); else if (p.apuntados.length < p.cupo) { p.apuntados.push(E.sesion); if (p.apuntados.length === p.cupo) notificar(p.autor, `"${p.titulo}" ya llenó el cupo`, '#/propuestas'); } this.guardar(); },
   resolver(id, ganadora, como = 'admin') {
     const p = E.propuestas.find(x => x.id === id); if (!p || p.estado === 'resuelta' || p.estado === 'anulada') return;
@@ -255,7 +255,7 @@ const DB = {
   },
   revisarConsentimiento(r) { const v = Object.values(r.consentimiento); if (v.some(x => x === false)) r.estado = 'rechazado'; else if (v.every(x => x === true) && r.estado === 'consentimiento') r.estado = 'aprobado'; },
   responderConsentimiento(id, acepta) { const r = E.rankings.find(x => x.id === id); if (!r) return; r.consentimiento[E.sesion] = acepta; this.revisarConsentimiento(r); notificar(r.autor, `@${this.yo().usuario} ${acepta ? 'aceptó' : 'no aceptó'} aparecer en "${r.titulo}"`, '#/rankings'); this.guardar(); },
-  votarRanking(id, op) { if (this.yo().verificado !== 'si') return { error: 'verificar' }; const r = E.rankings.find(x => x.id === id); r.votos[E.sesion] = op; this.guardar(); return { ok: true }; },
+  votarRanking(id, op) { const r = E.rankings.find(x => x.id === id); r.votos[E.sesion] = op; this.guardar(); return { ok: true }; },
   moderarRanking(id, estado) { const r = E.rankings.find(x => x.id === id); r.estado = estado; notificar(r.autor, estado === 'aprobado' ? `Tu ranking "${r.titulo}" ya está publicado` : `Tu ranking "${r.titulo}" no se publicó`, '#/rankings'); this.guardar(); },
 
   /* ---------- Profesores ---------- */
@@ -501,10 +501,10 @@ function asegurarEquipo() {
   let cambio = false;
   (CONFIG.cuentasEquipo || []).forEach(c => {
     const u = E.usuarios[c.id];
-    if (u) { if (c.admin && u.rol !== 'admin') { u.rol = 'admin'; cambio = true; } if (!c.admin && u.rol === 'admin' && c.usuario) { u.rol = 'estudiante'; cambio = true; } return; }
+    if (u) { if (c.admin && u.rol !== 'admin') { u.rol = 'admin'; cambio = true; } if (!c.admin && u.rol === 'admin' && c.usuario) { u.rol = 'estudiante'; cambio = true; } if (u.verificado !== 'si') { u.verificado = 'si'; if (!u.insignias.includes('verificado')) u.insignias.push('verificado'); cambio = true; } return; }
     const base = E.usuarios.u_valeria || Object.values(E.usuarios)[0];
     E.usuarios[c.id] = { ...JSON.parse(JSON.stringify(base)), id: c.id, usuario: c.usuario, nombre: c.nombre, nombreVis: 'todos', nombreElegidos: [], carrera: 'Sin carrera', gen: null, semestre: null,
-      verificado: 'no', documento: null, contacto: 'equipo de prueba', rol: c.admin ? 'admin' : 'estudiante', bio: '', cancion: null, playlists: [], insignias: [], ocultas: [],
+      verificado: 'si', documento: null, contacto: 'equipo de prueba', rol: c.admin ? 'admin' : 'estudiante', bio: '', cancion: null, playlists: [], insignias: ['verificado'], ocultas: [],
       amigos: [], bloqueados: [], silenciados: [], horario: [], racha: { dias: 0, ultimo: null, semana: [] }, diarios: { fecha: null }, limites: { fecha: null }, reputacion: 0, creado: new Date().toISOString(), suspendido: false, equipo: true, dispositivo: 'equipo-' + c.id };
     mover(c.id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida', null, 'bienv_' + c.id); cambio = true;
   });
