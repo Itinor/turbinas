@@ -139,7 +139,7 @@ const SYNC = (() => {
 
   function repintar() {
     const r = ruta(), escribiendo = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName), hoja = document.getElementById('velo');
-    if (['juego', 'herramientas', 'redes', 'comprar-ramitas', 'editar-perfil'].includes(r.nombre) || escribiendo || hoja) { pintarLuego = true; actualizarChip?.(); return; }
+    if (['juego', 'herramientas', 'redes', 'comprar-ramitas', 'editar-perfil'].includes(r.nombre) || escribiendo || hoja || document.querySelector('.principal iframe')) { pintarLuego = true; actualizarChip?.(); return; }
     pintarLuego = false; const y = scrollY; pintar(); scrollTo(0, y);
   }
   function estado(e) { document.documentElement.dataset.sync = e; }

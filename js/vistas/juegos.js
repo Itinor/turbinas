@@ -1,9 +1,9 @@
 /* El rincón del castor: racha, retos académicos, diarios, mejores de la semana y juegos */
 'use strict';
 const JUEGOS_EXTERNOS = {
-  runner: { nombre: 'Runner', desc: 'Corre, salta y no te caigas', src: 'juegos/runner/index.html?v=202611212001', ico: 'runner', tinte: '#FFF6DA', color: '#8A5A00' },
-  spacewar: { nombre: 'Space War', desc: 'Derrota al jefe asteroide', src: 'juegos/spacewar/index.html?v=202611212001', ico: 'nave', tinte: '#DCE8FB', color: '#174EAD' },
-  royal: { nombre: 'Ruleta y tragamonedas', desc: 'Juega con tus ramitas', src: 'juegos/royal/index.html?v=202611212001', ico: 'ruleta', tinte: '#F3EFFA', color: '#4B1F7A' }
+  runner: { nombre: 'Runner', desc: 'Corre, salta y no te caigas', src: 'juegos/runner/index.html?v=202611212013', ico: 'runner', tinte: '#FFF6DA', color: '#8A5A00' },
+  spacewar: { nombre: 'Space War', desc: 'Derrota al jefe asteroide', src: 'juegos/spacewar/index.html?v=202611212013', ico: 'nave', tinte: '#DCE8FB', color: '#174EAD' },
+  royal: { nombre: 'Ruleta y tragamonedas', desc: 'Juega con tus ramitas', src: 'juegos/royal/index.html?v=202611212013', ico: 'ruleta', tinte: '#F3EFFA', color: '#4B1F7A' }
 };
 VISTAS.juegos = {
   titulo: 'El rincón del castor', nav: 'juegos',
@@ -23,7 +23,8 @@ VISTAS.juegos = {
       <div class="rejilla3">${diarios.map(([k, t, ic, ti, co, p]) => `<a class="juego-tile" href="#/juego/${k}"><span class="ico" style="background:${ti};color:${co}">${icono(ic, 20)}</span><b style="font-size:14px;line-height:1.2">${t}</b><span class="mini" style="font-weight:700;color:${d[k] ? 'var(--okTxt)' : '#8A5A00'}">${d[k] ? 'Hecho' : '+' + p}</span></a>`).join('')}</div>
       <section class="tarjeta"><div class="entre"><h2>Los mejores de la semana</h2><span class="mini gris">Cierra el domingo</span></div>
         ${mejores.map((m, i) => `<div class="fila" style="flex-wrap:nowrap;padding:8px 6px;border-bottom:1px solid var(--linea);${m.u.id === u.id ? 'background:var(--suave);border-radius:10px' : ''}"><b style="width:24px">${i + 1}</b><span style="flex:1"><b class="peq">@${esc(m.u.usuario)}${m.u.id === u.id ? ' (tú)' : ''}</b><br><span class="mini gris">${esc(m.u.carrera)} · ${m.pts} pts</span></span><span class="insignia i-amarillo">${premios[i]}</span></div>`).join('') || '<p class="vacio">Juega un reto para aparecer aquí.</p>'}</section>
-      <div class="seccion"><h2>Para relajarse</h2></div>
+      <div class="seccion"><h2>Para relajarse</h2><span class="mini gris">Sin ramitas, las veces que quieras</span></div>
+      <div class="rejilla3">${diarios.map(([k, t, ic, ti, co]) => `<a class="juego-tile" href="#/juego/${k}/libre"><span class="ico" style="background:${ti};color:${co}">${icono(ic, 20)}</span><b style="font-size:14px;line-height:1.2">${t.replace(' del día', '')}</b><span class="mini gris">Libre</span></a>`).join('')}</div>
       <div class="rejilla2"><a class="juego-tile" href="#/juego/baraja"><span class="ico" style="background:#FFF6DA;color:#8A5A00">${icono('carta', 20)}</span><b>La Baraja</b><span class="mini gris">El oráculo del chisme</span></a>
         ${Object.entries(JUEGOS_EXTERNOS).map(([k, j]) => `<a class="juego-tile" href="#/juego/${k}"><span class="ico" style="background:${j.tinte};color:${j.color}">${icono(j.ico, 20)}</span><b>${j.nombre}</b><span class="mini gris">${j.desc}</span></a>`).join('')}</div>
       <section class="tarjeta fila" style="flex-wrap:nowrap;background:var(--avisoBg);border:1px dashed #E2C46A">${icono('regalo', 30, 'style="color:#8A5A00;flex:none"')}<span><b>Tienda del castor</b><br><span class="peq" style="color:var(--avisoTxt)">Muy pronto: cambia ramitas por cupones de negocios cerca del campus.</span></span></section>
@@ -34,15 +35,15 @@ VISTAS.juegos = {
 /* ---------- Juegos individuales ---------- */
 UI.trivia = null; UI.palabra = null; UI.logica = null; UI.baraja = { hist: [] };
 VISTAS.juego = {
-  titulo: ([k]) => ({ trivia: 'Trivia del día', palabra: 'Palabra del día', logica: 'Reto de lógica', crucigrama: 'Crucigrama del día', significa: '¿Qué significa?', baraja: 'La Baraja' }[k] || JUEGOS_EXTERNOS[k]?.nombre || 'Juego'), nav: 'juegos', atras: '#/juegos',
+  titulo: ([k, m]) => m === 'libre' ? ({ trivia: 'Trivia', palabra: 'Palabra', logica: 'Lógica', crucigrama: 'Crucigrama', significa: '¿Qué significa?' }[k] || 'Juego') + ' · libre' : ({ trivia: 'Trivia del día', palabra: 'Palabra del día', logica: 'Reto de lógica', crucigrama: 'Crucigrama del día', significa: '¿Qué significa?', baraja: 'La Baraja' }[k] || JUEGOS_EXTERNOS[k]?.nombre || 'Juego'), nav: 'juegos', atras: '#/juegos',
   montar() { cargarDefiniciones(); },
   render([k]) {
-    const d = DB.diarios();
+    const d = modoLibre() ? {} : DB.diarios();
     if (k === 'trivia') {
-      if (!UI.trivia || UI.trivia.fecha !== fechaLocal() || UI.trivia.u !== DB.yo().id) { const r = azar(semillaPersonal('trivia')), ids = TRIVIA_TODA().map((_, i) => i).sort(() => r() - 0.5); UI.trivia = { fecha: fechaLocal(), u: DB.yo().id, qs: ids.slice(0, 5), i: 0, ok: 0, eleg: null }; }
+      if (!UI.trivia || UI.trivia.clave !== claveJuego()) { const r = azar(semillaPersonal('trivia')), ids = TRIVIA_TODA().map((_, i) => i).sort(() => r() - 0.5); UI.trivia = { clave: claveJuego(), qs: ids.slice(0, 5), i: 0, ok: 0, eleg: null }; }
       const t = UI.trivia;
       if (d.trivia && t.i < 5 && t.eleg === null && t.i === 0) return `<div class="tarjeta" style="text-align:center"><h2>Ya jugaste la trivia de hoy</h2><p class="gris">Vuelve mañana por 5 preguntas nuevas.</p><a class="btn" href="#/retos">Prueba un reto</a></div>`;
-      if (t.i >= 5) return `<div class="tarjeta" style="text-align:center"><b style="font-family:Sora,sans-serif;font-size:56px;color:var(--moradoTxt)">${t.ok}/5</b><h2>${t.ok >= 4 ? '¡Muy bien! +15 ramitas' : 'Casi. Mañana hay otra'}</h2><a class="btn" style="margin-top:14px" href="#/juegos">Volver</a></div>`;
+      if (t.i >= 5) return `<div class="tarjeta" style="text-align:center"><b style="font-family:Sora,sans-serif;font-size:56px;color:var(--moradoTxt)">${t.ok}/5</b><h2>${t.ok >= 4 ? '¡Muy bien!' + txtPremio(15) : modoLibre() ? 'Casi' : 'Casi. Mañana hay otra'}</h2>${botonFinal()}</div>`;
       const q = TRIVIA_TODA()[t.qs[t.i]];
       return `<div class="problema"><div class="entre peq" style="font-weight:700"><span>Pregunta ${t.i + 1} de 5</span><span>${t.ok} aciertos</span></div>
         <div class="progreso">${[0, 1, 2, 3, 4].map(i => `<span class="${i < t.i ? 'b' : i === t.i ? 'a' : ''}"></span>`).join('')}</div>
@@ -52,21 +53,21 @@ VISTAS.juego = {
     }
     if (k === 'palabra') {
       const PP = palabraPersonal(), sol = PP.sol, N = PP.largo;
-      if (!UI.palabra || UI.palabra.fecha !== fechaLocal() || UI.palabra.u !== DB.yo().id) UI.palabra = { fecha: fechaLocal(), u: DB.yo().id, intentos: [], actual: '', fin: d.palabra ? 'hecho' : null };
+      if (!UI.palabra || UI.palabra.clave !== claveJuego()) UI.palabra = { clave: claveJuego(), intentos: [], actual: '', fin: d.palabra ? 'hecho' : null };
       const P = UI.palabra, colores = w => { const r = Array(N).fill('g'), s = [...sol]; w.split('').forEach((c, i) => { if (c === sol[i]) { r[i] = 'v'; s[i] = null; } }); w.split('').forEach((c, i) => { if (r[i] !== 'v') { const j = s.indexOf(c); if (j >= 0) { r[i] = 'a'; s[j] = null; } } }); return r; };
       const est = {}; P.intentos.forEach(w => colores(w).forEach((c, i) => { const l = w[i]; if (c === 'v' || (c === 'a' && est[l] !== 'v') || !est[l]) est[l] = c; }));
       const filas = []; for (let i = 0; i < 6; i++) { const w = P.intentos[i] || (i === P.intentos.length ? P.actual.padEnd(N) : ' '.repeat(N)); const c = P.intentos[i] ? colores(w) : []; filas.push(`<div class="r" style="grid-template-columns:repeat(${N},1fr)">${[...w].map((ch, j) => `<div class="c ${c[j] || ''}">${esc(ch.trim())}</div>`).join('')}</div>`); }
       const tec = ['QWERTYUIOP', 'ASDFGHJKLÑ', '<ZXCVBNM>'];
       return `<div class="pila"><p class="gris peq" style="text-align:center;margin:0">Adivina la palabra de ${N} letras en 6 intentos. Hoy cada quien tiene la suya. Verde: letra en su lugar. Amarillo: está, pero en otro lugar.</p>
         <div class="wordle" aria-live="polite">${filas.join('')}</div>
-        ${P.fin ? `<div class="tarjeta" style="text-align:center"><h2>${P.fin === 'gano' ? '¡La sacaste! +10 ramitas' : P.fin === 'hecho' ? 'Ya jugaste la palabra de hoy' : 'Era ' + sol}</h2>${P.fin !== 'hecho' || P.intentos.length ? cajaDefinicion(PP.palabra) : ''}<a class="btn" style="margin-top:10px" href="#/juegos">Volver</a></div>`
+        ${P.fin ? `<div class="tarjeta" style="text-align:center"><h2>${P.fin === 'gano' ? '¡La sacaste!' + txtPremio(10) : P.fin === 'hecho' ? 'Ya jugaste la palabra de hoy' : 'Era ' + sol}</h2>${P.fin !== 'hecho' || P.intentos.length ? cajaDefinicion(PP.palabra) : ''}${botonFinal()}</div>`
           : `<div class="teclado">${tec.map(r => `<div class="r">${r.split('').map(ch => ch === '<' ? '<button class="ancha" data-a="tecla" data-k="borrar" aria-label="Borrar">Borrar</button>' : ch === '>' ? '<button class="ancha" data-a="tecla" data-k="enviar">Enviar</button>' : `<button class="${est[ch] || ''}" data-a="tecla" data-k="${ch}">${ch}</button>`).join('')}</div>`).join('')}</div>`}</div>`;
     }
     if (k === 'crucigrama') return vistaCrucigrama(d);
     if (k === 'significa') return vistaSignifica(d);
     if (k === 'logica') {
       const q = LOGICA[semillaPersonal('logica') % LOGICA.length];
-      if (!UI.logica || UI.logica.fecha !== fechaLocal()) { const ops = [...new Set([q.r, q.r + 1, q.r - 2, q.r + 3, q.r * 2])].slice(0, 4); const giro = Math.abs(q.r) % ops.length; ops.push(...ops.splice(0, giro)); UI.logica = { fecha: fechaLocal(), ops, eleg: d.logica ? q.r : null }; }
+      if (!UI.logica || UI.logica.clave !== claveJuego()) { const ops = [...new Set([q.r, q.r + 1, q.r - 2, q.r + 3, q.r * 2])].slice(0, 4); const giro = Math.abs(q.r) % ops.length; ops.push(...ops.splice(0, giro)); UI.logica = { clave: claveJuego(), ops, eleg: d.logica ? q.r : null }; }
       const L = UI.logica;
       return `<div class="problema"><span class="etiqueta">Completa la secuencia</span><div class="expr" style="margin-top:12px">${esc(q.p).replace(/-/g, MENOS)}</div>
         <div class="opciones">${L.ops.map((o, i) => `<button class="opcion${L.eleg !== null ? (o === q.r ? ' ok' : o === L.eleg ? ' mal' : '') : ''}" data-a="logicaResp" data-v="${o}"><span class="l">${'ABCD'[i]}</span>${String(o).replace('-', MENOS)}</button>`).join('')}</div>
@@ -79,16 +80,16 @@ VISTAS.juego = {
   }
 };
 ACC.triviaResp = b => { const t = UI.trivia; if (t.eleg !== null) return; t.eleg = +b.dataset.i; if (t.eleg === TRIVIA_TODA()[t.qs[t.i]].c) t.ok++; refrescar(); };
-ACC.triviaSig = () => { const t = UI.trivia; t.i++; t.eleg = null; if (t.i >= 5) { DB.completarDiario('trivia', t.ok >= 4 ? 15 : 0); } refrescar(); };
+ACC.triviaSig = () => { const t = UI.trivia; t.i++; t.eleg = null; if (t.i >= 5) { premiarDiario('trivia', t.ok >= 4 ? 15 : 0); } refrescar(); };
 ACC.tecla = b => {
   const P = UI.palabra, k = b.dataset.k, PP = palabraPersonal(), sol = PP.sol, N = PP.largo; if (P.fin) return;
   if (k === 'borrar') P.actual = P.actual.slice(0, -1);
-  else if (k === 'enviar') { if ([...P.actual].length < N) return aviso('Faltan letras'); P.intentos.push(P.actual); P.actual = ''; if (P.intentos.at(-1) === sol) { P.fin = 'gano'; DB.completarDiario('palabra', 10); } else if (P.intentos.length >= 6) { P.fin = 'perdio'; DB.completarDiario('palabra', 0); } }
+  else if (k === 'enviar') { if ([...P.actual].length < N) return aviso('Faltan letras'); P.intentos.push(P.actual); P.actual = ''; if (P.intentos.at(-1) === sol) { P.fin = 'gano'; premiarDiario('palabra', 10); } else if (P.intentos.length >= 6) { P.fin = 'perdio'; premiarDiario('palabra', 0); } }
   else if ([...P.actual].length < N) P.actual += k;
   refrescar();
 };
 document.addEventListener('keydown', e => { if (ruta().nombre !== 'juego' || ruta().params[0] !== 'palabra' || e.target.matches('input,textarea')) return; const k = e.key.toUpperCase(); if (k === 'BACKSPACE') ACC.tecla({ dataset: { k: 'borrar' } }); else if (k === 'ENTER') ACC.tecla({ dataset: { k: 'enviar' } }); else if (/^[A-ZÑ]$/.test(k)) ACC.tecla({ dataset: { k } }); });
-ACC.logicaResp = b => { const L = UI.logica; if (L.eleg !== null) return; L.eleg = +b.dataset.v; const q = LOGICA[semillaPersonal('logica') % LOGICA.length]; DB.completarDiario('logica', L.eleg === q.r ? 10 : 0); refrescar(); };
+ACC.logicaResp = b => { const L = UI.logica; if (L.eleg !== null) return; L.eleg = +b.dataset.v; const q = LOGICA[semillaPersonal('logica') % LOGICA.length]; premiarDiario('logica', L.eleg === q.r ? 10 : 0); refrescar(); };
 
 /* ---------- La Baraja (oráculo del chisme) ---------- */
 const PALOS = [['♥', 'roja'], ['♦', 'roja'], ['♣', ''], ['♠', '']], VALORES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -124,7 +125,7 @@ async function cargarDefiniciones() {
 
 /* ---------- Crucigrama del día (cada quien el suyo) ---------- */
 function vistaCrucigrama(d) {
-  if (!UI.cruci || UI.cruci.fecha !== fechaLocal() || UI.cruci.u !== DB.yo().id) UI.cruci = { fecha: fechaLocal(), u: DB.yo().id, data: armarCrucigrama(semillaPersonal('cruci')), resp: {}, defs: null, dir: true, mal: {}, fin: !!d.crucigrama };
+  if (!UI.cruci || UI.cruci.clave !== claveJuego()) UI.cruci = { clave: claveJuego(), data: armarCrucigrama(semillaPersonal('cruci')), resp: {}, defs: null, dir: true, mal: {}, fin: !!d.crucigrama };
   const C = UI.cruci, X = C.data;
   if (!C.defs && !C.pidiendo) { C.pidiendo = true; DEFINICIONES.de(X.palabras.map(p => p.palabra)).then(r => { C.defs = r; C.pidiendo = false; if (ruta().params[0] === 'crucigrama') refrescar(); }); }
   const pista = p => { const dd = C.defs?.[p.palabra]; return dd && dd.length ? esc(dd[0]) : C.defs ? `Empieza con “${p.sol[0]}” (${[...p.sol].length} letras)` : 'Cargando pista…'; };
@@ -133,7 +134,7 @@ function vistaCrucigrama(d) {
   const lista = h => X.palabras.filter(p => p.h === h).sort((a, b) => a.n - b.n).map(p => `<li value="${p.n}" class="peq" style="margin-bottom:6px">${pista(p)}</li>`).join('');
   return `<div class="pila"><p class="gris peq" style="text-align:center;margin:0">Hoy cada quien tiene su propio crucigrama. Sin acentos.</p>
     <div class="crucigrama" style="grid-template-columns:repeat(${X.N},1fr)">${celdas.join('')}</div>
-    ${C.fin ? `<div class="tarjeta" style="text-align:center"><h2>${d.crucigrama && !C.gano ? 'Ya hiciste el crucigrama de hoy' : '¡Completo! +15 ramitas'}</h2><a class="btn" style="margin-top:10px" href="#/juegos">Volver</a></div>` : `<div class="rejilla2"><button class="btn" data-a="revisarCruci">Revisar</button><button class="btn3" data-a="dirCruci">Escribir ${C.dir ? 'hacia abajo' : 'hacia la derecha'}</button></div>`}
+    ${C.fin ? `<div class="tarjeta" style="text-align:center"><h2>${d.crucigrama && !C.gano ? 'Ya hiciste el crucigrama de hoy' : '¡Completo!' + txtPremio(15)}</h2>${botonFinal()}</div>` : `<div class="rejilla2"><button class="btn" data-a="revisarCruci">Revisar</button><button class="btn3" data-a="dirCruci">Escribir ${C.dir ? 'hacia abajo' : 'hacia la derecha'}</button></div>`}
     <section class="tarjeta"><h3 style="margin:0 0 6px">Horizontales</h3><ol style="margin:0;padding-left:22px">${lista(true)}</ol><h3 style="margin:12px 0 6px">Verticales</h3><ol style="margin:0;padding-left:22px">${lista(false)}</ol>${C.defs ? FUENTE_DEF : ''}</section></div>`;
 }
 ENTRADAS.cruci = el => {
@@ -144,25 +145,34 @@ ACC.dirCruci = () => { UI.cruci.dir = !UI.cruci.dir; refrescar(); };
 ACC.revisarCruci = () => {
   const C = UI.cruci, X = C.data; let ok = true, vacias = 0; C.mal = {};
   for (let f = 0; f < X.N; f++) for (let c = 0; c < X.N; c++) { const v = X.grid[f][c]; if (!v) continue; const k = f + ',' + c, r = C.resp[k]; if (!r) { vacias++; ok = false; } else if (r !== v) { C.mal[k] = true; ok = false; } }
-  if (ok) { C.fin = true; C.gano = true; DB.completarDiario('crucigrama', 15); aviso('¡Crucigrama completo! +15 ramitas'); }
+  if (ok) { C.fin = true; C.gano = true; premiarDiario('crucigrama', 15); aviso('¡Crucigrama completo!' + txtPremio(15)); }
   else aviso(Object.keys(C.mal).length ? `${Object.keys(C.mal).length} letra${Object.keys(C.mal).length > 1 ? 's' : ''} no van (en rojo)` : `Te faltan ${vacias} casillas`);
   refrescar();
 };
 
 /* ---------- ¿Qué significa? (cada quien el suyo) ---------- */
 function vistaSignifica(d) {
-  if (!UI.signi || UI.signi.fecha !== fechaLocal() || UI.signi.u !== DB.yo().id) {
+  if (!UI.signi || UI.signi.clave !== claveJuego()) {
     const r = azar(semillaPersonal('significa')), ws = PALABRAS_ES.filter(w => w.length >= 4).sort(() => r() - 0.5).slice(0, 10);
-    UI.signi = { fecha: fechaLocal(), u: DB.yo().id, ws, defs: null, eleg: null, fin: !!d.significa };
+    UI.signi = { clave: claveJuego(), ws, defs: null, eleg: null, fin: !!d.significa };
   }
   const S = UI.signi;
   if (!S.defs && !S.pidiendo) { S.pidiendo = true; DEFINICIONES.de(S.ws).then(r => { S.defs = r; S.pidiendo = false; if (ruta().params[0] === 'significa') refrescar(); }); }
   if (!S.defs) return `<div class="tarjeta" style="text-align:center"><p class="gris">Buscando palabras…</p></div>`;
   const con = S.ws.filter(w => S.defs[w]?.length); if (con.length < 4) return `<div class="tarjeta" style="text-align:center"><h2>Necesitas internet</h2><p class="gris">Este juego busca los significados en Wikcionario.</p><a class="btn" href="#/juegos">Volver</a></div>`;
   const w = con[0], ops = con.slice(0, 4).map(x => S.defs[x][0]), orden = [0, 1, 2, 3].sort((a, b) => (semillaPersonal('s' + a) % 97) - (semillaPersonal('s' + b) % 97));
-  if (S.fin && S.eleg === null) return `<div class="tarjeta" style="text-align:center"><h2>Ya jugaste hoy</h2>${cajaDefinicion(w)}<a class="btn" style="margin-top:10px" href="#/juegos">Volver</a></div>`;
+  if (S.fin && S.eleg === null) return `<div class="tarjeta" style="text-align:center"><h2>Ya jugaste hoy</h2>${cajaDefinicion(w)}${botonFinal()}</div>`;
   return `<div class="pila"><div class="tarjeta" style="text-align:center"><span class="etiqueta gris">¿Qué significa?</span><h1 style="font-size:34px;margin:6px 0 0;text-transform:capitalize">${esc(w)}</h1></div>
-    <div class="pila" style="gap:8px">${orden.map(i => { const bien = i === 0, elegido = S.eleg === i; return `<button class="opcion${S.eleg !== null ? (bien ? ' ok' : elegido ? ' mal' : '') : ''}" style="text-align:left" data-a="signiResp" data-i="${i}" ${S.eleg !== null ? 'disabled' : ''}>${esc(ops[i])}</button>`; }).join('')}</div>
-    ${S.eleg !== null ? `<div class="tarjeta" style="text-align:center"><h2>${S.eleg === 0 ? '¡Correcto! +10 ramitas' : 'Era la otra'}</h2>${FUENTE_DEF}<a class="btn" style="margin-top:10px" href="#/juegos">Volver</a></div>` : ''}</div>`;
+    <div class="pila" style="gap:8px">${orden.map(i => { const bien = i === 0, elegido = S.eleg === i; return `<button class="opcion clara${S.eleg !== null ? (bien ? ' ok' : elegido ? ' mal' : '') : ''}" style="text-align:left" data-a="signiResp" data-i="${i}" ${S.eleg !== null ? 'disabled' : ''}>${esc(ops[i])}</button>`; }).join('')}</div>
+    ${S.eleg !== null ? `<div class="tarjeta" style="text-align:center"><h2>${S.eleg === 0 ? '¡Correcto!' + txtPremio(10) : 'Era la otra'}</h2>${FUENTE_DEF}${botonFinal()}</div>` : ''}</div>`;
 }
-ACC.signiResp = b => { const S = UI.signi; if (S.eleg !== null) return; S.eleg = +b.dataset.i; DB.completarDiario('significa', S.eleg === 0 ? 10 : 0); refrescar(); };
+ACC.signiResp = b => { const S = UI.signi; if (S.eleg !== null) return; S.eleg = +b.dataset.i; premiarDiario('significa', S.eleg === 0 ? 10 : 0); refrescar(); };
+
+/* ---------- modo libre (para relajarse): mismos juegos, sin ramitas, uno tras otro ---------- */
+UI.libreN = 0;
+function modoLibre() { const r = ruta(); return r.nombre === 'juego' && r.params[1] === 'libre'; }
+function claveJuego() { return fechaLocal() + '|' + (DB.yo()?.id || '') + '|' + (modoLibre() ? 'L' + UI.libreN : 'D'); }
+function txtPremio(n) { return modoLibre() ? '' : ` +${n} ramitas`; }
+function premiarDiario(cual, premio) { if (modoLibre()) return 0; return DB.completarDiario(cual, premio); }
+function botonFinal() { return modoLibre() ? `<div class="fila" style="justify-content:center;margin-top:12px"><button class="btn" data-a="otraLibre">Otra</button><a class="btn3" href="#/juegos">Volver</a></div>` : '<a class="btn" style="margin-top:12px" href="#/juegos">Volver</a>'; }
+ACC.otraLibre = () => { UI.libreN++; ['trivia', 'palabra', 'logica', 'cruci', 'signi'].forEach(k => UI[k] = null); refrescar(); scrollTo(0, 0); };

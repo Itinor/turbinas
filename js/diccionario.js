@@ -30,7 +30,7 @@ tuerca tumba universo uña vacío valor vapor vecino veneno ventana verano verde
 zanahoria`.split(/\s+/).filter(Boolean);
 const sinAcentos = w => w.toUpperCase().normalize('NFD').replace(/(?![̃])[̀-ͯ]/g, '').normalize('NFC');
 /* número al azar estable para una persona y un día */
-function semillaPersonal(sal) { const u = (typeof DB !== 'undefined' && DB.yo()?.id) || 'anon'; let h = 2166136261; for (const c of u + '|' + fechaLocal() + '|' + sal) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function semillaPersonal(sal) { const u = ((typeof DB !== 'undefined' && DB.yo()?.id) || 'anon') + (typeof modoLibre === 'function' && modoLibre() ? '|libre' + UI.libreN + '|' + (UI.libreBase = UI.libreBase || Math.random()) : ''); let h = 2166136261; for (const c of u + '|' + fechaLocal() + '|' + sal) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function azar(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function palabraPersonal() {
   const r = azar(semillaPersonal('palabra')), largo = 4 + Math.floor(r() * 4);
