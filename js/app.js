@@ -135,3 +135,6 @@ ACC.miniSiguiente = () => REPRO.siguiente();
 (() => { const actual = (document.querySelector('script[src*="app.js?v="]')?.src.match(/v=(\d+)/) || [])[1]; if (!actual) return;
   const revisar = () => fetch('index.html', { cache: 'no-store' }).then(r => r.text()).then(t => { const v = (t.match(/app\.js\?v=(\d+)/) || [])[1]; if (v && v > actual && !document.getElementById('aviso-version')) document.body.insertAdjacentHTML('beforeend', `<button id="aviso-version" class="aviso-version" onclick="location.reload()">Hay una versión nueva · toca para actualizar</button>`); }).catch(() => {});
   setTimeout(revisar, 5000); setInterval(revisar, 120000); })();
+
+/* la barra de desplazamiento solo aparece mientras te mueves */
+(() => { let t = null; addEventListener('scroll', () => { document.documentElement.classList.add('desplazando'); clearTimeout(t); t = setTimeout(() => document.documentElement.classList.remove('desplazando'), 900); }, { capture: true, passive: true }); })();

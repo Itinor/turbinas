@@ -908,7 +908,7 @@ syncScreens();requestAnimationFrame(loop);
 (function(){
   const tactil=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;if(!tactil)return;
   document.documentElement.classList.add('es-tactil');
-  try{if(localStorage.getItem('msw7_autoaim')===null){autoAim=true;const c=document.getElementById('autoAimChk');if(c)c.checked=true}}catch(e){}
+  /* en celular ya no se activa solo el fijado automático: se dispara con el botón FUEGO */
   const pal=document.getElementById('palanca'),per=document.getElementById('perilla');let id=null;
   const soltar=()=>{id=null;per.style.transform='';keys.arrowup=keys.arrowdown=keys.arrowleft=keys.arrowright=false};
   const mover=e=>{const r=pal.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const m=Math.hypot(dx,dy),max=r.width/2-20;if(m>max){dx=dx/m*max;dy=dy/m*max}per.style.transform=`translate(${dx}px,${dy}px)`;const nx=dx/max,ny=dy/max,z=.32;keys.arrowleft=nx<-z;keys.arrowright=nx>z;keys.arrowup=ny<-z;keys.arrowdown=ny>z};

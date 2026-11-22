@@ -336,6 +336,8 @@ const DB = {
   quitarArea(nombre) { if (!this.esAdmin() || E.profes.some(p => p.area === nombre)) return false; E.areas = this.areas().filter(a => a !== nombre); this.guardar(); return true; },
   /* ---------- Tablón ---------- */
   puedeFijar(t) { return this.tablonVisible(t) && (!t.oficial || this.esAdmin()); },
+  verTablonItem(id) { const it = E.tablonItems.find(x => x.id === id); if (!it) return; it.vieron = it.vieron || []; if (!it.vieron.includes(E.sesion)) { it.vieron.push(E.sesion); this.guardar(); } },
+  interaccion(it) { return (it.vieron || []).length + 3 * (it.apuntados || []).length + (it.fijado ? 5 : 0); },
   apuntarseTablon(id) { const it = E.tablonItems.find(x => x.id === id); if (!it) return; it.apuntados = it.apuntados || []; const i = it.apuntados.indexOf(E.sesion); if (i >= 0) it.apuntados.splice(i, 1); else { it.apuntados.push(E.sesion); if (it.autor !== E.sesion) notificar(it.autor, `@${this.yo().usuario} se apuntó a "${it.titulo}"`, '#/tablon/' + it.tablon); } this.guardar(); },
   tablonVisible(t) { if (!t) return false; if (!t.chat) return true; const c = E.chats.find(x => x.id === t.chat); return !!c && (c.miembros.includes(E.sesion) || this.esAdmin()); },
   misTablones() { return E.tablones.filter(t => this.tablonVisible(t)); },

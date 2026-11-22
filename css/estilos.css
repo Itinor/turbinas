@@ -207,7 +207,7 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .pin-tablon:focus-visible{outline:3px solid #FFC93C;outline-offset:3px}
 .chinche{position:absolute;top:-7px;left:50%;margin-left:-8px;width:16px;height:16px;border-radius:50%;box-shadow:0 2px 3px rgba(0,0,0,.4)}
 .letra-nota{display:block;font-family:Caveat,cursive;font-size:22px;line-height:1.05;max-height:100px;overflow:hidden;overflow-wrap:anywhere}
-.foto-pin{display:block;height:130px;background:#E9E4F2 center/cover no-repeat;border-radius:4px}
+.foto-pin{display:block;aspect-ratio:4/3;max-height:300px;background:#E9E4F2 center/cover no-repeat;border-radius:4px}
 .doc-pin{display:grid;place-items:center;align-content:center;gap:2px;height:100px;background:#F3EFFA;color:#4B1F7A;border-radius:6px}
 .sin-archivo{display:grid;place-items:center;font-size:11px;color:#6B6280;text-align:center;padding:8px}
 .fab-tablon{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:28;width:58px;height:58px;border-radius:50%;border:0;background:#FFC93C;color:#1B1530;box-shadow:0 6px 16px rgba(0,0,0,.3);display:grid;place-items:center;cursor:pointer}
@@ -248,3 +248,14 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .adj-foto img{display:block;width:100%;min-height:80px;max-height:300px;object-fit:cover;background:rgba(0,0,0,.08)}
 .adj-doc{display:flex;align-items:center;gap:10px;border:0;background:rgba(255,255,255,.18);color:inherit;border-radius:12px;padding:8px 10px;margin:0 -4px 6px;cursor:pointer;font:inherit;max-width:240px}
 .adj-doc:not(.mio){background:var(--tarjeta)}
+
+/* barra de desplazamiento minimalista: delgada, sin flechas y solo visible mientras te mueves */
+html{scrollbar-width:thin;scrollbar-color:transparent transparent}
+html.desplazando{scrollbar-color:rgba(75,31,122,.45) transparent}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-button{display:none;width:0;height:0}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:transparent;border-radius:6px}
+html.desplazando *::-webkit-scrollbar-thumb,html.desplazando::-webkit-scrollbar-thumb{background:rgba(75,31,122,.45)}
+*{scrollbar-width:thin;scrollbar-color:transparent transparent}
+html.desplazando *{scrollbar-color:rgba(75,31,122,.45) transparent}

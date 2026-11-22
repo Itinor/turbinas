@@ -27,19 +27,19 @@ function listaTablones() {
   const ts = DB.misTablones(), fijos = ['tb_uni', 'tb_eventos', 'tb_general'];
   return `<div class="pila" style="gap:22px">${ts.map(t => { const its = DB.itemsTablon(t.id), n = its.length;
     return `<section class="pila" style="gap:8px"><div class="entre"><span><h2 style="font-size:19px">${esc(t.nombre)}${t.oficial ? ' <span class="insignia i-morado" style="vertical-align:middle">Oficial</span>' : ''}</h2><span class="mini gris">${esc(t.desc || (t.chat ? 'Tablón de tu grupo' : ''))}${n ? ` · ${n} ${n === 1 ? 'cosa' : 'cosas'}` : ''}</span></span><span class="fila" style="flex-wrap:nowrap;gap:4px">${DB.puedeFijar(t) ? `<button class="btn" style="min-height:40px;padding:0 12px" data-a="nuevoEnTablon" data-t="${t.id}">${icono('mas', 16)}Fijar</button>` : ''}${fijos.includes(t.id) ? '' : botonEliminar('tablon', t.id)}</span></div>
-      <a href="#/tablon/${t.id}" class="vista-corcho" aria-label="Abrir el tablón ${esc(t.nombre)}">${corcho(its.slice(0, 4), `<span class="peq vacio-corcho">${t.oficial && !DB.esAdmin() ? 'Aquí aparecerá lo que publique la universidad.' : 'Vacío. Sé el primero en fijar algo.'}</span>`, true)}${n > 4 ? `<span class="mas-corcho">Ver las ${n} →</span>` : ''}</a></section>`; }).join('')}
+      <a href="#/tablon/${t.id}" class="vista-corcho" aria-label="Abrir el tablón ${esc(t.nombre)}">${collage(its, `<span class="peq vacio-corcho">${t.oficial && !DB.esAdmin() ? 'Aquí aparecerá lo que publique la universidad.' : 'Vacío. Sé el primero en fijar algo.'}</span>`, true)}${n > 9 ? `<span class="mas-corcho">Ver las ${n} →</span>` : ''}</a></section>`; }).join('')}
     <button class="btn3 ancho" data-a="nuevoTablon">${icono('mas', 18)}Nuevo tablón</button></div>`;
 }
 function corcho(items, vacio, preview) {
   const alto = { nota: 150, archivo: 190, foto: 215, evento: 175 }, cols = [12, 12], tag = preview ? 'span' : 'button'; let html = '';
   items.forEach(it => {
     const g = giro(it.id), c = cols[0] <= cols[1] ? 0 : 1, top = cols[c];
-    cols[c] += alto[it.tipo] + 14;
+    cols[c] += ((it.tipo === 'foto' || esImagen(it)) && it.archivo?.w ? Math.min(330, Math.max(120, 70 + 180 * it.archivo.h / it.archivo.w)) : alto[it.tipo]) + 14;
     html += `<${tag} class="pin-tablon tipo-${it.tipo}" style="left:calc(${c * 50}% + ${6 + g.dx}px);top:${top}px;transform:rotate(${g.r}deg);${it.tipo === 'nota' ? `background:${COLORES_NOTA[it.color] || COLORES_NOTA.amarillo}` : ''}" ${preview ? '' : `data-a="verTablonItem" data-id="${it.id}" aria-label="${esc(it.titulo || it.texto.slice(0, 40))}"`}>
       <span class="chinche" style="background:${it.fijado ? '#E2453C' : g.c}"></span>${it.fijado ? '<span class="mini" style="position:absolute;right:6px;top:4px;font-weight:800;color:#B42318">FIJADO</span>' : ''}
       ${it.tipo === 'nota' ? `<span class="letra-nota">${esc(it.texto)}</span>`
         : it.tipo === 'evento' ? `<span class="evento-pin"><span class="fecha-pin"><b>${new Date(it.cuando).getDate()}</b><span>${new Date(it.cuando).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')}</span></span><b class="peq" style="display:block;margin-top:6px;line-height:1.2">${esc(it.titulo)}</b><span class="mini" style="color:#6B6280">${new Date(it.cuando).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' })}${it.lugar ? ' · ' + esc(it.lugar) : ''}</span>${(it.apuntados || []).length ? `<span class="mini" style="display:block;font-weight:800;color:#14632F">${it.apuntados.length} ${it.apuntados.length === 1 ? 'va' : 'van'}</span>` : ''}</span>`
-        : it.tipo === 'foto' || esImagen(it) ? `<span class="foto-pin" data-idb="${esc(it.archivo.clave)}" data-como="fondo"></span><b class="peq" style="display:block;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.titulo || (it.tipo === 'foto' ? 'Foto' : it.archivo.nombre))}</b>`
+        : it.tipo === 'foto' || esImagen(it) ? `<span class="foto-pin" data-idb="${esc(it.archivo.clave)}" data-como="fondo" style="${it.archivo?.w ? `aspect-ratio:${it.archivo.w}/${it.archivo.h}` : ''}"></span><b class="peq" style="display:block;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.titulo || (it.tipo === 'foto' ? 'Foto' : it.archivo.nombre))}</b>`
         : `<span class="doc-pin">${icono('archivo', 30)}<span class="mini" style="font-weight:800">${esc((it.archivo.nombre.split('.').pop() || '').toUpperCase().slice(0, 4))}</span></span><b class="peq" style="display:block;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.titulo || it.archivo.nombre)}</b>`}
       <span class="mini" style="color:#6B6280">@${esc(DB.usuario(it.autor)?.usuario || '')}</span></${tag}>`;
   });
@@ -60,7 +60,7 @@ async function cargarArchivosTablon() {
     const blob = await ARCHIVOS.leer(el.dataset.idb).catch(() => null);
     if (!blob) { el.classList.add('sin-archivo'); el.textContent = 'Solo en el celular de quien lo subió'; continue; }
     const url = URL.createObjectURL(blob);
-    if (el.dataset.como === 'fondo') el.style.backgroundImage = `url('${url}')`; else el.src = url;
+    if (el.dataset.como === 'fondo') { el.style.backgroundImage = `url('${url}')`; if (!el.style.aspectRatio) { const im = new Image(); im.onload = () => { el.style.aspectRatio = im.naturalWidth + '/' + im.naturalHeight; }; im.src = url; } } else el.src = url;
   }
 }
 function reducirFoto(archivo, max = 1400) {
@@ -96,11 +96,13 @@ CAMBIOS.archivoTablon = async el => {
     const blob = N.tipo === 'foto' ? await reducirFoto(f) : f, clave = 'tab_' + uid('f');
     await ARCHIVOS.guardar(clave, blob);
     N.archivo = { clave, nombre: f.name.slice(0, 120), peso: blob.size, mime: blob.type || f.type };
+    if (/^image\//.test(N.archivo.mime)) { try { const bm = await createImageBitmap(blob); N.archivo.w = bm.width; N.archivo.h = bm.height; bm.close?.(); } catch {} }
     if (et) et.textContent = f.name;
   } catch { aviso('No pudimos leer ese archivo.'); if (et) et.textContent = 'Elegir de nuevo'; }
 };
 FORMS.fijarTablon = d => { const N = UI.nuevoTab; const r = DB.fijarEnTablon({ tablon: N.tablon, tipo: N.tipo, titulo: d.titulo, texto: d.texto, color: N.color, archivo: N.archivo, cuando: d.cuando ? new Date(d.cuando).toISOString() : null, lugar: d.lugar }); if (r.error) return aviso(r.error); N.archivo = null; cerrarHoja(); aviso('Fijado'); refrescar(); };
 ACC.verTablonItem = b => {
+  DB.verTablonItem(b.dataset.id);
   const it = DB.estado.tablonItems.find(x => x.id === b.dataset.id); if (!it) return; const mio = it.autor === DB.yo().id || DB.esAdmin();
   abrirHoja(`<div class="pila"><span class="mini gris">@${esc(DB.usuario(it.autor)?.usuario || '')} · ${hace(it.fecha)}</span>
     ${it.tipo === 'evento' ? `<div class="fila" style="flex-wrap:nowrap"><span class="fecha-pin"><b>${new Date(it.cuando).getDate()}</b><span>${new Date(it.cuando).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')}</span></span><span><h2>${esc(it.titulo)}</h2><span class="peq gris">${new Date(it.cuando).toLocaleString('es-MX', { weekday: 'long', hour: 'numeric', minute: '2-digit' })}${it.lugar ? ' · ' + esc(it.lugar) : ''}</span></span></div>${it.texto ? `<p style="margin:0;white-space:pre-wrap">${esc(it.texto)}</p>` : ''}
@@ -123,3 +125,23 @@ ACC.fijarArriba = b => { DB.fijarArriba(b.dataset.id); cerrarHoja(); refrescar()
 ACC.apuntarseTablon = b => { DB.apuntarseTablon(b.dataset.id); refrescar(); ACC.verTablonItem(b); };
 
 function esImagen(it) { return it.tipo === 'archivo' && (/^image\//.test(it.archivo?.mime || '') || /\.(png|jpe?g|gif|webp|heic|bmp)$/i.test(it.archivo?.nombre || '')); }
+
+/* portada de un tablón como collage: lo que más interacción tiene queda encima y más al centro */
+function collage(items, vacio) {
+  if (!items.length) return `<div class="corcho" style="height:100%">${vacio}</div>`;
+  const top = items.slice().sort((a, b) => DB.interaccion(b) - DB.interaccion(a) || b.fecha.localeCompare(a.fecha)).slice(0, 9);
+  const n = top.length, html = top.map((it, i) => {
+    const g = giro(it.id), h2 = (g.dx * 37 + i * 11) % 100;
+    /* el más visto al centro; los demás alrededor, un poco más chicos */
+    const ancho = i === 0 ? 48 : 40 - Math.min(10, i);
+    const left = i === 0 ? 26 : ((i % 2 ? 2 : 56) + (h2 % 12));
+    const topPx = i === 0 ? 40 : 6 + ((Math.floor((i - 1) / 2) * 70) + (h2 % 30)) % 200;
+    const z = 100 - i, img = it.tipo === 'foto' || esImagen(it);
+    return `<span class="pin-tablon tipo-${it.tipo}" style="left:${left}%;top:${topPx}px;width:${ancho}%;max-width:none;z-index:${z};transform:rotate(${g.r * 1.4}deg);${it.tipo === 'nota' ? `background:${COLORES_NOTA[it.color] || COLORES_NOTA.amarillo}` : ''}"><span class="chinche" style="background:${g.c}"></span>
+      ${it.tipo === 'nota' ? `<span class="letra-nota">${esc(it.texto)}</span>`
+        : img ? `<span class="foto-pin" data-idb="${esc(it.archivo.clave)}" data-como="fondo" style="${it.archivo?.w ? `aspect-ratio:${it.archivo.w}/${it.archivo.h};` : ''}max-height:170px"></span>`
+        : it.tipo === 'evento' ? `<span class="evento-pin"><span class="fecha-pin"><b>${new Date(it.cuando).getDate()}</b><span>${new Date(it.cuando).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')}</span></span><b class="peq" style="display:block;margin-top:6px;line-height:1.2">${esc(it.titulo)}</b></span>`
+        : `<span class="doc-pin" style="height:70px">${icono('archivo', 26)}</span><b class="peq" style="display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.titulo || it.archivo.nombre)}</b>`}</span>`;
+  }).join('');
+  return `<div class="corcho" style="height:100%">${html}</div>`;
+}

@@ -21,7 +21,7 @@ const SYNC = (() => {
     propuestas: { apuestas: 'a', votos: 'm', apuntados: 'p', aclaraciones: 'a' },
     rankings: { votos: 'm' },
     profes: { opiniones: 'a' },
-    tablonItems: { apuntados: 'p' },
+    tablonItems: { apuntados: 'p', vieron: 'p' },
     usuarios: { amigos: 'p', solicitudes: 'p' }
   };
   let meta = { url: '', cursor: 0, hechos: {} }, listo = false, subiendo = false, otraVez = false, temporizador = null, sondeo = null, pendientes = {}, pintarLuego = false;
