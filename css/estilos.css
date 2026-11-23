@@ -294,3 +294,17 @@ input:checked+.punto-color{border-color:#4B1F7A;box-shadow:0 0 0 2px #fff inset}
 .dia-chip input:checked+span{background:#4B1F7A;color:#fff;border-color:#4B1F7A}
 .dia-chip input:focus-visible+span{outline:3px solid #FFC93C}
 .ht-clase.encima{box-shadow:0 2px 6px rgba(0,0,0,.18);outline:1.5px solid rgba(255,255,255,.9);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.35) 0 6px,transparent 6px 12px)!important}
+
+.ht-hueco{position:absolute;left:3px;right:3px;border:1.5px dashed #D9C6C0;border-radius:8px;background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(217,198,192,.25) 6px 12px);display:flex;align-items:center;justify-content:center;pointer-events:none}
+.ht-hueco span{font-size:10px;color:#8A7A76;font-weight:700;background:#FFFBF8;padding:1px 4px;border-radius:6px}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:10px}
+.res-dato{border:1.5px solid var(--linea);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.res-dato b{font-size:20px;line-height:1.1}
+.res-dato span{font-size:13px;font-weight:600}
+.res-dato small{font-size:11px;color:var(--gris,#6B6680)}
+.res-dato:first-child{background:var(--suave)}
+.res-tabla{margin-top:10px}
+.res-fila{display:grid;grid-template-columns:48px 1fr 72px 72px;gap:6px;padding:7px 2px;border-bottom:1px solid var(--linea);font-size:13px;align-items:center}
+.res-cab{font-size:11px;font-weight:700;color:var(--gris,#6B6680);text-transform:uppercase}
+.res-tot{border-bottom:0;font-weight:700}
+.res-mal{color:var(--malTxt);font-weight:700}
