@@ -1,9 +1,9 @@
 /* El rincón del castor: racha, retos académicos, diarios, mejores de la semana y juegos */
 'use strict';
 const JUEGOS_EXTERNOS = {
-  runner: { nombre: 'Runner', desc: 'Corre, salta y no te caigas', src: 'juegos/runner/index.html?v=202611231629', ico: 'runner', tinte: '#FFF6DA', color: '#8A5A00' },
-  spacewar: { nombre: 'Space War', desc: 'Derrota al jefe asteroide', src: 'juegos/spacewar/index.html?v=202611231629', ico: 'nave', tinte: '#DCE8FB', color: '#174EAD' },
-  royal: { nombre: 'Ruleta y tragamonedas', desc: 'Juega con tus ramitas', src: 'juegos/royal/index.html?v=202611231629', ico: 'ruleta', tinte: '#F3EFFA', color: '#4B1F7A' }
+  runner: { nombre: 'Runner', desc: 'Corre, salta y no te caigas', src: 'juegos/runner/index.html?v=202611231632', ico: 'runner', tinte: '#FFF6DA', color: '#8A5A00' },
+  spacewar: { nombre: 'Space War', desc: 'Derrota al jefe asteroide', src: 'juegos/spacewar/index.html?v=202611231632', ico: 'nave', tinte: '#DCE8FB', color: '#174EAD' },
+  royal: { nombre: 'Ruleta y tragamonedas', desc: 'Juega con tus ramitas', src: 'juegos/royal/index.html?v=202611231632', ico: 'ruleta', tinte: '#F3EFFA', color: '#4B1F7A' }
 };
 VISTAS.juegos = {
   titulo: 'El rincón del castor', nav: 'juegos',

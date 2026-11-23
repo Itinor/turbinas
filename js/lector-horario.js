@@ -26,7 +26,7 @@ const LECTOR_HORARIO = (() => {
     if (cab.length < 3) return [];
     cab.sort((a, b) => a.x - b.x);
     const yCab = Math.max(...cab.map(c => c.y)), anchoCol = (cab.at(-1).x - cab[0].x) / Math.max(1, cab.length - 1);
-    const izq = cab[0].x - anchoCol * 0.55;
+    const izq = cab[0].k.x - Math.min(anchoCol * 0.25, alto * 2.5);
     const debajo = tokens.filter(k => k.cy > yCab + alto * 0.4 && !cab.some(c => c.k === k));
     /* filas por altura */
     const filas = []; debajo.sort((a, b) => a.cy - b.cy).forEach(k => { const f = filas.find(f => Math.abs(f.y - k.cy) < alto * 0.7); if (f) { f.k.push(k); f.y = (f.y + k.cy) / 2; } else filas.push({ y: k.cy, k: [k] }); });
@@ -38,22 +38,24 @@ const LECTOR_HORARIO = (() => {
         if (u && hueco < alto * 0.9 && (colIdx(u.x) === colIdx(k.x + k.w) || hueco < alto * 0.35)) { u.t += ' ' + k.t; u.w = k.x + k.w - u.x; u.h = Math.max(u.h, k.h); u.cx = u.x + u.w / 2; }
         else unidas.push({ ...k }); });
       f.k = unidas; });
-    const colDe = k => { const i = colIdx(k.x + Math.min(k.w, anchoCol * 0.5) / 2); if (i < 0) return 'izq'; if (k.cx > cab.at(-1).x + anchoCol * 0.75) return null; return cab[i].d; };
+    const colDe = k => { if (k.x < izq) return 'izq'; const i = colIdx(k.x + Math.min(k.w, anchoCol * 0.5) / 2); if (i < 0) return 'izq'; if (k.cx > cab.at(-1).x + anchoCol * 0.75) return null; return cab[i].d; };
     const celdas = filas.map(f => { const c = { y: f.y, izq: [], dias: {} }; f.k.sort((a, b) => a.x - b.x).forEach(k => { const col = colDe(k); if (col === 'izq') c.izq.push(k.t); else if (col) (c.dias[col] = c.dias[col] || []).push(k.t); }); return { ...c, izqT: c.izq.join(' '), diasT: Object.fromEntries(Object.entries(c.dias).map(([d, v]) => [d, v.join(' ')])) }; });
     for (const [d] of DIAS) for (let i = 0; i < celdas.length - 1; i++) {
       const a1 = celdas[i].diasT[d], b1 = celdas[i + 1].diasT[d]; if (!a1 || !b1) continue;
-      if (!rangos(a1).length && /\d{1,2}[:.]\d{2}\s*(-|–|a)?\s*$/.test(arreglarNum(a1)) && /^\s*(-|–|a)?\s*\d{1,2}[:.]\d{2}/.test(arreglarNum(b1))) { celdas[i].diasT[d] = a1 + ' - ' + b1.replace(/^\s*(-|–|a)\s*/, ''); delete celdas[i + 1].diasT[d]; }
+      if (Math.abs(celdas[i + 1].y - celdas[i].y) < alto * 1.9 && !rangos(a1).length && /\d{1,2}[:.]\d{2}\s*(-|–|a)?\s*$/.test(arreglarNum(a1)) && /^\s*(-|–|a)\s*\d{1,2}[:.]\d{2}/.test(arreglarNum(b1)) || (Math.abs(celdas[i + 1].y - celdas[i].y) < alto * 1.9 && !rangos(a1).length && /\d{1,2}[:.]\d{2}\s*(-|–|a)\s*$/.test(arreglarNum(a1)) && /^\s*\d{1,2}[:.]\d{2}/.test(arreglarNum(b1)))) { celdas[i].diasT[d] = a1 + ' - ' + b1.replace(/^\s*(-|–|a)\s*/, ''); delete celdas[i + 1].diasT[d]; }
     }
     /* nombres de materia en dos renglones: si un renglón solo tiene texto a la izquierda y el siguiente también, se juntan */
     for (let i = 0; i < celdas.length - 1; i++) { const c = celdas[i], n = celdas[i + 1]; if (c.izqT && !Object.keys(c.diasT).length && n.izqT && /^[a-záéíóúñ]/i.test(n.izqT) && !rangos(n.izqT).length && Math.abs(n.y - c.y) < alto * 1.8) { n.izqT = c.izqT + ' ' + n.izqT; c.izqT = ''; } }
-    const conRango = celdas.filter(c => Object.values(c.diasT).some(t => rangos(t).length)).length;
+    /* hora suelta dentro de un día (ej. "11:00" o "11"): se toma como inicio y dura 1 h (se puede corregir al revisar) */
+    const horaEnCelda = t => { const x = arreglarNum(t).trim(), m = /^(\d{1,2})(?:[:.](\d{2}))?\s*(?:hrs?\.?|am|pm)?$/i.exec(x.split(/\s+/)[0] + (/^\d{1,2}$/.test(x.split(/\s+/)[0]) && /^(hrs?|am|pm)/i.test(x.split(/\s+/)[1] || '') ? ' ' + x.split(/\s+/)[1] : '')); if (!m) return null; let h = +m[1]; if (h > 23) return null; if (/pm/i.test(x) && h < 12) h += 12; if (h < 6) h += 12; return h * 60 + (+m[2] || 0); };
+    const conRango = celdas.filter(c => Object.values(c.diasT).some(t => rangos(t).length || horaEnCelda(t) != null)).length;
     const horasIzq = celdas.filter(c => rangos(c.izqT).length || horaSola(c.izq[0] || '') != null).length;
     const clases = new Map(), add = (materia, d, a, b, salon = '') => { materia = materia.replace(/\s+/g, ' ').trim(); if (!materia || materia.length < 2) return; const k = materia.toLowerCase(); if (!clases.has(k)) clases.set(k, { materia, salon, sesiones: [] }); const c = clases.get(k); if (!c.sesiones.some(s => s.d === d && s.ini === fmt(a))) c.sesiones.push({ d, ini: fmt(a), fin: fmt(b) }); if (salon && !c.salon) c.salon = salon; };
     if (conRango >= horasIzq) {
       /* formato lista: cada fila es una materia y en cada día viene su rango de horas */
       let ultima = '';
       celdas.forEach(c => { const nombre = c.izqT.replace(/\b\d{3,}\b/g, '').trim() || ultima; let algo = false;
-        Object.entries(c.diasT).forEach(([d, t]) => rangos(t).forEach(([a, b]) => { const salon = arreglarNum(t).replace(/(\d{1,2}(?:[:.]\d{2})?)\s*(?:-|–|—|a)\s*(\d{1,2}(?:[:.]\d{2})?)/g, '').replace(/hrs?\.?/gi, '').trim(); add(nombre, d, a, b, salon.slice(0, 20)); algo = true; }));
+        Object.entries(c.diasT).forEach(([d, t]) => (rangos(t).length ? rangos(t) : horaEnCelda(t) != null ? [[horaEnCelda(t), horaEnCelda(t) + 60, true]] : []).forEach(([a, b]) => { const salon = arreglarNum(t).replace(/(\d{1,2}(?:[:.]\d{2})?)\s*(?:-|–|—|a)\s*(\d{1,2}(?:[:.]\d{2})?)/g, '').replace(/^\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?/i, '').replace(/hrs?\.?/gi, '').trim(); add(nombre, d, a, b, salon.slice(0, 20)); algo = true; }));
         if (c.izqT && !algo) ultima = c.izqT; else if (algo) ultima = nombre; });
     } else {
       /* formato cuadrícula: a la izquierda las horas, en cada día el nombre de la materia */
