@@ -10,19 +10,14 @@ VISTAS.horario = {
     const yo = DB.yo(), u = n ? DB.porUsuario(n) : yo; if (!u) return '<p class="vacio">No encontramos ese horario.</p>';
     const mio = u.id === yo.id;
     if (!DB.puedeVerHorario(u.id)) return `<div class="tarjeta" style="text-align:center">${avatar(u.id, true)}<h2 style="margin-top:10px">@${esc(u.usuario)}</h2><p class="gris">Su horario es privado.</p></div>`;
-    const foto = u.horarioFoto, clases = u.horario || [];
-    const porDia = DIAS_H.map(([k, nombre]) => [nombre, clases.map((c, i) => ({ ...c, i })).filter(c => diasDeClase(c.dias).includes(k)).sort((a, b) => String(a.hora).localeCompare(String(b.hora)))]).filter(([, l]) => l.length);
-    const sinDia = clases.map((c, i) => ({ ...c, i })).filter(c => !diasDeClase(c.dias).length);
+    const foto = u.horarioFoto, clases = normalizarHorario(u);
     return `<div class="pila">
       <section class="tarjeta"><div class="entre"><h2>Foto del horario</h2>${mio ? `<label class="btn3" style="cursor:pointer;min-height:40px;padding:0 12px">${icono('camara', 16)}${foto ? 'Cambiar' : 'Subir'}<input type="file" accept="image/*,.pdf" class="oculto" data-cambio="fotoHorario"></label>` : ''}</div>
         ${foto ? (/pdf/.test(foto.mime || '') ? `<button class="adj-doc" style="margin-top:10px;max-width:none;width:100%" data-a="abrirAdjunto" data-c="${esc(foto.clave)}" data-n="${esc(foto.nombre)}">${icono('archivo', 26)}<b>${esc(foto.nombre)}</b></button>` : `<button class="adj-foto" style="max-width:none;width:100%;margin:10px 0 0" data-a="abrirAdjunto" data-c="${esc(foto.clave)}" data-n="${esc(foto.nombre)}" data-img="1" aria-label="Ver horario en grande"><img alt="Horario" data-idb="${esc(foto.clave)}" style="max-height:none;object-fit:contain"></button>`)
           + (mio ? `<button class="btn3" style="margin-top:8px;min-height:38px;color:var(--malTxt)" data-a="quitarFotoHorario">Quitar foto</button>` : '')
           : `<p class="peq gris" style="margin:6px 0 0">${mio ? 'Sube una foto o captura de tu horario.' : 'No ha subido foto.'}</p>`}</section>
-      <section class="tarjeta"><h2 style="margin-bottom:8px">Clases de la semana</h2>
-        ${porDia.map(([nombre, l]) => `<div style="margin-bottom:10px"><b class="peq" style="color:var(--moradoTxt)">${nombre}</b>${l.map(c => filaClase(c, mio)).join('')}</div>`).join('')}
-        ${sinDia.map(c => filaClase(c, mio)).join('')}
-        ${!clases.length ? `<p class="peq gris" style="margin:0">${mio ? 'Agrega tus clases y te las acomodamos por día.' : 'Sin clases registradas.'}</p>` : ''}
-        ${mio ? `<form data-form="agregarClase" class="pila" style="gap:6px;margin-top:10px"><div class="rejilla2"><label class="oculto" for="hm">Materia</label><input id="hm" name="materia" required placeholder="Materia"><label class="oculto" for="hd">Días</label><input id="hd" name="dias" required placeholder="Lun y Mié"></div><div class="rejilla2"><label class="oculto" for="hh">Hora</label><input id="hh" name="hora" type="time" required><label class="oculto" for="hs">Salón</label><input id="hs" name="salon" placeholder="Salón (opcional)"></div><button class="btn2">Agregar clase</button></form>` : ''}</section>
+      <section class="tarjeta"><div class="entre"><h2>Mi semana</h2>${mio ? `<button class="btn" style="min-height:40px;padding:0 12px" data-a="nuevaClase">${icono('mas', 16)}Agregar clase</button>` : ''}</div>
+        ${clases.length ? tablaHorario(clases, mio) : `<p class="peq gris" style="margin:6px 0 0">${mio ? 'Agrega tus clases con su día y hora de inicio y fin, y se arma tu horario solo.' : 'Sin clases registradas.'}</p>`}</section>
       ${mio ? `<section class="tarjeta"><h2>¿Quién lo puede ver?</h2>
         <div class="pestanas" style="margin-top:8px"><button class="pastilla${u.horarioVis !== 'elegidos' ? ' on' : ''}" data-a="visHorario" data-v="yo">Solo yo</button><button class="pastilla${u.horarioVis === 'elegidos' ? ' on' : ''}" data-a="visHorario" data-v="elegidos">Personas que elijo</button></div>
         ${u.horarioVis === 'elegidos' ? `<div style="margin-top:10px">${(u.horarioCompartido || []).map(id => DB.usuario(id)).filter(Boolean).map(p => `<div class="entre" style="padding:6px 0;border-bottom:1px solid var(--linea)"><span class="fila" style="flex-wrap:nowrap">${avatar(p.id)}<span>@${esc(p.usuario)}</span></span><button class="icono-btn" data-a="dejarCompartir" data-u="${p.id}" aria-label="Quitar a @${esc(p.usuario)}">${icono('cerrar', 18)}</button></div>`).join('') || '<p class="peq gris" style="margin:0">Todavía no lo compartes con nadie.</p>'}
@@ -46,3 +41,73 @@ ACC.elegirCompartir = () => {
   abrirHoja(`<form class="pila" data-form="compartirHorario"><h2>¿Con quién lo compartes?</h2><div class="pila" style="gap:4px;max-height:50vh;overflow:auto">${gente.map(p => `<label class="fila" style="flex-wrap:nowrap;padding:6px 4px;border-bottom:1px solid var(--linea)"><input type="checkbox" name="u_${p.id}" ${ya.has(p.id) ? 'checked' : ''}> ${avatar(p.id).replace('<a ', '<span ').replace('</a>', '</span>')}<span>@${esc(p.usuario)}${u.amigos.includes(p.id) ? ' <span class="mini gris">· amigo</span>' : ''}</span></label>`).join('')}</div><button class="btn ancho">Guardar</button></form>`);
 };
 FORMS.compartirHorario = d => { const u = DB.yo(), antes = new Set(u.horarioCompartido || []); u.horarioCompartido = Object.keys(d).filter(k => k.startsWith('u_')).map(k => k.slice(2)); u.horarioCompartido.filter(id => !antes.has(id)).forEach(id => notificar(id, `@${u.usuario} compartió su horario contigo`, '#/horario/' + u.usuario)); DB.guardar(); cerrarHoja(); aviso('Listo'); refrescar(); };
+
+/* ---------- horario tipo cuadrícula ---------- */
+const COLORES_CLASE = ['#E9DDF7', '#DCE8FB', '#DCF5E3', '#FFF1C7', '#FFE1D6', '#FCE1EC', '#D9F2F2', '#ECE7DF'];
+const minutos = t => { const [h, m] = String(t || '0:0').split(':').map(Number); return h * 60 + (m || 0); };
+const hhmm = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+/* convierte el formato viejo {materia, dias, hora, salon} al nuevo con sesiones por día */
+function normalizarHorario(u) {
+  const l = u.horario || []; let cambio = false;
+  const nuevo = l.map((c, i) => { if (c.sesiones) return c; cambio = true; const ini = c.hora || '07:00', fin = hhmm(minutos(ini) + 60);
+    return { id: uid('cl'), materia: c.materia, salon: c.salon || '', color: COLORES_CLASE[i % COLORES_CLASE.length], sesiones: diasDeClase(c.dias).map(d => ({ d, ini, fin })) }; });
+  if (cambio && u.id === DB.yo()?.id) { u.horario = nuevo; DB.guardar(); }
+  return nuevo;
+}
+function tablaHorario(clases, mio) {
+  const ses = clases.flatMap(c => (c.sesiones || []).map(s => ({ ...s, c })));
+  if (!ses.length) return '<p class="peq gris">Tus clases no tienen días.</p>';
+  const dias = DIAS_H.filter(([k], i) => i < 5 || ses.some(s => s.d === k));
+  const ini = Math.floor(Math.min(...ses.map(s => minutos(s.ini))) / 60) * 60, fin = Math.ceil(Math.max(...ses.map(s => minutos(s.fin))) / 60) * 60;
+  const pxMin = 1.1, alto = (fin - ini) * pxMin, horas = []; for (let m = ini; m <= fin; m += 60) horas.push(m);
+  return `<div class="horario-tabla" style="--cols:${dias.length}">
+    <div class="ht-cab"><span>Hora</span>${dias.map(([, n]) => `<span>${n.slice(0, 3)}</span>`).join('')}</div>
+    <div class="ht-cuerpo" style="height:${alto}px">
+      <div class="ht-horas">${horas.map(m => `<span style="top:${(m - ini) * pxMin}px">${hhmm(m)}</span>`).join('')}</div>
+      ${dias.map(([k]) => `<div class="ht-dia">${horas.slice(1).map(m => `<i style="top:${(m - ini) * pxMin}px"></i>`).join('')}${carriles(ses.filter(s => s.d === k)).map(s => { const a = minutos(s.ini), b = Math.max(minutos(s.fin), a + 15);
+        return `<button class="ht-clase${s.encima ? ' encima' : ''}" style="top:${(a - ini) * pxMin}px;height:${(b - a) * pxMin - 2}px;left:calc(${s.lane / s.lanes * 100}% + 2px);right:auto;width:calc(${100 / s.lanes}% - 4px);z-index:${s.encima ? 3 : 1};background:${s.c.color || COLORES_CLASE[0]}" data-a="verClase" data-id="${s.c.id}" ${mio ? '' : 'data-solover="1"'} title="${esc(s.c.materia)} ${s.ini}–${s.fin}"><b${(b - a) * pxMin < 40 ? ' style="-webkit-line-clamp:1"' : ''}>${esc(s.c.materia)}</b>${(b - a) * pxMin < 40 ? '' : `<span>${s.ini}–${s.fin}${s.c.salon ? ' · ' + esc(s.c.salon) : ''}</span>`}</button>`; }).join('')}</div>`).join('')}
+    </div></div>`;
+}
+/* formulario: materia + una o varias filas de (días, de, a) */
+function hojaClase(c) {
+  const filas = c?.sesiones?.length ? agrupar(c.sesiones) : [{ dias: [], ini: '07:00', fin: '09:00' }];
+  UI.claseFilas = filas.length; UI.claseEdit = c?.id || null;
+  abrirHoja(`<form class="pila" data-form="guardarClase"><h2>${c ? 'Editar clase' : 'Agregar clase'}</h2>
+    <div><label class="campo" for="cm">Materia</label><input id="cm" name="materia" required maxlength="60" value="${esc(c?.materia || '')}" placeholder="Cálculo II, Receso…"></div>
+    <div><label class="campo" for="cs">Salón <span class="mini gris">(opcional)</span></label><input id="cs" name="salon" maxlength="30" value="${esc(c?.salon || '')}"></div>
+    <div><span class="campo">Color</span><div class="fila" style="gap:6px">${COLORES_CLASE.map((col, i) => `<label style="cursor:pointer"><input type="radio" name="color" value="${col}" class="oculto" ${(c?.color || COLORES_CLASE[normalizarHorario(DB.yo()).length % COLORES_CLASE.length]) === col ? 'checked' : ''}><span class="punto-color" style="background:${col}"></span></label>`).join('')}</div></div>
+    <div><span class="campo">¿Cuándo?</span><div id="filasClase" class="pila" style="gap:8px">${filas.map((f, i) => filaSesion(i, f)).join('')}</div>
+      <button type="button" class="btn3" style="margin-top:8px;min-height:40px" data-a="otraFilaClase">${icono('mas', 16)}Otro horario (otros días u otra hora)</button></div>
+    <button class="btn ancho">Guardar</button>${c ? `<button type="button" class="btn-peligro ancho" data-a="quitarClaseId" data-id="${c.id}">Quitar clase</button>` : ''}</form>`);
+}
+function agrupar(ses) { const m = new Map(); ses.forEach(s => { const k = s.ini + '|' + s.fin; if (!m.has(k)) m.set(k, { dias: [], ini: s.ini, fin: s.fin }); m.get(k).dias.push(s.d); }); return [...m.values()]; }
+function filaSesion(i, f) {
+  return `<div class="tarjeta" style="box-shadow:none;border:1.5px solid var(--linea);padding:10px"><div class="fila" style="gap:4px">${DIAS_H.map(([k, n]) => `<label class="dia-chip"><input type="checkbox" name="d${i}_${k}" ${f.dias.includes(k) ? 'checked' : ''}><span>${n.slice(0, 2)}</span></label>`).join('')}</div>
+    <div class="fila" style="flex-wrap:nowrap;margin-top:8px;gap:8px"><label class="peq" for="i${i}">De</label><input id="i${i}" name="i${i}" type="time" required value="${f.ini}" style="flex:1"><label class="peq" for="f${i}">a</label><input id="f${i}" name="f${i}" type="time" required value="${f.fin}" style="flex:1"></div></div>`;
+}
+ACC.nuevaClase = () => hojaClase(null);
+ACC.otraFilaClase = () => { const n = UI.claseFilas++; $('#filasClase').insertAdjacentHTML('beforeend', filaSesion(n, { dias: [], ini: '07:00', fin: '08:00' })); };
+ACC.verClase = b => { const u = b.dataset.solover ? null : DB.yo(), c = (u ? normalizarHorario(u) : []).find(x => x.id === b.dataset.id); if (c) return hojaClase(c);
+  const cl = Object.values(DB.estado.usuarios).flatMap(x => x.horario || []).find(x => x.id === b.dataset.id); if (cl) abrirHoja(`<h2>${esc(cl.materia)}</h2>${cl.salon ? `<p class="peq gris">Salón ${esc(cl.salon)}</p>` : ''}${agrupar(cl.sesiones || []).map(f => `<p class="peq" style="margin:4px 0">${f.dias.map(d => DIAS_H.find(x => x[0] === d)[1]).join(', ')} · ${f.ini}–${f.fin}</p>`).join('')}`); };
+FORMS.guardarClase = d => {
+  const ses = [];
+  for (let i = 0; i < UI.claseFilas; i++) { if (!d['i' + i]) continue; const ini = d['i' + i], fin = d['f' + i];
+    if (minutos(fin) <= minutos(ini)) return aviso('La hora de fin tiene que ser después de la de inicio.');
+    DIAS_H.forEach(([k]) => { if (d[`d${i}_${k}`]) ses.push({ d: k, ini, fin }); }); }
+  if (!ses.length) return aviso('Marca al menos un día.');
+  const u = DB.yo(), l = normalizarHorario(u), datos = { materia: d.materia.trim().slice(0, 60), salon: (d.salon || '').trim().slice(0, 30), color: d.color || COLORES_CLASE[l.length % COLORES_CLASE.length], sesiones: ses };
+  const i = l.findIndex(x => x.id === UI.claseEdit); if (i >= 0) l[i] = { ...l[i], ...datos }; else l.push({ id: uid('cl'), ...datos });
+  u.horario = l; DB.guardar(); cerrarHoja(); aviso('Guardado'); refrescar();
+};
+ACC.quitarClaseId = b => { const u = DB.yo(); u.horario = normalizarHorario(u).filter(x => x.id !== b.dataset.id); DB.guardar(); cerrarHoja(); refrescar(); };
+
+/* clases que se enciman: si una cabe dentro de otra (como un receso), va encima a lo ancho;
+   si de verdad chocan, se ponen lado a lado */
+function carriles(l) {
+  const o = l.map(s => ({ ...s, a: minutos(s.ini), b: minutos(s.fin), lane: 0, lanes: 1, encima: false })).sort((x, y) => (y.b - y.a) - (x.b - x.a));
+  o.forEach((s, i) => { if (o.slice(0, i).some(x => x.a <= s.a && s.b <= x.b)) s.encima = true; });
+  const base = o.filter(s => !s.encima).sort((x, y) => x.a - y.a), fines = [];
+  base.forEach(s => { let k = fines.findIndex(f => f <= s.a); if (k < 0) { k = fines.length; fines.push(0); } fines[k] = s.b; s.lane = k; });
+  base.forEach(s => { const sol = base.filter(x => x.a < s.b && s.a < x.b); s.lanes = Math.max(...sol.map(x => x.lane)) + 1; });
+  return o;
+}

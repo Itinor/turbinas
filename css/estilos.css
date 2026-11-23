@@ -274,3 +274,23 @@ html.desplazando *{scrollbar-color:rgba(75,31,122,.45) transparent}
 .visor-cuerpo canvas{display:block;width:100%;height:auto;margin:0 auto 8px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:4px}
 .visor-cuerpo iframe{width:100%;height:100%;min-height:70vh;border:0;border-radius:8px;background:#fff}
 .visor-cuerpo pre{white-space:pre-wrap;word-break:break-word;margin:0;padding:12px;background:#fff;border-radius:8px;font-size:13px}
+
+/* horario en cuadrícula */
+.horario-tabla{margin-top:10px;border:1.5px solid #E8D9D4;border-radius:14px;overflow:hidden;background:#FFFCFA}
+.ht-cab{display:grid;grid-template-columns:46px repeat(var(--cols),1fr);background:#F4E6E1;font-size:12px;font-weight:700;color:#5B4A47;text-align:center;text-transform:uppercase;letter-spacing:.04em}
+.ht-cab span{padding:8px 2px;border-left:1px solid #E8D9D4}.ht-cab span:first-child{border-left:0;text-transform:none}
+.ht-cuerpo{display:grid;grid-template-columns:46px repeat(var(--cols),1fr);position:relative}
+.ht-horas{position:relative;background:#F4E6E1}
+.ht-horas span{position:absolute;left:0;right:4px;text-align:right;font-size:11px;color:#7A6763;transform:translateY(-1px);font-variant-numeric:tabular-nums}
+.ht-dia{position:relative;border-left:1px solid #E8D9D4}
+.ht-dia i{position:absolute;left:0;right:0;border-top:1px solid #F0E4E0}
+.ht-clase{position:absolute;left:2px;right:2px;border:0;border-radius:8px;padding:3px 4px;text-align:left;overflow:hidden;cursor:pointer;color:#1B1530;display:flex;flex-direction:column;gap:1px;box-shadow:0 1px 2px rgba(0,0,0,.08);font:inherit}
+.ht-clase b{font-size:11px;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ht-clase span{font-size:10px;opacity:.75;line-height:1.1}
+@media(min-width:700px){.ht-clase b{font-size:13px}.ht-clase span{font-size:11px}}
+.punto-color{display:inline-block;width:30px;height:30px;border-radius:50%;border:2px solid transparent}
+input:checked+.punto-color{border-color:#4B1F7A;box-shadow:0 0 0 2px #fff inset}
+.dia-chip input{position:absolute;opacity:0}.dia-chip span{display:inline-grid;place-items:center;min-width:40px;height:36px;border-radius:999px;border:1.5px solid var(--linea);font-weight:700;font-size:13px;cursor:pointer}
+.dia-chip input:checked+span{background:#4B1F7A;color:#fff;border-color:#4B1F7A}
+.dia-chip input:focus-visible+span{outline:3px solid #FFC93C}
+.ht-clase.encima{box-shadow:0 2px 6px rgba(0,0,0,.18);outline:1.5px solid rgba(255,255,255,.9);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.35) 0 6px,transparent 6px 12px)!important}
