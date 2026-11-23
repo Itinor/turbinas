@@ -7,12 +7,14 @@ const LECTOR_HORARIO = (() => {
   const H = t => { const m = /^(\d{1,2})(?::|\.|h)?(\d{2})?$/.exec(String(t).trim()); if (!m) return null; const h = +m[1], mi = +(m[2] || 0); return h <= 23 && mi < 60 ? h * 60 + mi : null; };
   const fmt = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   /* busca rangos tipo "07:00 - 09:00", "7-9", "07:00 a 09:00" dentro de un texto */
+  /* el OCR confunde O↔0, l/I↔1, S↔5 junto a números */
+  const arreglarNum = t => String(t).replace(/(?<=\d|:)[oO]|[oO](?=\d|:)/g, '0').replace(/(?<=\d|:)[lI|]|[lI|](?=\d{1}:)/g, '1').replace(/(?<=\d:)[sS]|[sS](?=\d:)/g, '5').replace(/(\d)\s*[:;.,]\s*(\d{2})/g, '$1:$2');
   function rangos(t) {
-    const out = [], re = /(\d{1,2}(?:[:.]\d{2})?)\s*(?:-|–|—|a|hrs?\.?\s*a)\s*(\d{1,2}(?:[:.]\d{2})?)/gi; let m;
+    t = arreglarNum(t); const out = [], re = /(\d{1,2}(?:[:.]\d{2})?)\s*(?:-|–|—|a|hrs?\.?\s*a)\s*(\d{1,2}(?:[:.]\d{2})?)/gi; let m;
     while ((m = re.exec(t))) { let a = H(m[1].replace('.', ':')), b = H(m[2].replace('.', ':')); if (a == null || b == null) continue; if (b <= a && b + 720 > a && b < 13 * 60) b += 720; if (a < 6 * 60) a += 720, b += b < a ? 720 : 0; if (b > a && b - a <= 6 * 60) out.push([a, b]); }
     return out;
   }
-  const horaSola = t => { const m = /^(\d{1,2})[:.](\d{2})$/.exec(String(t).trim()); return m ? H(m[1] + ':' + m[2]) : null; };
+  const horaSola = t => { const m = /^(\d{1,2})[:.](\d{2})$/.exec(arreglarNum(String(t)).trim()); return m ? H(m[1] + ':' + m[2]) : null; };
 
   /* tokens: [{t, x, y, w, h}] en cualquier escala; y crece hacia abajo */
   function interpretar(tokens) {
@@ -30,6 +32,12 @@ const LECTOR_HORARIO = (() => {
     const filas = []; debajo.sort((a, b) => a.cy - b.cy).forEach(k => { const f = filas.find(f => Math.abs(f.y - k.cy) < alto * 0.7); if (f) { f.k.push(k); f.y = (f.y + k.cy) / 2; } else filas.push({ y: k.cy, k: [k] }); });
     const colDe = k => { if (k.cx < izq) return 'izq'; let mejor = null, d = Infinity; cab.forEach(c => { const e = Math.abs(c.x - k.cx); if (e < d) { d = e; mejor = c.d; } }); return d < anchoCol * 0.6 ? mejor : null; };
     const celdas = filas.map(f => { const c = { y: f.y, izq: [], dias: {} }; f.k.sort((a, b) => a.x - b.x).forEach(k => { const col = colDe(k); if (col === 'izq') c.izq.push(k.t); else if (col) (c.dias[col] = c.dias[col] || []).push(k.t); }); return { ...c, izqT: c.izq.join(' '), diasT: Object.fromEntries(Object.entries(c.dias).map(([d, v]) => [d, v.join(' ')])) }; });
+    for (const [d] of DIAS) for (let i = 0; i < celdas.length - 1; i++) {
+      const a1 = celdas[i].diasT[d], b1 = celdas[i + 1].diasT[d]; if (!a1 || !b1) continue;
+      if (!rangos(a1).length && /\d{1,2}[:.]\d{2}\s*(-|–|a)?\s*$/.test(arreglarNum(a1)) && /^\s*(-|–|a)?\s*\d{1,2}[:.]\d{2}/.test(arreglarNum(b1))) { celdas[i].diasT[d] = a1 + ' - ' + b1.replace(/^\s*(-|–|a)\s*/, ''); delete celdas[i + 1].diasT[d]; }
+    }
+    /* nombres de materia en dos renglones: si un renglón solo tiene texto a la izquierda y el siguiente también, se juntan */
+    for (let i = 0; i < celdas.length - 1; i++) { const c = celdas[i], n = celdas[i + 1]; if (c.izqT && !Object.keys(c.diasT).length && n.izqT && /^[a-záéíóúñ]/i.test(n.izqT) && !rangos(n.izqT).length && Math.abs(n.y - c.y) < alto * 1.8) { n.izqT = c.izqT + ' ' + n.izqT; c.izqT = ''; } }
     const conRango = celdas.filter(c => Object.values(c.diasT).some(t => rangos(t).length)).length;
     const horasIzq = celdas.filter(c => rangos(c.izqT).length || horaSola(c.izq[0] || '') != null).length;
     const clases = new Map(), add = (materia, d, a, b, salon = '') => { materia = materia.replace(/\s+/g, ' ').trim(); if (!materia || materia.length < 2) return; const k = materia.toLowerCase(); if (!clases.has(k)) clases.set(k, { materia, salon, sesiones: [] }); const c = clases.get(k); if (!c.sesiones.some(s => s.d === d && s.ini === fmt(a))) c.sesiones.push({ d, ini: fmt(a), fin: fmt(b) }); if (salon && !c.salon) c.salon = salon; };
@@ -37,7 +45,7 @@ const LECTOR_HORARIO = (() => {
       /* formato lista: cada fila es una materia y en cada día viene su rango de horas */
       let ultima = '';
       celdas.forEach(c => { const nombre = c.izqT.replace(/\b\d{3,}\b/g, '').trim() || ultima; let algo = false;
-        Object.entries(c.diasT).forEach(([d, t]) => rangos(t).forEach(([a, b]) => { const salon = t.replace(/(\d{1,2}(?:[:.]\d{2})?)\s*(?:-|–|—|a)\s*(\d{1,2}(?:[:.]\d{2})?)/g, '').replace(/hrs?\.?/gi, '').trim(); add(nombre, d, a, b, salon.slice(0, 20)); algo = true; }));
+        Object.entries(c.diasT).forEach(([d, t]) => rangos(t).forEach(([a, b]) => { const salon = arreglarNum(t).replace(/(\d{1,2}(?:[:.]\d{2})?)\s*(?:-|–|—|a)\s*(\d{1,2}(?:[:.]\d{2})?)/g, '').replace(/hrs?\.?/gi, '').trim(); add(nombre, d, a, b, salon.slice(0, 20)); algo = true; }));
         if (c.izqT && !algo) ultima = c.izqT; else if (algo) ultima = nombre; });
     } else {
       /* formato cuadrícula: a la izquierda las horas, en cada día el nombre de la materia */
@@ -71,7 +79,7 @@ const LECTOR_HORARIO = (() => {
   }
   async function tokensDeImagen(blob, avance) {
     const T = await cargarTesseract(), r = await T.recognize(blob, 'spa', { logger: m => m.status === 'recognizing text' && avance?.(Math.round(m.progress * 100)) });
-    return (r.data.words || []).filter(w => w.confidence > 30).map(w => ({ t: w.text, x: w.bbox.x0, y: w.bbox.y0, w: w.bbox.x1 - w.bbox.x0, h: w.bbox.y1 - w.bbox.y0 }));
+    return (r.data.words || []).filter(w => w.confidence > 10).map(w => ({ t: w.text, x: w.bbox.x0, y: w.bbox.y0, w: w.bbox.x1 - w.bbox.x0, h: w.bbox.y1 - w.bbox.y0 }));
   }
   async function leer(blob, nombre, avance) {
     const esPdf = /pdf/.test(blob.type) || /\.pdf$/i.test(nombre || '');
