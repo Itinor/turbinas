@@ -91,9 +91,23 @@ const LECTOR_HORARIO = (() => {
     const T = await cargarTesseract(), r = await T.recognize(blob, 'spa', { logger: m => m.status === 'recognizing text' && avance?.(Math.round(m.progress * 100)) });
     return (r.data.words || []).filter(w => w.confidence > 10).map(w => ({ t: w.text, x: w.bbox.x0, y: w.bbox.y0, w: w.bbox.x1 - w.bbox.x0, h: w.bbox.y1 - w.bbox.y0 }));
   }
+  /* convierte las páginas del PDF en imagen (para cuando el horario viene como dibujo o foto dentro del PDF) */
+  async function pdfAImagenes(blob) {
+    const lib = await VISOR.cargarPdfjs(), doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise, out = [];
+    for (let n = 1; n <= Math.min(doc.numPages, 2); n++) { const pg = await doc.getPage(n), v = pg.getViewport({ scale: 2.5 }), cv = document.createElement('canvas'); cv.width = v.width; cv.height = v.height; const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); await pg.render({ canvasContext: cx, viewport: v }).promise; out.push(await new Promise(r => cv.toBlob(r, 'image/png'))); }
+    return out;
+  }
   async function leer(blob, nombre, avance) {
     const esPdf = /pdf/.test(blob.type) || /\.pdf$/i.test(nombre || '');
-    const tokens = esPdf ? await tokensDePdf(blob) : await tokensDeImagen(blob, avance);
+    if (esPdf) {
+      const tt = await tokensDePdf(blob), c1 = interpretar(tt);
+      if (c1.length) return { clases: c1, tokens: tt.length, texto: tt.map(k => k.t).join(' ').slice(0, 600) };
+      /* el horario no venía como texto: se lee la página como imagen */
+      avance?.(0); let todo = [], off = 0;
+      for (const img of await pdfAImagenes(blob)) { const tk = await tokensDeImagen(img, avance); todo = todo.concat(tk.map(k => ({ ...k, y: k.y + off }))); off += 100000; }
+      return { clases: interpretar(todo), tokens: todo.length, texto: todo.map(k => k.t).join(' ').slice(0, 600) };
+    }
+    const tokens = await tokensDeImagen(blob, avance);
     return { clases: interpretar(tokens), tokens: tokens.length, texto: tokens.map(k => k.t).join(' ').slice(0, 600) };
   }
   return { leer, interpretar, rangos };
