@@ -17,17 +17,31 @@ const LECTOR_HORARIO = (() => {
   const horaSola = t => { const m = /^(\d{1,2})[:.](\d{2})$/.exec(arreglarNum(String(t)).trim()); return m ? H(m[1] + ':' + m[2]) : null; };
 
   /* tokens: [{t, x, y, w, h}] en cualquier escala; y crece hacia abajo */
+  const NOMBRES = { lu: 'lunes', ma: 'martes', mi: 'miercoles', ju: 'jueves', vi: 'viernes', sa: 'sabado' };
+  const lev = (a, b) => { const d = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j; for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[a.length][b.length]; };
+  /* el OCR a veces corta o cambia una letra del encabezado ("iernes", "Miercoies") */
+  const esDia = (t, d, re) => { if (re.test(sinAc(t))) return true; const w = sinAc(t).toLowerCase().replace(/[^a-z]/g, ''), n = NOMBRES[d]; return w.length >= 5 && (lev(w, n) <= 1 || (n.endsWith(w) && w.length >= n.length - 2)); };
   function interpretar(tokens) {
     tokens = tokens.filter(k => String(k.t).trim()).map(k => ({ ...k, t: String(k.t).trim(), cx: k.x + (k.w || 0) / 2, cy: k.y + (k.h || 0) / 2 }));
     if (!tokens.length) return [];
     const alto = tokens.map(k => k.h || 10).sort((a, b) => a - b)[Math.floor(tokens.length / 2)] || 10;
-    /* encabezados de días */
-    const cab = []; DIAS.forEach(([d, re]) => { const k = tokens.filter(x => re.test(sinAc(x.t))).sort((a, b) => a.y - b.y)[0]; if (k) cab.push({ d, x: k.cx, y: k.cy, k }); });
+    /* encabezados de días (todos en el mismo renglón) */
+    let cab = []; DIAS.forEach(([d, re]) => { const k = tokens.filter(x => esDia(x.t, d, re)).sort((a, b) => a.y - b.y)[0]; if (k) cab.push({ d, x: k.cx, y: k.cy, k }); });
+    if (cab.length >= 3) { const ym = cab.map(c => c.y).sort((a, b) => a - b)[Math.floor(cab.length / 2)]; cab = cab.filter(c => Math.abs(c.y - ym) < alto * 2); }
     if (cab.length < 3) return [];
+    /* si falta un día que el OCR no leyó, se deduce por la separación entre columnas */
+    const idx = d => DIAS.findIndex(x => x[0] === d);
+    { const n = cab.length, sx = cab.reduce((a, c) => a + idx(c.d), 0), sy = cab.reduce((a, c) => a + c.x, 0), sxx = cab.reduce((a, c) => a + idx(c.d) ** 2, 0), sxy = cab.reduce((a, c) => a + idx(c.d) * c.x, 0), b = (n * sxy - sx * sy) / (n * sxx - sx * sx), a = (sy - b * sx) / n, ym = cab[0].y;
+      const hasta = Math.max(...cab.map(c => idx(c.d))), minX = Math.min(...cab.map(c => c.k.x)) - b * hasta;
+      if (b > alto * 2) for (let i = 0; i <= hasta; i++) if (!cab.some(c => idx(c.d) === i)) { const x = a + b * i; if (x > minX && x > 0) cab.push({ d: DIAS[i][0], x, y: ym, k: { x: x - alto * 2, y: ym, w: alto * 4, h: alto, cx: x, cy: ym, t: '' }, falso: true }); } }
     cab.sort((a, b) => a.x - b.x);
     const yCab = Math.max(...cab.map(c => c.y)), anchoCol = (cab.at(-1).x - cab[0].x) / Math.max(1, cab.length - 1);
-    const izq = cab[0].k.x - Math.min(anchoCol * 0.25, alto * 2.5);
-    const debajo = tokens.filter(k => k.cy > yCab + alto * 0.4 && !cab.some(c => c.k === k));
+    /* otros encabezados del mismo renglón (Clave, Materia, Grupo, Fechas…) */
+    const otrosCab = tokens.filter(k => Math.abs(k.cy - yCab) < alto * 0.8 && /[a-z]{3,}/i.test(k.t) && !cab.some(c => c.k === k) && !cab.some(c => Math.abs(c.x - k.cx) < anchoCol * 0.3));
+    const cabIzq = otrosCab.filter(k => k.cx < cab[0].x).sort((a, b) => a.cx - b.cx), cabDer = otrosCab.filter(k => k.cx > cab.at(-1).x).sort((a, b) => a.cx - b.cx);
+    const izq = cabIzq.length ? Math.max((cabIzq.at(-1).cx + cab[0].x) / 2, cabIzq.at(-1).x + cabIzq.at(-1).w) : cab[0].k.x - Math.min(anchoCol * 0.25, alto * 2.5);
+    const der = cabDer.length ? (cab.at(-1).x + cabDer[0].cx) / 2 : cab.at(-1).x + anchoCol * 0.75;
+    const debajo = tokens.filter(k => k.cy > yCab + alto * 0.6 && !cab.some(c => c.k === k));
     /* filas por altura */
     const filas = []; debajo.sort((a, b) => a.cy - b.cy).forEach(k => { const f = filas.find(f => Math.abs(f.y - k.cy) < alto * 0.7); if (f) { f.k.push(k); f.y = (f.y + k.cy) / 2; } else filas.push({ y: k.cy, k: [k] }); });
     /* junta palabras de la misma frase (el OCR da palabra por palabra) para que un nombre largo no caiga en otra columna */
@@ -38,7 +52,7 @@ const LECTOR_HORARIO = (() => {
         if (u && hueco < alto * 0.9 && (colIdx(u.x) === colIdx(k.x + k.w) || hueco < alto * 0.35)) { u.t += ' ' + k.t; u.w = k.x + k.w - u.x; u.h = Math.max(u.h, k.h); u.cx = u.x + u.w / 2; }
         else unidas.push({ ...k }); });
       f.k = unidas; });
-    const colDe = k => { if (k.x < izq) return 'izq'; const i = colIdx(k.x + Math.min(k.w, anchoCol * 0.5) / 2); if (i < 0) return 'izq'; if (k.cx > cab.at(-1).x + anchoCol * 0.75) return null; return cab[i].d; };
+    const colDe = k => { if (k.x < izq) return 'izq'; const i = colIdx(k.x + Math.min(k.w, anchoCol * 0.5) / 2); if (i < 0) return 'izq'; if (k.cx > der) return null; return cab[i].d; };
     const celdas = filas.map(f => { const c = { y: f.y, izq: [], dias: {} }; f.k.sort((a, b) => a.x - b.x).forEach(k => { const col = colDe(k); if (col === 'izq') c.izq.push(k.t); else if (col) (c.dias[col] = c.dias[col] || []).push(k.t); }); return { ...c, izqT: c.izq.join(' '), diasT: Object.fromEntries(Object.entries(c.dias).map(([d, v]) => [d, v.join(' ')])) }; });
     for (const [d] of DIAS) for (let i = 0; i < celdas.length - 1; i++) {
       const a1 = celdas[i].diasT[d], b1 = celdas[i + 1].diasT[d]; if (!a1 || !b1) continue;
@@ -53,6 +67,31 @@ const LECTOR_HORARIO = (() => {
     const clases = new Map(), add = (materia, d, a, b, salon = '') => { materia = materia.replace(/\s+/g, ' ').trim(); if (!materia || materia.length < 2) return; const k = materia.toLowerCase(); if (!clases.has(k)) clases.set(k, { materia, salon, sesiones: [] }); const c = clases.get(k); if (!c.sesiones.some(s => s.d === d && s.ini === fmt(a))) c.sesiones.push({ d, ini: fmt(a), fin: fmt(b) }); if (salon && !c.salon) c.salon = salon; };
     if (conRango >= horasIzq) {
       /* formato lista: cada fila es una materia y en cada día viene su rango de horas */
+      const salonDe = t => arreglarNum(t).replace(/(\d{1,2}(?:[:.]\d{2})?)\s*(?:-|–|—|a)\s*(\d{1,2}(?:[:.]\d{2})?)/g, '').replace(/^\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?/i, '').replace(/hrs?\.?/gi, '').replace(/\s*-\s*/g, '-').replace(/^-+|-+$/g, '').trim().slice(0, 20);
+      /* filas altas (horas y salón en dos renglones, nombre centrado): se buscan columnas "ancla" con un dato por fila
+         (clave, grupo, tipo, fecha) y cada palabra se asigna a la fila cuyo centro le queda más cerca */
+      const anclas = (() => {
+        const cands = tokens.filter(k => k.cy > yCab + alto * 0.6 && (k.cx < izq || k.cx > der) && /\w/.test(k.t)); let mejor = null;
+        const grupos = []; cands.forEach(k => { const g = grupos.find(g => Math.abs(g.x - k.cx) < alto * 2.5); if (g) g.k.push(k); else grupos.push({ x: k.cx, k: [k] }); });
+        grupos.forEach(g => { const ys = g.k.map(k => k.cy).sort((a, b) => a - b); if (ys.length < 2) return; const gaps = ys.slice(1).map((y, i) => y - ys[i]); if (Math.min(...gaps) < alto * 2.4) return; if (g.k.some(k => k.h > alto * 1.6)) return; if (!mejor || ys.length > mejor.length) mejor = ys; });
+        return mejor;
+      })();
+      if (anclas && anclas.length >= 2) {
+        const paso = (anclas.at(-1) - anclas[0]) / (anclas.length - 1);
+        const fila = cy => { if (cy < anclas[0] - paso * 0.6 || cy > anclas.at(-1) + paso * 0.6) return -1; let b = 0; anclas.forEach((a, i) => { if (Math.abs(a - cy) < Math.abs(anclas[b] - cy)) b = i; }); return b; };
+        /* columna de la materia: entre el encabezado "Materia" y el siguiente; si no hay, todo lo de la izquierda que no parezca clave/grupo/tipo */
+        const iM = cabIzq.findIndex(k => /materia|asignatura|curso|nombre|unidad/i.test(sinAc(k.t)));
+        const esNombre = iM >= 0 ? k => k.cx > (iM > 0 ? cabIzq[iM - 1].x + cabIzq[iM - 1].w + alto : -1e9) && k.x < (cabIzq[iM + 1] ? cabIzq[iM + 1].x - alto * 0.5 : izq)
+          : k => k.cx < izq && !/\d/.test(k.t) && !/^(teor[ií]a|laboratorio|pr[aá]ctica)$/i.test(sinAc(k.t));
+        const unir = l => { l.sort((a, b) => a.cy - b.cy); const lin = []; l.forEach(k => { const u = lin.find(u => Math.abs(u.y - k.cy) < alto * 0.6); if (u) u.k.push(k); else lin.push({ y: k.cy, k: [k] }); }); return lin.sort((a, b) => a.y - b.y).map(u => u.k.sort((a, b) => a.x - b.x).map(k => k.t).join(' ')).join(' '); };
+        const filasA = anclas.map(() => ({ nom: [], dias: {} }));
+        tokens.filter(k => k.cy > yCab + alto * 0.6 && !cab.some(c => c.k === k)).forEach(k => { const f = fila(k.cy); if (f < 0) return;
+          if (k.cx < izq) { if (esNombre(k) && /[a-záéíóúñ]/i.test(k.t)) filasA[f].nom.push(k); return; }
+          if (k.cx > der) return; const i = colIdx(k.cx); if (i < 0 || !cab[i]) return; (filasA[f].dias[cab[i].d] = filasA[f].dias[cab[i].d] || []).push(k); });
+        filasA.forEach(f => { const nombre = unir(f.nom).replace(/[:;|]+/g, ' ').replace(/\s+/g, ' ').trim(); if (!nombre) return;
+          Object.entries(f.dias).forEach(([d, l]) => { const t = unir(l), rs = rangos(t); (rs.length ? rs : horaEnCelda(t) != null ? [[horaEnCelda(t), horaEnCelda(t) + 60]] : []).forEach(([a, b]) => add(nombre, d, a, b, salonDe(t))); }); });
+        if (clases.size) return [...clases.values()].filter(c => c.sesiones.length);
+      }
       let ultima = '';
       celdas.forEach(c => { const nombre = c.izqT.replace(/\b\d{3,}\b/g, '').trim() || ultima; let algo = false;
         Object.entries(c.diasT).forEach(([d, t]) => (rangos(t).length ? rangos(t) : horaEnCelda(t) != null ? [[horaEnCelda(t), horaEnCelda(t) + 60, true]] : []).forEach(([a, b]) => { const salon = arreglarNum(t).replace(/(\d{1,2}(?:[:.]\d{2})?)\s*(?:-|–|—|a)\s*(\d{1,2}(?:[:.]\d{2})?)/g, '').replace(/^\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?/i, '').replace(/hrs?\.?/gi, '').trim(); add(nombre, d, a, b, salon.slice(0, 20)); algo = true; }));
@@ -87,9 +126,27 @@ const LECTOR_HORARIO = (() => {
     if (!tesseract) tesseract = new Promise((ok, mal) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'; s.onload = () => ok(window.Tesseract); s.onerror = () => { tesseract = null; mal(new Error('tesseract')); }; document.head.appendChild(s); });
     return tesseract;
   }
-  async function tokensDeImagen(blob, avance) {
+  /* segunda pasada: escala de grises, más grande y con los renglones oscuros (encabezados de color) invertidos */
+  async function mejorarImagen(blob) {
+    const bmp = await createImageBitmap(blob), f = bmp.width < 2000 ? 2 : 1, cv = document.createElement('canvas'); cv.width = bmp.width * f; cv.height = bmp.height * f;
+    const cx = cv.getContext('2d'); cx.imageSmoothingQuality = 'high'; cx.drawImage(bmp, 0, 0, cv.width, cv.height);
+    const im = cx.getImageData(0, 0, cv.width, cv.height), d = im.data, W = cv.width;
+    for (let i = 0; i < d.length; i += 4) d[i] = d[i + 1] = d[i + 2] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    for (let y = 0; y < cv.height; y++) { let s = 0, n = 0; for (let x = 0; x < W; x += 7) { s += d[(y * W + x) * 4]; n++; } if (s / n < 110) for (let x = 0; x < W; x++) { const o = (y * W + x) * 4; d[o] = d[o + 1] = d[o + 2] = 255 - d[o]; } }
+    cx.putImageData(im, 0, 0);
+    return { img: await new Promise(r => cv.toBlob(r, 'image/png')), f };
+  }
+  async function tokensDeImagen(blob, avance, mejorar) {
+    let f = 1; if (mejorar) { try { const m = await mejorarImagen(blob); blob = m.img; f = m.f; } catch (e) { console.warn(e); } }
     const T = await cargarTesseract(), r = await T.recognize(blob, 'spa', { logger: m => m.status === 'recognizing text' && avance?.(Math.round(m.progress * 100)) });
-    return (r.data.words || []).filter(w => w.confidence > 10).map(w => ({ t: w.text, x: w.bbox.x0, y: w.bbox.y0, w: w.bbox.x1 - w.bbox.x0, h: w.bbox.y1 - w.bbox.y0 }));
+    return (r.data.words || []).filter(w => w.confidence > 10).map(w => ({ t: w.text, x: w.bbox.x0 / f, y: w.bbox.y0 / f, w: (w.bbox.x1 - w.bbox.x0) / f, h: (w.bbox.y1 - w.bbox.y0) / f }));
+  }
+  const sesionesDe = c => c.reduce((a, x) => a + x.sesiones.length, 0);
+  /* lee la imagen dos veces (tal cual y mejorada) y se queda con la lectura que encontró más clases */
+  async function leerImagen(img, avance) {
+    const t1 = await tokensDeImagen(img, p => avance?.(Math.round(p / 2))), c1 = interpretar(t1);
+    let t2 = [], c2 = []; try { t2 = await tokensDeImagen(img, p => avance?.(50 + Math.round(p / 2)), true); c2 = interpretar(t2); } catch (e) { console.warn(e); }
+    return sesionesDe(c2) > sesionesDe(c1) ? { clases: c2, tokens: t2 } : { clases: c1, tokens: t1.length ? t1 : t2 };
   }
   /* convierte las páginas del PDF en imagen (para cuando el horario viene como dibujo o foto dentro del PDF) */
   async function pdfAImagenes(blob) {
@@ -103,12 +160,12 @@ const LECTOR_HORARIO = (() => {
       const tt = await tokensDePdf(blob), c1 = interpretar(tt);
       if (c1.length) return { clases: c1, tokens: tt.length, texto: tt.map(k => k.t).join(' ').slice(0, 600) };
       /* el horario no venía como texto: se lee la página como imagen */
-      avance?.(0); let todo = [], off = 0;
-      for (const img of await pdfAImagenes(blob)) { const tk = await tokensDeImagen(img, avance); todo = todo.concat(tk.map(k => ({ ...k, y: k.y + off }))); off += 100000; }
-      return { clases: interpretar(todo), tokens: todo.length, texto: todo.map(k => k.t).join(' ').slice(0, 600) };
+      avance?.(0); let clases = [], todo = [];
+      for (const img of await pdfAImagenes(blob)) { const r = await leerImagen(img, avance); todo = todo.concat(r.tokens); r.clases.forEach(c => { const y = clases.find(x => x.materia.toLowerCase() === c.materia.toLowerCase()); if (y) c.sesiones.forEach(s => y.sesiones.some(z => z.d === s.d && z.ini === s.ini) || y.sesiones.push(s)); else clases.push(c); }); }
+      return { clases, tokens: todo.length, texto: todo.map(k => k.t).join(' ').slice(0, 600) };
     }
-    const tokens = await tokensDeImagen(blob, avance);
-    return { clases: interpretar(tokens), tokens: tokens.length, texto: tokens.map(k => k.t).join(' ').slice(0, 600) };
+    const r = await leerImagen(blob, avance);
+    return { clases: r.clases, tokens: r.tokens.length, texto: r.tokens.map(k => k.t).join(' ').slice(0, 600) };
   }
   return { leer, interpretar, rangos };
 })();
