@@ -61,7 +61,7 @@ ACC.borrarMsg = b => { DB.borrarMensaje(b.dataset.id, +b.dataset.i); cerrarHoja(
 function esImagenAdj(a) { return /^image\//.test(a.mime || '') || /\.(png|jpe?g|gif|webp|heic|bmp)$/i.test(a.nombre || ''); }
 function burbujaAdjunto(a, mio) {
   if (esImagenAdj(a)) return `<button class="adj-foto" data-a="abrirAdjunto" data-c="${esc(a.clave)}" data-n="${esc(a.nombre)}" data-img="1" aria-label="Ver foto"><img alt="Foto enviada" data-idb="${esc(a.clave)}"></button>`;
-  return `<button class="adj-doc${mio ? ' mio' : ''}" data-a="abrirAdjunto" data-c="${esc(a.clave)}" data-n="${esc(a.nombre)}">${icono('archivo', 26)}<span style="min-width:0;text-align:left"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.nombre)}</b><span class="mini" style="opacity:.8">${pesoBonito(a.peso)} · Toca para abrir</span></span></button>`;
+  return `<button class="adj-doc${mio ? ' mio' : ''}" data-a="abrirAdjunto" data-c="${esc(a.clave)}" data-n="${esc(a.nombre)}" data-m="${esc(a.mime || '')}">${icono('archivo', 26)}<span style="min-width:0;text-align:left"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.nombre)}</b><span class="mini" style="opacity:.8">${pesoBonito(a.peso)} · Toca para ver</span></span></button>`;
 }
 CAMBIOS.adjuntoChat = async el => {
   const fs = [...el.files], id = el.dataset.id; el.value = ''; if (!fs.length) return;
@@ -76,9 +76,4 @@ CAMBIOS.adjuntoChat = async el => {
   }
   if ($('#msg')) $('#msg').value = ''; refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight;
 };
-ACC.abrirAdjunto = async b => {
-  const blob = await ARCHIVOS.leer(b.dataset.c).catch(() => null); if (!blob) return aviso('No se pudo abrir el archivo. Revisa tu internet.');
-  const url = URL.createObjectURL(blob);
-  if (b.dataset.img) { abrirHoja(`<div class="pila"><img src="${url}" alt="Foto" style="width:100%;border-radius:14px"><div class="rejilla2"><a class="btn2" href="${url}" download="${esc(b.dataset.n)}">${icono('descargar', 18)}Descargar</a><button class="btn3" data-a="cerrarHoja">Cerrar</button></div></div>`); return; }
-  const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; if (!/pdf|image|text/.test(blob.type)) a.download = b.dataset.n; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
-};
+ACC.abrirAdjunto = b => VISOR.abrir({ clave: b.dataset.c, nombre: b.dataset.n, mime: b.dataset.img ? 'image/jpeg' : '' });

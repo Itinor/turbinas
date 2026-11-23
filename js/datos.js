@@ -60,6 +60,7 @@ const INSIGNIAS = {
   verificado: { texto: 'Estudiante verificado', clase: 'i-azul' },
   colaborador: { texto: 'Colaborador', clase: 'i-morado' },
   organizador: { texto: 'Organizador', clase: 'i-amarillo' },
+  original: { texto: 'Original · creador', clase: 'i-original' },
   fundador: { texto: 'Miembro fundador', clase: 'i-naranja' },
   tutor: { texto: 'Tutor', clase: 'i-verde' }
 };

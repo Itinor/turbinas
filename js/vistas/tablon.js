@@ -115,15 +115,14 @@ ACC.verTablonItem = b => {
       : it.tipo === 'nota' ? `<div style="background:${COLORES_NOTA[it.color] || COLORES_NOTA.amarillo};border-radius:14px;padding:16px;white-space:pre-wrap;font-size:17px">${esc(it.texto)}</div>`
       : it.tipo === 'foto' || esImagen(it) ? `<h2>${esc(it.titulo || (it.tipo === 'foto' ? 'Foto' : it.archivo.nombre))}</h2><img alt="${esc(it.titulo || 'Foto del tablón')}" data-idb="${esc(it.archivo.clave)}" style="width:100%;border-radius:14px;background:var(--suave);min-height:120px">`
       : `<h2 style="overflow-wrap:anywhere">${esc(it.titulo || it.archivo.nombre)}</h2><p class="peq gris" style="margin:0">${esc(it.archivo.nombre)} · ${pesoBonito(it.archivo.peso)}</p>`}
-    ${it.tipo === 'archivo' || it.tipo === 'foto' ? `<div class="rejilla2"><button class="btn2" data-a="abrirArchivoTablon" data-id="${it.id}">Abrir</button><button class="btn3" data-a="abrirArchivoTablon" data-id="${it.id}" data-bajar="1">${icono('descargar', 18)}Descargar</button></div>` : ''}
+    ${it.tipo === 'archivo' || it.tipo === 'foto' ? `<div class="rejilla2"><button class="btn2" data-a="abrirArchivoTablon" data-id="${it.id}">Ver</button><button class="btn3" data-a="abrirArchivoTablon" data-id="${it.id}" data-bajar="1">${icono('descargar', 18)}Descargar</button></div>` : ''}
     <div class="fila">${mio ? `<button class="btn3" data-a="fijarArriba" data-id="${it.id}">${it.fijado ? 'Quitar de arriba' : 'Fijar arriba'}</button>` : ''}${it.autor !== DB.yo().id ? `<button class="btn3" style="color:var(--malTxt)" data-a="abrirReporte" data-tipo="tablon" data-ref="${it.id}">${icono('bandera', 16)}Reportar</button>` : ''}${botonEliminar('tablonItem', it.id)}</div></div>`);
   cargarArchivosTablon();
 };
 ACC.abrirArchivoTablon = async b => {
-  const it = DB.estado.tablonItems.find(x => x.id === b.dataset.id), blob = it && await ARCHIVOS.leer(it.archivo.clave).catch(() => null);
-  if (!blob) return aviso('Este archivo solo está en el celular de quien lo subió (hasta que conectemos el servidor).');
-  const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener';
-  if (b.dataset.bajar) a.download = it.archivo.nombre; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  const it = DB.estado.tablonItems.find(x => x.id === b.dataset.id); if (!it?.archivo) return;
+  if (b.dataset.bajar) return ACC.visorBajar({ dataset: { c: it.archivo.clave, n: it.archivo.nombre } });
+  VISOR.abrir(it.archivo);
 };
 ACC.fijarArriba = b => { DB.fijarArriba(b.dataset.id); cerrarHoja(); refrescar(); };
 
