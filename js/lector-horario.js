@@ -76,7 +76,7 @@ const LECTOR_HORARIO = (() => {
   async function leer(blob, nombre, avance) {
     const esPdf = /pdf/.test(blob.type) || /\.pdf$/i.test(nombre || '');
     const tokens = esPdf ? await tokensDePdf(blob) : await tokensDeImagen(blob, avance);
-    return { clases: interpretar(tokens), tokens: tokens.length };
+    return { clases: interpretar(tokens), tokens: tokens.length, texto: tokens.map(k => k.t).join(' ').slice(0, 600) };
   }
   return { leer, interpretar, rangos };
 })();
@@ -90,7 +90,7 @@ if (typeof ACC !== 'undefined') {
   const procesar = async (blob, nombre) => {
     const e = $('#leyendo'); if (e) e.textContent = /pdf/.test(blob.type) || /\.pdf$/i.test(nombre) ? 'Leyendo el PDF…' : 'Leyendo la imagen (la primera vez tarda un poco)…';
     try { const r = await LECTOR_HORARIO.leer(blob, nombre, p => { const x = $('#leyendo'); if (x) x.textContent = `Leyendo la imagen… ${p}%`; });
-      if (!r.clases.length) { const x = $('#leyendo'); if (x) x.innerHTML = r.tokens ? 'Leímos texto pero no reconocimos el formato del horario. Mándale una captura a quien hace la app para que lo agregue, o agrégalas a mano.' : 'No pudimos leer texto. Prueba con el PDF o una captura más clara.'; return; }
+      if (!r.clases.length) { const x = $('#leyendo'); if (x) x.innerHTML = (r.tokens ? 'Leímos texto pero no encontramos los días (Lunes, Martes…) para armar el horario.' : 'No pudimos leer texto en el archivo. Prueba con el PDF o una captura más clara.') + (r.texto ? `<details style="margin-top:8px"><summary>Ver lo que leímos</summary><p class="mini" style="white-space:pre-wrap">${esc(r.texto)}</p></details>` : ''); return; }
       UI.leido = r.clases; revisarLeido(); }
     catch (err) { console.warn(err); const x = $('#leyendo'); if (x) x.textContent = 'No se pudo leer (revisa tu internet).'; }
   };
