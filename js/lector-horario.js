@@ -30,7 +30,15 @@ const LECTOR_HORARIO = (() => {
     const debajo = tokens.filter(k => k.cy > yCab + alto * 0.4 && !cab.some(c => c.k === k));
     /* filas por altura */
     const filas = []; debajo.sort((a, b) => a.cy - b.cy).forEach(k => { const f = filas.find(f => Math.abs(f.y - k.cy) < alto * 0.7); if (f) { f.k.push(k); f.y = (f.y + k.cy) / 2; } else filas.push({ y: k.cy, k: [k] }); });
-    const colDe = k => { if (k.cx < izq) return 'izq'; let mejor = null, d = Infinity; cab.forEach(c => { const e = Math.abs(c.x - k.cx); if (e < d) { d = e; mejor = c.d; } }); return d < anchoCol * 0.6 ? mejor : null; };
+    /* junta palabras de la misma frase (el OCR da palabra por palabra) para que un nombre largo no caiga en otra columna */
+    const limites = cab.slice(1).map((c, i) => (c.x + cab[i].x) / 2);
+    const colIdx = x => x < izq ? -1 : limites.filter(l => x >= l).length;
+    filas.forEach(f => { f.k.sort((a, b) => a.x - b.x); const unidas = [];
+      f.k.forEach(k => { const u = unidas.at(-1), hueco = u ? k.x - (u.x + u.w) : Infinity;
+        if (u && hueco < alto * 0.9 && (colIdx(u.x) === colIdx(k.x + k.w) || hueco < alto * 0.35)) { u.t += ' ' + k.t; u.w = k.x + k.w - u.x; u.h = Math.max(u.h, k.h); u.cx = u.x + u.w / 2; }
+        else unidas.push({ ...k }); });
+      f.k = unidas; });
+    const colDe = k => { const i = colIdx(k.x + Math.min(k.w, anchoCol * 0.5) / 2); if (i < 0) return 'izq'; if (k.cx > cab.at(-1).x + anchoCol * 0.75) return null; return cab[i].d; };
     const celdas = filas.map(f => { const c = { y: f.y, izq: [], dias: {} }; f.k.sort((a, b) => a.x - b.x).forEach(k => { const col = colDe(k); if (col === 'izq') c.izq.push(k.t); else if (col) (c.dias[col] = c.dias[col] || []).push(k.t); }); return { ...c, izqT: c.izq.join(' '), diasT: Object.fromEntries(Object.entries(c.dias).map(([d, v]) => [d, v.join(' ')])) }; });
     for (const [d] of DIAS) for (let i = 0; i < celdas.length - 1; i++) {
       const a1 = celdas[i].diasT[d], b1 = celdas[i + 1].diasT[d]; if (!a1 || !b1) continue;
