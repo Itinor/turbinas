@@ -73,12 +73,21 @@ const LECTOR_HORARIO = (() => {
       const anclas = (() => {
         const cands = tokens.filter(k => k.cy > yCab + alto * 0.6 && (k.cx < izq || k.cx > der) && /\w/.test(k.t)); let mejor = null;
         const grupos = []; cands.forEach(k => { const g = grupos.find(g => Math.abs(g.x - k.cx) < alto * 2.5); if (g) g.k.push(k); else grupos.push({ x: k.cx, k: [k] }); });
-        grupos.forEach(g => { const ys = g.k.map(k => k.cy).sort((a, b) => a - b); if (ys.length < 2) return; const gaps = ys.slice(1).map((y, i) => y - ys[i]); if (Math.min(...gaps) < alto * 2.4) return; if (g.k.some(k => k.h > alto * 1.6)) return; if (!mejor || ys.length > mejor.length) mejor = ys; });
+        /* se juntan todas las columnas ancla (si el OCR se salta la clave de una fila, la sacan el grupo, el tipo o la fecha) */
+        const ys = []; grupos.forEach(g => { const v = g.k.map(k => k.cy).sort((a, b) => a - b); if (v.length < 2) return; const gaps = v.slice(1).map((y, i) => y - v[i]); if (Math.min(...gaps) < alto * 2.4) return; if (g.k.some(k => k.h > alto * 1.6)) return; ys.push(...v); });
+        if (!ys.length) return null;
+        ys.sort((a, b) => a - b); const cl = []; ys.forEach(y => { const u = cl.at(-1); if (u && y - u.y.at(-1) < alto * 1.5) u.y.push(y); else cl.push({ y: [y] }); });
+        mejor = cl.map(c => c.y.reduce((a, b) => a + b, 0) / c.y.length);
+        /* filas con horas en los días pero sin ancla (todas sus anclas se perdieron): se agregan */
+        if (mejor.length >= 2) { const paso = Math.min(...mejor.slice(1).map((y, i) => y - mejor[i]));
+          const horas = tokens.filter(k => k.cy > yCab + alto * 0.6 && k.cx >= izq && k.cx <= der && /\d{1,2}[:.]\d{2}/.test(arreglarNum(k.t)) && mejor.every(a => Math.abs(a - k.cy) > paso * 0.6)).sort((a, b) => a.cy - b.cy);
+          const nuevas = []; horas.forEach(k => { const u = nuevas.at(-1); if (u && k.cy - u.y.at(-1) < paso * 0.6) u.y.push(k.cy); else nuevas.push({ y: [k.cy] }); });
+          nuevas.forEach(n => mejor.push(Math.max(...n.y) + alto * 0.5)); mejor.sort((a, b) => a - b); }
         return mejor;
       })();
       if (anclas && anclas.length >= 2) {
         const paso = (anclas.at(-1) - anclas[0]) / (anclas.length - 1);
-        const fila = cy => { if (cy < anclas[0] - paso * 0.6 || cy > anclas.at(-1) + paso * 0.6) return -1; let b = 0; anclas.forEach((a, i) => { if (Math.abs(a - cy) < Math.abs(anclas[b] - cy)) b = i; }); return b; };
+        const fila = cy => { if (cy < anclas[0] - paso * 0.75 || cy > anclas.at(-1) + paso * 0.75) return -1; let b = 0; anclas.forEach((a, i) => { if (Math.abs(a - cy) < Math.abs(anclas[b] - cy)) b = i; }); return b; };
         /* columna de la materia: entre el encabezado "Materia" y el siguiente; si no hay, todo lo de la izquierda que no parezca clave/grupo/tipo */
         const iM = cabIzq.findIndex(k => /materia|asignatura|curso|nombre|unidad/i.test(sinAc(k.t)));
         const esNombre = iM >= 0 ? k => k.cx > (iM > 0 ? cabIzq[iM - 1].x + cabIzq[iM - 1].w + alto : -1e9) && k.x < (cabIzq[iM + 1] ? cabIzq[iM + 1].x - alto * 0.5 : izq)
@@ -88,7 +97,7 @@ const LECTOR_HORARIO = (() => {
         tokens.filter(k => k.cy > yCab + alto * 0.6 && !cab.some(c => c.k === k)).forEach(k => { const f = fila(k.cy); if (f < 0) return;
           if (k.cx < izq) { if (esNombre(k) && /[a-záéíóúñ]/i.test(k.t)) filasA[f].nom.push(k); return; }
           if (k.cx > der) return; const i = colIdx(k.cx); if (i < 0 || !cab[i]) return; (filasA[f].dias[cab[i].d] = filasA[f].dias[cab[i].d] || []).push(k); });
-        filasA.forEach(f => { const nombre = unir(f.nom).replace(/[:;|]+/g, ' ').replace(/\s+/g, ' ').trim(); if (!nombre) return;
+        let sinNombre = 0; filasA.forEach(f => { let nombre = unir(f.nom).replace(/[:;|]+/g, ' ').replace(/\s+/g, ' ').trim(); if (!nombre && Object.keys(f.dias).length) nombre = 'Materia sin nombre ' + (++sinNombre); if (!nombre) return;
           Object.entries(f.dias).forEach(([d, l]) => { const t = unir(l), rs = rangos(t); (rs.length ? rs : horaEnCelda(t) != null ? [[horaEnCelda(t), horaEnCelda(t) + 60]] : []).forEach(([a, b]) => add(nombre, d, a, b, salonDe(t))); }); });
         if (clases.size) return [...clases.values()].filter(c => c.sesiones.length);
       }
@@ -146,7 +155,10 @@ const LECTOR_HORARIO = (() => {
   async function leerImagen(img, avance) {
     const t1 = await tokensDeImagen(img, p => avance?.(Math.round(p / 2))), c1 = interpretar(t1);
     let t2 = [], c2 = []; try { t2 = await tokensDeImagen(img, p => avance?.(50 + Math.round(p / 2)), true); c2 = interpretar(t2); } catch (e) { console.warn(e); }
-    return sesionesDe(c2) > sesionesDe(c1) ? { clases: c2, tokens: t2 } : { clases: c1, tokens: t1.length ? t1 : t2 };
+    const [mej, otra] = sesionesDe(c2) > sesionesDe(c1) ? [c2, c1] : [c1, c2], clave = c => sinAc(c.materia).toLowerCase().replace(/[^a-z]/g, '');
+    /* si la otra lectura encontró una materia que a esta se le pasó, se agrega */
+    otra.forEach(c => { if (!/^materia sin nombre/i.test(c.materia) && !mej.some(m => clave(m) === clave(c))) mej.push(c); });
+    return { clases: mej, tokens: t1.length ? t1 : t2 };
   }
   /* convierte las páginas del PDF en imagen (para cuando el horario viene como dibujo o foto dentro del PDF) */
   async function pdfAImagenes(blob) {
@@ -158,14 +170,14 @@ const LECTOR_HORARIO = (() => {
     const esPdf = /pdf/.test(blob.type) || /\.pdf$/i.test(nombre || '');
     if (esPdf) {
       const tt = await tokensDePdf(blob), c1 = interpretar(tt);
-      if (c1.length) return { clases: c1, tokens: tt.length, texto: tt.map(k => k.t).join(' ').slice(0, 600) };
+      if (c1.length) return { clases: c1, tokens: tt.length, texto: tt.map(k => k.t).join(' ').slice(0, 3000) };
       /* el horario no venía como texto: se lee la página como imagen */
       avance?.(0); let clases = [], todo = [];
       for (const img of await pdfAImagenes(blob)) { const r = await leerImagen(img, avance); todo = todo.concat(r.tokens); r.clases.forEach(c => { const y = clases.find(x => x.materia.toLowerCase() === c.materia.toLowerCase()); if (y) c.sesiones.forEach(s => y.sesiones.some(z => z.d === s.d && z.ini === s.ini) || y.sesiones.push(s)); else clases.push(c); }); }
-      return { clases, tokens: todo.length, texto: todo.map(k => k.t).join(' ').slice(0, 600) };
+      return { clases, tokens: todo.length, texto: todo.map(k => k.t).join(' ').slice(0, 3000) };
     }
     const r = await leerImagen(blob, avance);
-    return { clases: r.clases, tokens: r.tokens.length, texto: r.tokens.map(k => k.t).join(' ').slice(0, 600) };
+    return { clases: r.clases, tokens: r.tokens.length, texto: r.tokens.map(k => k.t).join(' ').slice(0, 3000) };
   }
   return { leer, interpretar, rangos };
 })();
@@ -180,7 +192,7 @@ if (typeof ACC !== 'undefined') {
     const e = $('#leyendo'); if (e) e.textContent = /pdf/.test(blob.type) || /\.pdf$/i.test(nombre) ? 'Leyendo el PDF…' : 'Leyendo la imagen (la primera vez tarda un poco)…';
     try { const r = await LECTOR_HORARIO.leer(blob, nombre, p => { const x = $('#leyendo'); if (x) x.textContent = `Leyendo la imagen… ${p}%`; });
       if (!r.clases.length) { const x = $('#leyendo'); if (x) x.innerHTML = (r.tokens ? 'Leímos texto pero no encontramos los días (Lunes, Martes…) para armar el horario.' : 'No pudimos leer texto en el archivo. Prueba con el PDF o una captura más clara.') + (r.texto ? `<details style="margin-top:8px"><summary>Ver lo que leímos</summary><p class="mini" style="white-space:pre-wrap">${esc(r.texto)}</p></details>` : ''); return; }
-      UI.leido = r.clases; revisarLeido(); }
+      UI.leido = r.clases; UI.leidoTexto = r.texto || ''; revisarLeido(); }
     catch (err) { console.warn(err); const x = $('#leyendo'); if (x) x.textContent = 'No se pudo leer (revisa tu internet).'; }
   };
   CAMBIOS.archivoLeerHorario = el => { const f = el.files[0]; el.value = ''; if (f) procesar(f, f.name); };
@@ -192,7 +204,8 @@ if (typeof ACC !== 'undefined') {
       ${l.map((c, i) => `<div class="tarjeta" style="box-shadow:none;border:1.5px solid var(--linea);padding:10px"><div class="fila" style="flex-wrap:nowrap"><label class="oculto" for="lm${i}">Materia</label><input id="lm${i}" name="m${i}" value="${esc(c.materia)}" style="flex:1"><label class="fila peq" style="flex-wrap:nowrap"><input type="checkbox" name="usar${i}" checked> Usar</label></div>
         <p class="mini gris" style="margin:6px 0 0">${c.sesiones.map(s => `${NOMBRES[s.d]} ${s.ini}–${s.fin}`).join(' · ')}${c.salon ? ' · ' + esc(c.salon) : ''}</p></div>`).join('')}
       <label class="fila peq"><input type="checkbox" name="reemplazar" ${(DB.yo().horario || []).length ? '' : 'checked'}> Reemplazar las clases que ya tengo</label>
-      <button class="btn ancho">Guardar en mi horario</button></form>`);
+      <button class="btn ancho">Guardar en mi horario</button>
+      ${UI.leidoTexto ? `<details><summary class="peq gris">¿Faltó una materia? Ver todo lo que leímos</summary><p class="mini" style="white-space:pre-wrap;user-select:text">${esc(UI.leidoTexto)}</p></details>` : ''}</form>`);
   }
   FORMS.guardarLeido = d => {
     const u = DB.yo(), base = d.reemplazar ? [] : normalizarHorario(u), nuevas = UI.leido.map((c, i) => d['usar' + i] ? { id: uid('cl'), materia: (d['m' + i] || c.materia).trim().slice(0, 60), salon: c.salon || '', color: COLORES_CLASE[(base.length + i) % COLORES_CLASE.length], sesiones: c.sesiones } : null).filter(Boolean);
