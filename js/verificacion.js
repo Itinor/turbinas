@@ -1,5 +1,5 @@
 'use strict';
-const VERIF_DEF = { prefijo: 'a', digitos: 6, max: 0 };
+const VERIF_DEF = { prefijo: 'a', digitos: 6, max: 402000 };
 const confVerif = () => ({ ...VERIF_DEF, ...(DB.estado.confVerif || {}) });
 function revisarMatricula(correo) {
   const c = String(correo || '').trim().toLowerCase(), [local, dom] = c.split('@');
