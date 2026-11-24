@@ -2,7 +2,7 @@
 UI.mapa = { sel: 'auditorio', filtro: 'todos', proponer: false, punto: null, vista: 'ing' };
 VISTAS.explorar = {
   titulo: 'Explorar', nav: 'explorar',
-  montar(params) { if ((params[0] || 'mapa') !== 'mapa') return; { const c = $('#mapaIng'), e = EDIF_ING.find(x => x.id === UI.ing.sel), svg = c?.querySelector('svg'); if (c && e && svg && svg.clientWidth > c.clientWidth) c.scrollLeft = (e.et[0] - 180) / 3120 * svg.clientWidth - c.clientWidth / 2; } const c = $('#mapaCampus'), l = DB.lugares().find(x => x.id === UI.mapa.sel), svg = c?.querySelector('svg'); if (c && l && svg && svg.clientWidth > c.clientWidth) c.scrollLeft = l.x / 1150 * svg.clientWidth - c.clientWidth / 2; },
+  montar(params) { if ((params[0] || 'mapa') !== 'mapa') return; { const c = $('#mapaIng'), e = EDIF_ING.find(x => x.id === UI.ing.sel), svg = c?.querySelector('svg'); if (c && e && svg && svg.clientWidth > c.clientWidth) c.scrollLeft = (e.et[0] - 340) / 1040 * svg.clientWidth - c.clientWidth / 2; } const c = $('#mapaCampus'), l = DB.lugares().find(x => x.id === UI.mapa.sel), svg = c?.querySelector('svg'); if (c && l && svg && svg.clientWidth > c.clientWidth) c.scrollLeft = l.x / 1150 * svg.clientWidth - c.clientWidth / 2; },
   render(params) {
     const tab = params[0] || 'mapa';
     const tabs = [['mapa', 'Mapa'], ['profesores', 'Profesores'], ['eventos', 'Eventos']].map(([k, t]) => `<a class="pastilla${tab === k ? ' on' : ''}" style="display:inline-grid;place-items:center;text-decoration:none;color:inherit" href="#/explorar/${k}">${t}</a>`).join('') + `<a class="pastilla" style="display:inline-grid;place-items:center;text-decoration:none;color:inherit" href="#/compraventa">Compraventa</a>`;
