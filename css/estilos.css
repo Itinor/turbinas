@@ -353,3 +353,17 @@ button.punto-color{padding:0;cursor:pointer;min-height:0}
 .sug-profe{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;padding:8px 10px;margin-top:6px;border-radius:12px;border:1.5px solid var(--linea);background:var(--tarjeta,#fff);font:inherit;cursor:pointer;color:inherit}
 .sug-profe span{font-size:12px;color:var(--gris,#6B6680)}.sug-profe em{font-size:11px;font-style:normal;font-weight:700;color:var(--moradoTxt)}
 .sug-profe:hover{border-color:var(--morado)}
+.vr-portada{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#F3EFFA,#DCF5E3);border:0}
+.vr-botella-mini{flex:none;transform:rotate(-35deg)}
+.vr-mesa{position:relative;width:100%;max-width:420px;aspect-ratio:1;margin:0 auto;border-radius:50%;background:radial-gradient(circle at 50% 45%,#FFFFFF 0%,#F3EFFA 55%,#E4D9F6 100%);border:2px solid var(--linea);box-shadow:inset 0 0 30px rgba(75,31,122,.08)}
+.vr-asiento{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;max-width:96px;transition:transform .3s}
+.vr-asiento span:last-child{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:96px}
+.vr-asiento.on{transform:translate(-50%,-50%) scale(1.18)}.vr-asiento.on .avatar{box-shadow:0 0 0 4px var(--amarillo,#FFC93C)}
+.vr-botella{position:absolute;left:50%;top:50%;width:120px;height:120px;transform:translate(-50%,-50%) rotate(var(--hasta));filter:drop-shadow(0 6px 8px rgba(0,0,0,.25))}
+.vr-botella.girando{animation:vr-girar 4.2s cubic-bezier(.12,.75,.15,1) forwards}
+@keyframes vr-girar{from{transform:translate(-50%,-50%) rotate(var(--desde))}to{transform:translate(-50%,-50%) rotate(var(--hasta))}}
+.vr-carta{border-radius:18px;padding:16px;text-align:center;border:2px solid var(--linea)}
+.vr-carta.verdad{background:#DCE8FB;border-color:#9DBDF0}.vr-carta.reto{background:#FFE1D6;border-color:#F3B39B}
+.vr-carta p{font:700 19px/1.3 Sora,sans-serif;margin:8px 0}
+.vr-verdad{background:#174EAD!important;color:#fff!important}.vr-reto{background:#D9462B!important;color:#fff!important}
+.vr-carta p.peq{font:500 14px/1.4 Inter,sans-serif}

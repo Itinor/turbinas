@@ -4,7 +4,7 @@ const SYNC = (() => {
   const activo = !!(CFG.url && CFG.clave);
   const CLAVE_META = 'cdu_sync_v1';
 
-  const COLS = ['posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes', 'notifs', 'reportes', 'libro', 'jugadas', 'bitacora', 'tablones', 'tablonItems', 'lugares', 'lugaresPend', 'profesPend', 'escuchas', 'triviaPro', 'dirProfes'];
+  const COLS = ['posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes', 'notifs', 'reportes', 'libro', 'jugadas', 'bitacora', 'tablones', 'tablonItems', 'lugares', 'lugaresPend', 'profesPend', 'escuchas', 'triviaPro', 'dirProfes', 'salasVR'];
   const MAPAS = ['usuarios'];
   const LOCALES = ['sesion', 'version', 'semilla'];
 
@@ -15,6 +15,7 @@ const SYNC = (() => {
     rankings: { votos: 'm' },
     profes: { opiniones: 'a' },
     tablonItems: { apuntados: 'p', vieron: 'p' },
+    salasVR: { aceptados: 'p', rechazados: 'p', propias: 'a', historial: 'a' },
     usuarios: { amigos: 'p', solicitudes: 'p', notitas: 'a' }
   };
   let meta = { url: '', cursor: 0, hechos: {} }, listo = false, subiendo = false, otraVez = false, temporizador = null, sondeo = null, pendientes = {}, pintarLuego = false;

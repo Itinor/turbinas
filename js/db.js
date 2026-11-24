@@ -12,7 +12,7 @@ const DB = {
   VERSION: 8,
 
   completar() {
-    ['dirProfes', 'triviaPro', 'escuchas', 'bitacora', 'jugadas', 'lugares', 'lugaresPend', 'profesPend', 'tablones', 'tablonItems', 'notifs', 'reportes', 'libro', 'posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes'].forEach(k => { if (!Array.isArray(E[k])) E[k] = []; });
+    ['salasVR', 'dirProfes', 'triviaPro', 'escuchas', 'bitacora', 'jugadas', 'lugares', 'lugaresPend', 'profesPend', 'tablones', 'tablonItems', 'notifs', 'reportes', 'libro', 'posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes'].forEach(k => { if (!Array.isArray(E[k])) E[k] = []; });
     E.usuarios = E.usuarios || {}; asegurarEquipo(); asegurarTablones();
   },
   guardarSoloLocal() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
