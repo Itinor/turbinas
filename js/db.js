@@ -12,7 +12,7 @@ const DB = {
   VERSION: 8,
 
   completar() {
-    ['triviaPro', 'escuchas', 'bitacora', 'jugadas', 'lugares', 'lugaresPend', 'profesPend', 'tablones', 'tablonItems', 'notifs', 'reportes', 'libro', 'posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes'].forEach(k => { if (!Array.isArray(E[k])) E[k] = []; });
+    ['dirProfes', 'triviaPro', 'escuchas', 'bitacora', 'jugadas', 'lugares', 'lugaresPend', 'profesPend', 'tablones', 'tablonItems', 'notifs', 'reportes', 'libro', 'posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes'].forEach(k => { if (!Array.isArray(E[k])) E[k] = []; });
     E.usuarios = E.usuarios || {}; asegurarEquipo(); asegurarTablones();
   },
   guardarSoloLocal() { try { localStorage.setItem(CLAVE, JSON.stringify(E)); } catch (e) { console.warn('No se pudo guardar', e); } },
@@ -353,6 +353,7 @@ const DB = {
     if (this.esAdmin()) { this.crearProfe(d); return { ok: true, directo: true }; }
     if (this.yo().verificado !== 'si') return { error: 'verificar' };
     const ya = this.profeParecido(d.nombre); if (ya) return { error: 'existe', id: ya.id };
+    const dir = d.dir && (E.dirProfes || []).find(p => p.id === d.dir); if (dir && this.claveNombre(dir.nombre) === this.claveNombre(d.nombre)) { this.crearProfe(d); mover(E.sesion, 10, 'regalo', 'profesor agregado'); return { ok: true, directo: true }; }
     const k = this.claveNombre(d.nombre), pend = E.profesPend.find(p => this.claveNombre(p.nombre) === k);
     if (pend) { if (pend.por === E.sesion || pend.apoyos.includes(E.sesion)) return { error: 'repetido' }; pend.apoyos.push(E.sesion); this.guardar(); return { ok: true, apoyo: true }; }
     if (E.profesPend.filter(p => p.por === E.sesion).length >= 5) return { error: 'limite' };
@@ -493,6 +494,7 @@ function asegurarEquipo() {
   let cambio = false;
   (CONFIG.cuentasEquipo || []).forEach(c => {
     const u = E.usuarios[c.id];
+    if (u && c.antes?.includes(u.usuario) && c.usuario && !Object.values(E.usuarios).some(x => x !== u && x.usuario === c.usuario)) { u.usuario = c.usuario; cambio = true; }
     if (u) { if (c.admin && u.rol !== 'admin') { u.rol = 'admin'; cambio = true; } if (c.admin && !u.insignias.includes('original')) { u.insignias = ['original', ...u.insignias.filter(x => x !== 'original')]; cambio = true; } if (!c.admin && u.rol === 'admin' && c.usuario) { u.rol = 'estudiante'; cambio = true; } if (c.usuario && u.equipo && u.usuario !== c.usuario && !Object.values(E.usuarios).some(x => x !== u && x.usuario === c.usuario)) { u.usuario = c.usuario; u.nombre = c.nombre; cambio = true; } if (u.verificado !== 'si') { u.verificado = 'si'; if (!u.insignias.includes('verificado')) u.insignias.push('verificado'); cambio = true; } return; }
     const base = E.usuarios.u_valeria || Object.values(E.usuarios)[0];
     E.usuarios[c.id] = { ...JSON.parse(JSON.stringify(base)), id: c.id, usuario: c.usuario, nombre: c.nombre, nombreVis: 'todos', nombreElegidos: [], carrera: 'Sin carrera', gen: null, semestre: null,

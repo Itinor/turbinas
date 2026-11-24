@@ -3,8 +3,8 @@ UI.admTab = 'moderacion'; UI.admUsuario = null;
 VISTAS.admin = {
   titulo: 'Administración', nav: 'admin', soloAdmin: true,
   render() {
-    const t = UI.admTab, tabs = [['moderacion', 'Moderación'], ['usuarios', 'Usuarios'], ['contenido', 'Contenido'], ['predicciones', 'Predicciones'], ['alertas', 'Alertas'], ['economia', 'Ramitas'], ['trivia', 'Trivia'], ['registro', 'Registro']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admTab" data-t="${k}">${n}${k === 'alertas' && DB.alertas().length ? ` · ${DB.alertas().length}` : ''}</button>`).join('');
-    return `<div class="pila"><div class="pestanas">${tabs}</div>${({ usuarios: admUsuarios, contenido: admContenido, moderacion: admModeracion, predicciones: admPredicciones, alertas: admAlertas, economia: admEconomia, trivia: admTrivia, registro: admRegistro })[t]()}</div>`;
+    const t = UI.admTab, tabs = [['moderacion', 'Moderación'], ['usuarios', 'Usuarios'], ['contenido', 'Contenido'], ['predicciones', 'Predicciones'], ['alertas', 'Alertas'], ['economia', 'Ramitas'], ['trivia', 'Trivia'], ['directorio', 'Profesores'], ['registro', 'Registro']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admTab" data-t="${k}">${n}${k === 'alertas' && DB.alertas().length ? ` · ${DB.alertas().length}` : ''}</button>`).join('');
+    return `<div class="pila"><div class="pestanas">${tabs}</div>${({ usuarios: admUsuarios, contenido: admContenido, moderacion: admModeracion, predicciones: admPredicciones, alertas: admAlertas, economia: admEconomia, trivia: admTrivia, directorio: admDirectorio, registro: admRegistro })[t]()}</div>`;
   }
 };
 function admModeracion() {

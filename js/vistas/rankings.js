@@ -50,11 +50,11 @@ FORMS.nuevoRanking = d => {
 };
 
 ACC.proponerProfe = () => abrirHoja(`<form class="pila" data-form="proponerProfe"><h2>${DB.esAdmin() ? 'Agregar' : 'Proponer'} un profesor</h2><p class="peq gris" style="margin:0">${DB.esAdmin() ? 'Se agrega directo.' : 'El equipo lo revisa y, al aprobarlo, todos pueden opinar. Ganas 10 ramitas.'}</p>
-  <div><label class="campo" for="ppn">Nombre</label><input id="ppn" name="nombre" required minlength="5" maxlength="60" placeholder="Mtra. Laura García" data-entrada="buscarProfeParecido" autocomplete="off"><p class="mini" id="ppAviso" style="margin:4px 0 0"></p></div>
+  <div><label class="campo" for="ppn">Nombre</label><input id="ppn" name="nombre" required minlength="5" maxlength="60" placeholder="Mtra. Laura García" data-entrada="buscarProfeParecido" autocomplete="off"><p class="mini" id="ppAviso" style="margin:4px 0 0"></p><div id="ppDir"></div></div>
   <div><label class="campo" for="ppa">Área</label><input id="ppa" name="area" list="listaAreas" required maxlength="40" value="${esc(UI.rkArea)}"><datalist id="listaAreas">${DB.areas().map(a => `<option value="${esc(a)}">`).join('')}</datalist></div>
   <div><label class="campo" for="ppm">Materias que da (separadas por coma)</label><input id="ppm" name="materias" required placeholder="Cálculo I, Cálculo II"></div>
   <button class="btn ancho">${DB.esAdmin() ? 'Agregar' : 'Enviar propuesta'}</button></form>`);
-ENTRADAS.buscarProfeParecido = el => { const p = DB.profeParecido(el.value), a = $('#ppAviso'); if (a) a.innerHTML = p ? `Ya existe: <a href="#/profe/${p.id}">${esc(p.nombre)}</a>` : ''; };
+ENTRADAS.buscarProfeParecido = el => { const p = DB.profeParecido(el.value), a = $('#ppAviso'); if (a) a.innerHTML = p ? `Ya existe: <a href="#/profe/${p.id}">${esc(p.nombre)}</a>` : ''; const s = $('#ppDir'), h = el.form?.querySelector('input[name=dir]'); if (h) h.value = ''; if (s) s.innerHTML = el.value.trim().length >= 2 ? sugerenciasDirectorio(el.value) : ''; };
 FORMS.proponerProfe = d => {
   const r = DB.proponerProfe(d);
   if (r.error === 'verificar') { cerrarHoja(); return pedirVerificacion(); }

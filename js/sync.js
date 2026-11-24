@@ -4,7 +4,7 @@ const SYNC = (() => {
   const activo = !!(CFG.url && CFG.clave);
   const CLAVE_META = 'cdu_sync_v1';
 
-  const COLS = ['posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes', 'notifs', 'reportes', 'libro', 'jugadas', 'bitacora', 'tablones', 'tablonItems', 'lugares', 'lugaresPend', 'profesPend', 'escuchas', 'triviaPro'];
+  const COLS = ['posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes', 'notifs', 'reportes', 'libro', 'jugadas', 'bitacora', 'tablones', 'tablonItems', 'lugares', 'lugaresPend', 'profesPend', 'escuchas', 'triviaPro', 'dirProfes'];
   const MAPAS = ['usuarios'];
   const LOCALES = ['sesion', 'version', 'semilla'];
 
