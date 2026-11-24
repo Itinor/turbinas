@@ -22,7 +22,7 @@ VISTAS.perfil = {
           ${u.bio ? `<p style="margin:10px 0 0">${esc(u.bio)}</p>` : ''}
           <span class="insignia i-morado" style="margin-top:10px">Reputación ${rango} · ${u.reputacion} pts</span>
           <div class="fila" style="justify-content:center;margin-top:12px">${mio ? '<a class="btn3" href="#/editar-perfil">Editar perfil</a><a class="btn3" href="#/horario">Mi horario</a>' + (DB.esAdmin() ? '<a class="btn2" href="#/admin">Administración</a>' : '') : `${botonAmistad(u.id)}${DB.puedeEscribir(u.id) ? `<button class="btn3" data-a="escribirA" data-u="${u.id}">Escribir</button>` : ''}${DB.puedeVerHorario(u.id) ? `<a class="btn3" href="#/horario/${esc(u.usuario)}">Horario</a>` : ''}<button class="icono-btn" data-a="menuPerfil" data-u="${u.id}" aria-label="Más opciones">${icono('puntos')}</button>`}</div></div></section>
-      ${ins.length ? `<div class="emblemas">${ins.map(i => emblema(i)).join('')}</div>` : ''}
+      ${ins.length ? `<div class="emblemas">${ins.map(i => emblema(i, estiloInsignia(u))).join('')}</div>` : ''}
       ${barraNotitas(u, mio)}
       ${seccionHorarioPerfil(u, mio)}
       ${seccionCanciones(u, mio)}
@@ -44,8 +44,8 @@ VISTAS.perfil = {
 };
 
 const ICONO_INSIGNIA = { verificado: 'ok', colaborador: 'grupo', organizador: 'agenda', original: 'estrella', fundador: 'bandera', tutor: 'profe' };
-const ESTILOS_INSIGNIA = [['pastilla', 'Pastilla suave', 'La de ahora'], ['contorno', 'Contorno', 'Fondo blanco, borde de color'], ['sello', 'Sello', 'Ícono en círculo de color'], ['cinta', 'Cinta', 'Listón con punta cortada'], ['solida', 'Sólida', 'Color lleno, letra blanca'], ['holo', 'Holográfica', 'Borde tornasol']];
-const estiloInsignia = () => UI.probarEstiloIns || DB.estado.estiloInsignias || 'pastilla';
+const ESTILOS_INSIGNIA = [['pastilla', 'Pastilla suave', 'Fondo de color suave'], ['contorno', 'Contorno', 'Fondo blanco, borde de color'], ['sello', 'Sello', 'Ícono en círculo de color'], ['cinta', 'Cinta', 'Listón con punta cortada'], ['solida', 'Sólida', 'Color lleno, letra blanca'], ['holo', 'Holográfica', 'Borde tornasol']];
+const estiloInsignia = u => (u && ESTILOS_INSIGNIA.some(e => e[0] === u.estiloInsignias) && u.estiloInsignias) || DB.estado.estiloInsignias || 'contorno';
 function emblema(k, est = estiloInsignia()) { const d = INSIGNIAS[k]; if (!d) return ''; return `<span class="insignia emblema est-${est} ${d.clase}" title="${esc(d.texto)}">${['sello', 'contorno', 'solida', 'holo'].includes(est) ? `<span class="emb-ico" aria-hidden="true">${icono(ICONO_INSIGNIA[k] || 'estrella', est === 'sello' ? 13 : 14)}</span>` : ''}<span class="emblema-txt">${esc(d.texto)}</span></span>`; }
 function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).length + DB.estado.propuestas.filter(p => p.autor === u.id).length + DB.estado.rankings.filter(r => r.autor === u.id).length; }
 function reproducir(src, auto, dueno) { const u = DB.usuario(dueno) || Object.values(DB.estado.usuarios).find(x => DB.canciones(x).some(c => c.archivo === src)); const c = u && DB.canciones(u).find(x => x.archivo === src); return REPRO.alternar(c || { archivo: src, titulo: 'Canción' }, u?.id, auto); }
@@ -85,7 +85,8 @@ VISTAS['editar-perfil'] = {
         <div><label class="campo" for="ryt">YouTube <span class="mini gris">(tu canal o un video)</span></label><input id="ryt" name="redYt" type="url" placeholder="https://www.youtube.com/@tucanal" value="${esc(u.redes?.youtube || '')}" data-orig="${esc(u.redes?.youtube || '')}"></div>
         <div><span class="campo">Publicaciones destacadas <span class="mini gris">(enlaces de Instagram, TikTok o YouTube)</span></span><div class="pila" style="gap:6px">${[0, 1, 2, 3].map(i => `<label class="oculto" for="rd${i}">Destacada ${i + 1}</label><input id="rd${i}" name="dest${i}" type="url" placeholder="https://www.instagram.com/p/…" value="${esc(u.redes?.destacadas?.[i] || '')}" data-orig="${esc(u.redes?.destacadas?.[i] || '')}">`).join('')}</div></div></div>`)}
       ${bloque('Playlists', `<div class="pila" style="gap:6px">${[0, 1, 2].map(i => { const p = u.playlists[i] || {}; return `<div class="rejilla2"><label class="oculto" for="pn${i}">Nombre</label><input id="pn${i}" name="pn${i}" placeholder="Nombre" maxlength="50" value="${esc(p.nombre || '')}" data-orig="${esc(p.nombre || '')}"><label class="oculto" for="pu${i}">Enlace</label><input id="pu${i}" name="pu${i}" type="url" placeholder="https://…" value="${esc(p.url || '')}" data-orig="${esc(p.url || '')}"></div>`; }).join('')}</div>`)}
-      ${bloque('Insignias que se muestran', `<div class="fila">${u.insignias.map(i => `<label style="cursor:pointer;display:inline-flex;gap:8px;align-items:center"><input type="checkbox" name="ins_${i}" ${u.ocultas.includes(i) ? '' : 'checked'} data-orig="${u.ocultas.includes(i) ? '' : 'on'}">${emblema(i)}</label>`).join('') || '<span class="gris peq">Aún no tienes insignias.</span>'}</div>`)}
+      ${bloque('Insignias que se muestran', `<div class="fila">${u.insignias.map(i => `<label style="cursor:pointer;display:inline-flex;gap:8px;align-items:center"><input type="checkbox" name="ins_${i}" ${u.ocultas.includes(i) ? '' : 'checked'} data-orig="${u.ocultas.includes(i) ? '' : 'on'}">${emblema(i, estiloInsignia(u))}</label>`).join('') || '<span class="gris peq">Aún no tienes insignias.</span>'}</div>`)}
+      ${u.insignias.length ? bloque('Estilo de tus insignias', `<p class="mini gris" style="margin:0 0 8px">Así se ven en tu perfil. Se guarda al tocarlo.</p><div class="pila" style="gap:8px">${ESTILOS_INSIGNIA.map(([k, n]) => `<button type="button" class="est-opcion${estiloInsignia(u) === k ? ' on' : ''}" data-a="miEstiloIns" data-k="${k}"><span class="peq" style="font-weight:700;min-width:96px;text-align:left">${n}</span><span class="emblemas" style="justify-content:flex-start;flex:1">${u.insignias.slice(0, 3).map(x => emblema(x, k)).join('')}</span></button>`).join('')}</div>`) : ''}
       <button class="btn ancho" id="btnGuardar">Guardar</button></form>`;
   }
 };
@@ -330,3 +331,5 @@ ACC.amigosTab = b => { UI.amigosTab = b.dataset.t; refrescar(); };
 ENTRADAS.buscaGente = el => { UI.buscaGente = el.value; const pos = el.selectionStart; refrescar(); const n = $('#bg'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
 
 ACC.moverCancion = b => { const l = DB.canciones(), i = +b.dataset.i, j = i + +b.dataset.d; if (j < 0 || j >= l.length) return; [l[i], l[j]] = [l[j], l[i]]; DB.guardarCanciones(l); pintarListaCanciones(); };
+
+ACC.miEstiloIns = b => { const u = DB.yo(); u.estiloInsignias = b.dataset.k; DB.guardar(); $$('.est-opcion').forEach(x => x.classList.toggle('on', x === b)); $$('label .emblema').forEach(e => { e.className = e.className.replace(/est-\w+/, 'est-' + b.dataset.k); }); aviso('Estilo guardado'); };

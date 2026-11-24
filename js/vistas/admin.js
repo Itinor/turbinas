@@ -213,8 +213,8 @@ function graficaCasino(J) {
 }
 
 function admDiseno() {
-  const act = DB.estado.estiloInsignias || 'pastilla', todas = Object.keys(INSIGNIAS);
-  return `<section class="tarjeta"><h2>Estilo de las insignias</h2><p class="peq gris" style="margin:4px 0 0">Se aplica a todos los perfiles. Todas conservan el destello.</p></section>
-    ${ESTILOS_INSIGNIA.map(([k, n, d]) => `<section class="tarjeta pila" style="gap:10px;${act === k ? 'border:2px solid var(--morado)' : ''}"><div class="entre"><span><b>${n}</b><br><span class="mini gris">${d}</span></span>${act === k ? '<span class="insignia i-morado">En uso</span>' : `<button class="btn2" style="min-height:36px" data-a="usarEstiloIns" data-k="${k}">Usar este</button>`}</div><div class="emblemas" style="justify-content:flex-start">${todas.map(i => emblema(i, k)).join('')}</div></section>`).join('')}`;
+  const act = DB.estado.estiloInsignias || 'contorno', todas = Object.keys(INSIGNIAS);
+  return `<section class="tarjeta"><h2>Estilo de las insignias</h2><p class="peq gris" style="margin:4px 0 0">El que elijas aquí es el que se usa de inicio. Cada quien puede cambiar el suyo en Editar perfil.</p></section>
+    ${ESTILOS_INSIGNIA.map(([k, n, d]) => `<section class="tarjeta pila" style="gap:10px;${act === k ? 'border:2px solid var(--morado)' : ''}"><div class="entre"><span><b>${n}</b><br><span class="mini gris">${d}</span></span>${act === k ? '<span class="insignia i-morado">De inicio</span>' : `<button class="btn2" style="min-height:36px" data-a="usarEstiloIns" data-k="${k}">Usar de inicio</button>`}</div><div class="emblemas" style="justify-content:flex-start">${todas.map(i => emblema(i, k)).join('')}</div></section>`).join('')}`;
 }
 ACC.usarEstiloIns = b => { DB.estado.estiloInsignias = b.dataset.k; DB.guardar(); aviso('Estilo aplicado'); refrescar(); };
