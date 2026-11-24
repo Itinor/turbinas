@@ -130,4 +130,16 @@ FORMS.entrarAdmin = d => {
   if (!cuentas.length) { const a = Object.values(DB.estado.usuarios).find(u => u.rol === 'admin'); cerrarHoja(); DB.entrar(a.id); return ir('#/inicio'); }
   abrirHoja(`<h2>¿Cuál es tu cuenta?</h2><div class="pila" style="gap:8px">${cuentas.map(c => { const u = DB.usuario(c.id); return `<button class="tarjeta fila" style="flex-wrap:nowrap;text-align:left;box-shadow:none;border:1.5px solid var(--linea);padding:10px 12px" data-a="elegirCuenta" data-id="${c.id}">${avatar(c.id).replace('<a ', '<span ').replace('</a>', '</span>')}<span style="flex:1"><b>${esc(c.nombre)}</b>${c.nota ? ` <span class="gris" style="font-weight:500">(${esc(c.nota)})</span>` : ''}<br><span class="mini gris">@${esc(u.usuario)}</span></span>${u.rol === 'admin' ? '<span class="insignia i-morado">Admin</span>' : ''}</button>`; }).join('')}</div>`);
 };
-ACC.elegirCuenta = b => { cerrarHoja(); DB.entrar(b.dataset.id); aviso(`Hola, ${CONFIG.cuentasEquipo.find(c => c.id === b.dataset.id)?.nombre || ''}`); ir('#/inicio'); };
+ACC.elegirCuenta = b => {
+  const c = CONFIG.cuentasEquipo.find(x => x.id === b.dataset.id), u = DB.usuario(b.dataset.id);
+  if (c?.admin) { const tiene = !!(u?.cripto?.h || u?.clave); return abrirHoja(`<form class="pila" data-form="entrarPrincipal"><h2>${tiene ? 'Contraseña de @admin' : 'Protege la cuenta @admin'}</h2><p class="peq gris" style="margin:0">${tiene ? 'Esta cuenta tiene todos los poderes de administración, así que pide su propia contraseña.' : 'La clave del equipo está dentro de la página y cualquiera podría verla. Crea una contraseña solo tuya para @admin; desde ahora se pedirá siempre.'}</p>
+    <input type="hidden" name="id" value="${c.id}"><label class="oculto" for="ep1">Contraseña</label><input id="ep1" name="clave" type="password" required autocomplete="${tiene ? 'current-password' : 'new-password'}" placeholder="Contraseña">
+    ${tiene ? '' : '<label class="oculto" for="ep2">Repite la contraseña</label><input id="ep2" name="clave2" type="password" required autocomplete="new-password" placeholder="Repite la contraseña">'}<button class="btn ancho">Entrar</button></form>`); }
+  cerrarHoja(); DB.entrar(b.dataset.id); aviso(`Hola, ${CONFIG.cuentasEquipo.find(c => c.id === b.dataset.id)?.nombre || ''}`); ir('#/inicio'); };
+
+FORMS.entrarPrincipal = async (d, f) => {
+  const u = DB.usuario(d.id), b = f.querySelector('button'); if (!u) return;
+  if (u.cripto?.h || u.clave) { b.disabled = true; b.textContent = 'Revisando…'; const ok = await CRIPTO.revisarClave(u, d.clave).catch(() => false); b.disabled = false; b.textContent = 'Entrar'; if (!ok) return aviso('Contraseña incorrecta.'); }
+  else { if (d.clave !== d.clave2) return aviso('Las contraseñas no coinciden.'); const r = revisarFuerza(d.clave, u); if (r) return aviso(r); }
+  DB.entrar(u.id); await CRIPTO.abrirConClave(u, d.clave).catch(e => console.warn(e)); cerrarHoja(); aviso('Hola, admin'); ir('#/inicio');
+};

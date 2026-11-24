@@ -20,8 +20,8 @@ ACC.elegirDirProfe = b => {
 UI.dirBusca = '';
 function admDirectorio() {
   const L = DB.estado.dirProfes || [], q = normNombre(UI.dirBusca), vis = q ? L.filter(p => normNombre(p.nombre + ' ' + p.materias.join(' ') + ' ' + (p.carrera || '')).includes(q)) : L;
-  return `<section class="tarjeta pila" style="gap:10px"><div class="entre"><h2>Directorio de profesores · ${L.length}</h2>${L.length ? '<button class="btn3" style="color:var(--malTxt)" data-a="dirVaciar">Vaciar</button>' : ''}</div>
-    <p class="peq gris" style="margin:0">No aparecen en los rankings. Sirven para que, al agregar un profesor, la gente vea las coincidencias con sus materias y elija al correcto. Si eligen uno del directorio, se agrega sin esperar revisión.</p>
+  return `${admOferta()}<section class="tarjeta pila" style="gap:10px"><div class="entre"><h2>Directorio extra · ${L.length}</h2>${L.length ? '<button class="btn3" style="color:var(--malTxt)" data-a="dirVaciar">Vaciar</button>' : ''}</div>
+    <p class="peq gris" style="margin:0">Profesores que no vienen en la oferta (de otras facultades o que ya no dan clase). No aparecen en los rankings. Sirven para que, al agregar un profesor, la gente vea las coincidencias con sus materias y elija al correcto. Si eligen uno del directorio, se agrega sin esperar revisión.</p>
     <form class="pila" style="gap:8px" data-form="dirImportar"><label class="campo" for="dirTxt">Pegar lista (un profesor por renglón)</label>
       <textarea id="dirTxt" name="txt" rows="6" placeholder="Nombre | Materia 1, Materia 2 | Carrera&#10;Pedro Páramo Jacinto | Física, Química | Ingeniería Física"></textarea>
       <p class="mini gris" style="margin:0">Separa con | ; o tabulador (sirve copiar y pegar desde Excel). Si el nombre ya está, se juntan sus materias.</p>

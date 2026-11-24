@@ -24,9 +24,11 @@ const CONFIG = {
     { id: 'u_brisa', usuario: 'brisa', nombre: 'Brisa' },
     { id: 'u_marcos_f', usuario: 'marcos.novio.de.fer', antes: ['marcos.f'], nombre: 'Marcos', nota: 'novio de Fernanda' },
     { id: 'u_marcos', usuario: 'marcos', nombre: 'Marcos' },
+    { id: 'u_pedro2', usuario: 'pedro2', nombre: 'Pedro', nota: 'segundo' },
     { id: 'u_ernesto', usuario: 'ernesto.lischbitz', antes: ['ernesto'], nombre: 'Ernesto', nota: 'Lischbitz' }
   ],
   claveAdmin: 'castor-admin',
+  adminPrincipal: 'u_diego',
   dineroReal: false,
   propuestasDemo: false,
 

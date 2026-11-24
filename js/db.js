@@ -52,7 +52,7 @@ const DB = {
     this.guardar();
     if (u.ajustes.oscuro) document.documentElement.dataset.tema = 'oscuro'; else delete document.documentElement.dataset.tema;
   },
-  esAdmin() { return this.yo()?.rol === 'admin'; },
+  esAdmin() { const u = this.yo(); return !!u && u.rol === 'admin' && u.id === CONFIG.adminPrincipal; },
 
   saldo(id = E.sesion) { return E.libro.reduce((s, m) => m.u === id ? s + m.monto : s, 0); },
   movimientos(id) { return E.libro.filter(m => m.u === id).slice().reverse(); },
