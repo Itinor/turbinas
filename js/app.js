@@ -58,7 +58,7 @@ function temporizador(fn, ms) { const t = setInterval(fn, ms); TEMPS.add(t); ret
 function detenerTemporizadores() { TEMPS.forEach(clearInterval); TEMPS.clear(); }
 
 function pedirVerificacion() {
-  abrirHoja(`<h2>Confirma que eres estudiante</h2><p class="gris">Para votar, opinar de profes y usar ramitas en predicciones necesitas verificarte. Toma un minuto con tu correo de la uni.</p>
+  abrirHoja(`<h2>Confirma que eres estudiante</h2><p class="gris">Para proponer, calificar profes y usar ramitas en predicciones necesitas verificarte. Es al instante con tu correo de la uni. Votar en las propuestas de la comunidad sí lo puedes hacer sin verificarte.</p>
     <div class="pila"><a class="btn ancho" href="#/verificar">Verificarme</a><button class="btn3 ancho" data-a="cerrarHoja">Ahora no</button></div>`);
 }
 ACC.cerrarHoja = () => cerrarHoja();

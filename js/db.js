@@ -106,6 +106,7 @@ const DB = {
   limites() { const u = this.yo(); if (u.limites.fecha !== fechaLocal()) u.limites = { fecha: fechaLocal(), propuestas: 0, encuestas: 0, apostado: 0, retos: 0 }; return u.limites; },
 
   crearPropuesta({ tipo, titulo, opciones, cierre, minutos, cupo }) {
+    if (!this.esAdmin() && this.yo().verificado !== 'si') return { error: 'verificar' };
     if (minutos) { minutos = Math.round(Number(minutos)); if (!(minutos >= REGLAS.duracionMin)) return { error: `La duración mínima es de ${REGLAS.duracionMin} minutos.` }; minutos = Math.min(minutos, REGLAS.duracionMax); cierre = new Date(Date.now() + minutos * 6e4).toISOString(); }
     else if (cierre && cierreMs(cierre) - Date.now() < REGLAS.duracionMin * 6e4) return { error: `Tiene que cerrar al menos en ${REGLAS.duracionMin} minutos.` };
     const L = this.limites();
@@ -241,6 +242,7 @@ const DB = {
     return this.sonAmigos(r.autor, quien) || (!a.amigos.length && a.carrera === q.carrera && a.gen === q.gen);
   },
   crearRanking(titulo, opciones, nombrados) {
+    if (!this.esAdmin() && this.yo().verificado !== 'si') return { error: 'verificar' };
     titulo = titulo.trim().slice(0, 140); opciones = opciones.map(o => String(o || '').trim()).filter(Boolean).slice(0, MAX_OPCIONES);
     if (titulo.length < 6 || opciones.length < 2) return { error: 'Escribe la pregunta y al menos dos opciones.' };
     const ids = [...new Set(nombrados.map(n => this.porUsuario(n)?.id).filter(Boolean))];

@@ -44,6 +44,7 @@ ACC.rkArea = b => { UI.rkArea = b.dataset.a2; refrescar(); };
 ACC.votarRanking = b => { const r = DB.votarRanking(b.dataset.id, +b.dataset.op); if (r.error === 'verificar') return pedirVerificacion(); refrescar(); };
 FORMS.nuevoRanking = d => {
   const r = DB.crearRanking(d.titulo, leerOpciones(d), (d.nombrados || '').split(/[,\s]+/).filter(Boolean));
+  if (r.error === 'verificar') { cerrarHoja(); return pedirVerificacion(); }
   if (r.error) return aviso(r.error);
   aviso(r.ok.estado === 'aprobado' ? 'Publicado. Primero lo verán tus amigos.' : r.ok.estado === 'revision' ? 'Lo revisará el equipo antes de publicarse.' : 'Publicado en cuanto acepten las personas mencionadas.');
   UI.rkTab = 'comunidad'; ir('#/rankings');

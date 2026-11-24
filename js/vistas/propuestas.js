@@ -64,6 +64,7 @@ ACC.votar = b => { const r = DB.votar(b.dataset.id, +b.dataset.op); if (r.error 
 ACC.apuntarse = b => { DB.apuntarse(b.dataset.id); refrescar(); };
 FORMS.nuevaPropuesta = d => {
   const r = DB.crearPropuesta({ tipo: UI.nuevaTipo || 'prediccion', titulo: d.titulo, opciones: leerOpciones(d), ...leerDuracion(d), cupo: d.cupo });
+  if (r.error === 'verificar') return pedirVerificacion();
   if (r.error) return aviso(r.error);
   aviso(r.nota || 'Publicado'); UI.propTab = 'todas'; ir('#/propuestas');
 };
