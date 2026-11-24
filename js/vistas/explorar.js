@@ -1,8 +1,8 @@
 'use strict';
-UI.mapa = { sel: 'auditorio', filtro: 'todos', proponer: false, punto: null };
+UI.mapa = { sel: 'auditorio', filtro: 'todos', proponer: false, punto: null, vista: 'ing' };
 VISTAS.explorar = {
   titulo: 'Explorar', nav: 'explorar',
-  montar(params) { if ((params[0] || 'mapa') !== 'mapa') return; const c = $('#mapaCampus'), l = DB.lugares().find(x => x.id === UI.mapa.sel), svg = c?.querySelector('svg'); if (c && l && svg && svg.clientWidth > c.clientWidth) c.scrollLeft = l.x / 1150 * svg.clientWidth - c.clientWidth / 2; },
+  montar(params) { if ((params[0] || 'mapa') !== 'mapa') return; { const c = $('#mapaIng'), e = EDIF_ING.find(x => x.id === UI.ing.sel), svg = c?.querySelector('svg'); if (c && e && svg && svg.clientWidth > c.clientWidth) c.scrollLeft = (e.et[0] - 340) / 1040 * svg.clientWidth - c.clientWidth / 2; } const c = $('#mapaCampus'), l = DB.lugares().find(x => x.id === UI.mapa.sel), svg = c?.querySelector('svg'); if (c && l && svg && svg.clientWidth > c.clientWidth) c.scrollLeft = l.x / 1150 * svg.clientWidth - c.clientWidth / 2; },
   render(params) {
     const tab = params[0] || 'mapa';
     const tabs = [['mapa', 'Mapa'], ['profesores', 'Profesores'], ['eventos', 'Eventos']].map(([k, t]) => `<a class="pastilla${tab === k ? ' on' : ''}" style="display:inline-grid;place-items:center;text-decoration:none;color:inherit" href="#/explorar/${k}">${t}</a>`).join('') + `<a class="pastilla" style="display:inline-grid;place-items:center;text-decoration:none;color:inherit" href="#/compraventa">Compraventa</a>`;
@@ -75,6 +75,12 @@ function svgCampus() {
     ${zonas}${etiquetas}`}${marcas}${temporal}</svg>`;
 }
 function vistaMapa(selParam) {
+  const sw = `<div class="pestanas">${[['ing', 'Ingeniería'], ['campus', 'Campus II']].map(([k, n]) => `<button class="pastilla${(UI.mapa.vista || 'ing') === k ? ' on' : ''}" data-a="vistaMapaSel" data-v="${k}">${n}</button>`).join('')}</div>`;
+  if ((UI.mapa.vista || 'ing') === 'ing' && !selParam) return sw + vistaMapaIng();
+  return sw + vistaMapaCampus(selParam);
+}
+ACC.vistaMapaSel = b => { UI.mapa.vista = b.dataset.v; refrescar(); };
+function vistaMapaCampus(selParam) {
   const M = UI.mapa; if (selParam && DB.lugares().some(l => l.id === selParam)) M.sel = selParam;
   const l = DB.lugares().find(x => x.id === M.sel), zona = l && ZONAS_CAMPUS.find(z => z.id === l.zona);
   const gmaps = l ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(l.nombre + ' UACH Campus II Chihuahua') : '';
