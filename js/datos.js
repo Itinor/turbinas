@@ -38,7 +38,7 @@ const CONFIG = {
 
   pagosActivos: false,
 
-  pagosDemo: true
+  pagosDemo: false
 };
 const CARRERAS = [
   { nombre: 'Ing. en Sistemas', facultad: 'Ingeniería' }, { nombre: 'Mecatrónica', facultad: 'Ingeniería' },

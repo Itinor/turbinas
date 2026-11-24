@@ -367,3 +367,17 @@ button.punto-color{padding:0;cursor:pointer;min-height:0}
 .vr-carta p{font:700 19px/1.3 Sora,sans-serif;margin:8px 0}
 .vr-verdad{background:#174EAD!important;color:#fff!important}.vr-reto{background:#D9462B!important;color:#fff!important}
 .vr-carta p.peq{font:500 14px/1.4 Inter,sans-serif}
+.emblema{display:inline-flex;align-items:center;gap:6px}
+.emblema.i-morado{--c:#4B1F7A;--cb:#F3EFFA}.emblema.i-azul{--c:#174EAD;--cb:#DCE8FB}.emblema.i-amarillo{--c:#8A5A00;--cb:#FFF6DA}.emblema.i-verde{--c:#14632F;--cb:#DCF5E3}.emblema.i-naranja{--c:#B45309;--cb:#FFE7D6}.emblema.i-original{--c:#4B1F7A;--cb:#FFC93C}
+.emb-ico{display:inline-grid;place-items:center;position:relative;z-index:1}
+.emblema.est-contorno{background:var(--tarjeta,#fff)!important;color:var(--c)!important;box-shadow:inset 0 0 0 1.5px var(--c)!important}
+.emblema.est-contorno.i-original{background:#FFF6DA!important}
+.emblema.est-sello{background:var(--tarjeta,#fff)!important;color:var(--c)!important;box-shadow:inset 0 0 0 1.5px var(--cb)!important;padding:3px 12px 3px 3px}
+.emblema.est-sello .emb-ico{width:24px;height:24px;border-radius:50%;background:var(--c);color:#fff}
+.emblema.est-sello.i-original .emb-ico{background:linear-gradient(135deg,#FFC93C,#FF9F1C);color:#1B1530;box-shadow:0 0 0 1.5px #4B1F7A}
+.emblema.est-cinta{border-radius:6px 0 0 6px!important;padding:5px 20px 5px 12px;clip-path:polygon(0 0,100% 0,calc(100% - 10px) 50%,100% 100%,0 100%);background:var(--cb)!important;color:var(--c)!important;box-shadow:inset 3px 0 0 var(--c)!important;font-weight:800}
+.emblema.est-cinta.i-original{background:linear-gradient(90deg,#FFC93C,#FF9F1C)!important;color:#1B1530!important;box-shadow:inset 3px 0 0 #4B1F7A!important}
+.emblema.est-solida{background:var(--c)!important;color:#fff!important;box-shadow:none!important}
+.emblema.est-solida.i-original{background:linear-gradient(90deg,#FFC93C,#FF9F1C)!important;color:#1B1530!important;box-shadow:inset 0 0 0 1.5px #4B1F7A!important}
+.emblema.est-holo{color:var(--c)!important;box-shadow:none!important;border:2px solid transparent;background-color:transparent!important;background-image:linear-gradient(var(--tarjeta,#fff),var(--tarjeta,#fff)),linear-gradient(120deg,#FF8FC8,#7FD3FF,#8CF09A,#FFE066,#C08CFF)!important;background-origin:border-box!important;background-clip:padding-box,border-box!important;padding:3px 11px}
+.emblema.est-holo.i-original{background-image:linear-gradient(90deg,#FFF6DA,#FFE7C2),linear-gradient(120deg,#FF6EC7,#5CC8FF,#7CFF6E,#FFE14D,#B46EFF)!important;color:#1B1530!important}

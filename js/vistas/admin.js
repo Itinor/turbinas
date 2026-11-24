@@ -3,8 +3,8 @@ UI.admTab = 'moderacion'; UI.admUsuario = null;
 VISTAS.admin = {
   titulo: 'Administración', nav: 'admin', soloAdmin: true,
   render() {
-    const t = UI.admTab, tabs = [['moderacion', 'Moderación'], ['usuarios', 'Usuarios'], ['contenido', 'Contenido'], ['predicciones', 'Predicciones'], ['alertas', 'Alertas'], ['economia', 'Ramitas'], ['trivia', 'Trivia'], ['directorio', 'Profesores'], ['registro', 'Registro']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admTab" data-t="${k}">${n}${k === 'alertas' && DB.alertas().length ? ` · ${DB.alertas().length}` : ''}</button>`).join('');
-    return `<div class="pila"><div class="pestanas">${tabs}</div>${({ usuarios: admUsuarios, contenido: admContenido, moderacion: admModeracion, predicciones: admPredicciones, alertas: admAlertas, economia: admEconomia, trivia: admTrivia, directorio: admDirectorio, registro: admRegistro })[t]()}</div>`;
+    const t = UI.admTab, tabs = [['moderacion', 'Moderación'], ['usuarios', 'Usuarios'], ['contenido', 'Contenido'], ['predicciones', 'Predicciones'], ['alertas', 'Alertas'], ['economia', 'Ramitas'], ['trivia', 'Trivia'], ['directorio', 'Profesores'], ['diseno', 'Diseño'], ['registro', 'Registro']].map(([k, n]) => `<button class="pastilla${t === k ? ' on' : ''}" data-a="admTab" data-t="${k}">${n}${k === 'alertas' && DB.alertas().length ? ` · ${DB.alertas().length}` : ''}</button>`).join('');
+    return `<div class="pila"><div class="pestanas">${tabs}</div>${({ usuarios: admUsuarios, contenido: admContenido, moderacion: admModeracion, predicciones: admPredicciones, alertas: admAlertas, economia: admEconomia, trivia: admTrivia, directorio: admDirectorio, diseno: admDiseno, registro: admRegistro })[t]()}</div>`;
   }
 };
 function admModeracion() {
@@ -211,3 +211,10 @@ function graficaCasino(J) {
     <div class="fila mini" style="margin-top:6px;gap:12px"><span class="fila" style="gap:4px"><span style="width:14px;height:3px;background:#FFD45A;display:inline-block"></span>Lo que lleva</span><span class="fila" style="gap:4px"><span style="width:14px;height:3px;background:#C4B5FD;display:inline-block"></span>Esperado por probabilidad</span><span class="fila" style="gap:4px"><span style="width:14px;height:10px;background:rgba(124,60,255,.35);display:inline-block"></span>Franja normal</span></div>
     ${fuera > n * 0.2 ? `<p class="peq" style="margin:6px 0 0;color:var(--avisoTxt)"><b>Se sale de la franja normal en ${Math.round(fuera / n * 100)}% de sus jugadas.</b> Revisa.</p>` : ''}`;
 }
+
+function admDiseno() {
+  const act = DB.estado.estiloInsignias || 'pastilla', todas = Object.keys(INSIGNIAS);
+  return `<section class="tarjeta"><h2>Estilo de las insignias</h2><p class="peq gris" style="margin:4px 0 0">Se aplica a todos los perfiles. Todas conservan el destello.</p></section>
+    ${ESTILOS_INSIGNIA.map(([k, n, d]) => `<section class="tarjeta pila" style="gap:10px;${act === k ? 'border:2px solid var(--morado)' : ''}"><div class="entre"><span><b>${n}</b><br><span class="mini gris">${d}</span></span>${act === k ? '<span class="insignia i-morado">En uso</span>' : `<button class="btn2" style="min-height:36px" data-a="usarEstiloIns" data-k="${k}">Usar este</button>`}</div><div class="emblemas" style="justify-content:flex-start">${todas.map(i => emblema(i, k)).join('')}</div></section>`).join('')}`;
+}
+ACC.usarEstiloIns = b => { DB.estado.estiloInsignias = b.dataset.k; DB.guardar(); aviso('Estilo aplicado'); refrescar(); };

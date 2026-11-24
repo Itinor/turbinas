@@ -43,7 +43,10 @@ VISTAS.perfil = {
   }
 };
 
-function emblema(k) { const d = INSIGNIAS[k]; if (!d) return ''; return `<span class="insignia emblema ${d.clase}" title="${esc(d.texto)}"><span class="emblema-txt">${esc(d.texto)}</span></span>`; }
+const ICONO_INSIGNIA = { verificado: 'ok', colaborador: 'grupo', organizador: 'agenda', original: 'estrella', fundador: 'bandera', tutor: 'profe' };
+const ESTILOS_INSIGNIA = [['pastilla', 'Pastilla suave', 'La de ahora'], ['contorno', 'Contorno', 'Fondo blanco, borde de color'], ['sello', 'Sello', 'Ícono en círculo de color'], ['cinta', 'Cinta', 'Listón con punta cortada'], ['solida', 'Sólida', 'Color lleno, letra blanca'], ['holo', 'Holográfica', 'Borde tornasol']];
+const estiloInsignia = () => UI.probarEstiloIns || DB.estado.estiloInsignias || 'pastilla';
+function emblema(k, est = estiloInsignia()) { const d = INSIGNIAS[k]; if (!d) return ''; return `<span class="insignia emblema est-${est} ${d.clase}" title="${esc(d.texto)}">${['sello', 'contorno', 'solida', 'holo'].includes(est) ? `<span class="emb-ico" aria-hidden="true">${icono(ICONO_INSIGNIA[k] || 'estrella', est === 'sello' ? 13 : 14)}</span>` : ''}<span class="emblema-txt">${esc(d.texto)}</span></span>`; }
 function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).length + DB.estado.propuestas.filter(p => p.autor === u.id).length + DB.estado.rankings.filter(r => r.autor === u.id).length; }
 function reproducir(src, auto, dueno) { const u = DB.usuario(dueno) || Object.values(DB.estado.usuarios).find(x => DB.canciones(x).some(c => c.archivo === src)); const c = u && DB.canciones(u).find(x => x.archivo === src); return REPRO.alternar(c || { archivo: src, titulo: 'Canción' }, u?.id, auto); }
 ACC.playPerfil = b => reproducir(b.dataset.src, false, b.dataset.u);

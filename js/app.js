@@ -30,7 +30,7 @@ function pintar() {
       <header class="barra">
         ${v.atras ? `<a class="icono-btn" href="${v.atras}" aria-label="Volver">${icono('atras')}</a>` : `<span class="lado-movil" style="display:flex">${castor(34)}</span>`}
         <h1 class="titulo">${esc(titulo || 'Itinor')}</h1>
-        <a class="chip-ramitas" href="#/ramitas" aria-label="Tus ramitas">${numero(DB.saldo())}<span class="oculto"> ramitas</span>${icono('rayo', 15)}</a>
+        <span class="chip-ramitas" aria-label="Tus ramitas">${numero(DB.saldo())}<span class="oculto"> ramitas</span>${icono('rayo', 15)}</span>
         <a class="icono-btn campana" href="#/notificaciones" aria-label="Notificaciones${sinLeer ? ', ' + sinLeer + ' sin leer' : ''}">${icono('campana')}${sinLeer ? `<span class="punto">${sinLeer > 9 ? '9+' : sinLeer}</span>` : ''}</a>
       </header>
       <main id="vista">${v.render(params)}</main>
