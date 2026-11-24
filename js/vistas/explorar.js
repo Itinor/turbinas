@@ -75,9 +75,7 @@ function svgCampus() {
     ${zonas}${etiquetas}`}${marcas}${temporal}</svg>`;
 }
 function vistaMapa(selParam) {
-  const sw = `<div class="pestanas">${[['ing', 'Ingeniería'], ['campus', 'Campus II']].map(([k, n]) => `<button class="pastilla${(UI.mapa.vista || 'ing') === k ? ' on' : ''}" data-a="vistaMapaSel" data-v="${k}">${n}</button>`).join('')}</div>`;
-  if ((UI.mapa.vista || 'ing') === 'ing' && !selParam) return sw + vistaMapaIng();
-  return sw + vistaMapaCampus(selParam);
+  return vistaMapaIng();
 }
 ACC.vistaMapaSel = b => { UI.mapa.vista = b.dataset.v; refrescar(); };
 function vistaMapaCampus(selParam) {

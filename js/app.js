@@ -140,8 +140,9 @@ ACC.miniModo = () => REPRO.cambiarModo();
 ACC.miniSiguiente = () => REPRO.siguiente();
 
 (() => { const actual = (document.querySelector('script[src*="app.js?v="]')?.src.match(/v=(\d+)/) || [])[1]; if (!actual) return;
-  const revisar = () => fetch('index.html', { cache: 'no-store' }).then(r => r.text()).then(t => { const v = (t.match(/app\.js\?v=(\d+)/) || [])[1]; if (v && v > actual && !document.getElementById('aviso-version')) document.body.insertAdjacentHTML('beforeend', `<button id="aviso-version" class="aviso-version" onclick="location.reload()">Hay una versión nueva · toca para actualizar</button>`); }).catch(() => {});
-  setTimeout(revisar, 5000); setInterval(revisar, 120000); })();
+  const revisar = () => fetch('index.html', { cache: 'no-store' }).then(r => r.text()).then(t => { const v = (t.match(/app\.js\?v=(\d+)/) || [])[1]; if (v && v > actual && !document.getElementById('aviso-version')) document.body.insertAdjacentHTML('beforeend', `<button id="aviso-version" class="aviso-version" onclick="ACC.actualizarApp()">Hay una versión nueva · toca para actualizar</button>`); }).catch(() => {});
+  setTimeout(revisar, 3000); setInterval(revisar, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) revisar(); }); })();
+ACC.actualizarApp = () => { const u = new URL(location.href); u.searchParams.set('v', Date.now()); location.replace(u.pathname + u.search + location.hash); };
 
 (() => { let t = null; addEventListener('scroll', () => { document.documentElement.classList.add('desplazando'); clearTimeout(t); t = setTimeout(() => document.documentElement.classList.remove('desplazando'), 900); }, { capture: true, passive: true }); })();
 
