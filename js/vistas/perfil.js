@@ -43,8 +43,8 @@ VISTAS.perfil = {
     cargarArchivosTablon(); montarNotitas();
   }
 };
-/* insignia como emblema de juego: marco metálico, banda con brillo y alas a los lados */
-function emblema(k) { const d = INSIGNIAS[k]; if (!d) return ''; return `<span class="emblema e-${d.tono || 'morado'}" title="${esc(d.texto)}"><span class="emblema-ala izq" aria-hidden="true"></span><span class="emblema-marco"><span class="emblema-fondo"><span class="emblema-txt">${esc(d.texto)}</span></span></span><span class="emblema-ala der" aria-hidden="true"></span></span>`; }
+/* insignia con el estilo de la app y un destello que la recorre */
+function emblema(k) { const d = INSIGNIAS[k]; if (!d) return ''; return `<span class="insignia emblema ${d.clase}" title="${esc(d.texto)}"><span class="emblema-txt">${esc(d.texto)}</span></span>`; }
 function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).length + DB.estado.propuestas.filter(p => p.autor === u.id).length + DB.estado.rankings.filter(r => r.autor === u.id).length; }
 function reproducir(src, auto, dueno) { const u = DB.usuario(dueno) || Object.values(DB.estado.usuarios).find(x => DB.canciones(x).some(c => c.archivo === src)); const c = u && DB.canciones(u).find(x => x.archivo === src); return REPRO.alternar(c || { archivo: src, titulo: 'Canción' }, u?.id, auto); }
 ACC.playPerfil = b => reproducir(b.dataset.src, false, b.dataset.u);
