@@ -10,7 +10,7 @@ function sugerenciasDirectorio(q) {
   return `<p class="mini gris" style="margin:6px 0 4px">¿Es alguno de estos?</p>${l.map(p => { const ya = DB.profeParecido(p.nombre); return `<button type="button" class="sug-profe" data-a="elegirDirProfe" data-id="${p.id}"><b>${esc(p.nombre)}</b><span>${esc(p.materias.join(', '))}${p.carrera ? ' · ' + esc(p.carrera) : ''}</span>${ya ? '<em>Ya tiene ficha</em>' : ''}</button>`; }).join('')}`;
 }
 ACC.elegirDirProfe = b => {
-  const p = (DB.estado.dirProfes || []).find(x => x.id === b.dataset.id); if (!p) return;
+  const p = DB.profeDeDirectorio ? DB.profeDeDirectorio(b.dataset.id) : (DB.estado.dirProfes || []).find(x => x.id === b.dataset.id); if (!p) return;
   const ya = DB.profeParecido(p.nombre); if (ya) { cerrarHoja(); location.hash = '#/profe/' + ya.id; return; }
   const f = b.closest('form'); f.nombre.value = p.nombre; f.materias.value = p.materias.join(', '); if (p.carrera && f.area) f.area.value = p.carrera;
   let h = f.querySelector('input[name=dir]'); if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = 'dir'; f.appendChild(h); } h.value = p.id;

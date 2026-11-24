@@ -80,6 +80,7 @@ const RUTAS = {
   profe: 'M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5',
   grupo: 'M9 11a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M17 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.6',
   mundo: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18',
+  lupa: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',
   mosaico: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
   renglones: 'M4 5h16v4H4zM4 15h16v4H4z',
   candado: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5z',

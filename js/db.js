@@ -353,7 +353,7 @@ const DB = {
     if (this.esAdmin()) { this.crearProfe(d); return { ok: true, directo: true }; }
     if (this.yo().verificado !== 'si') return { error: 'verificar' };
     const ya = this.profeParecido(d.nombre); if (ya) return { error: 'existe', id: ya.id };
-    const dir = d.dir && (E.dirProfes || []).find(p => p.id === d.dir); if (dir && this.claveNombre(dir.nombre) === this.claveNombre(d.nombre)) { this.crearProfe(d); mover(E.sesion, 10, 'regalo', 'profesor agregado'); return { ok: true, directo: true }; }
+    const dir = d.dir && (this.profeDeDirectorio ? this.profeDeDirectorio(d.dir) : (E.dirProfes || []).find(p => p.id === d.dir)); if (dir && this.claveNombre(dir.nombre) === this.claveNombre(d.nombre)) { this.crearProfe(d); mover(E.sesion, 10, 'regalo', 'profesor agregado'); return { ok: true, directo: true }; }
     const k = this.claveNombre(d.nombre), pend = E.profesPend.find(p => this.claveNombre(p.nombre) === k);
     if (pend) { if (pend.por === E.sesion || pend.apoyos.includes(E.sesion)) return { error: 'repetido' }; pend.apoyos.push(E.sesion); this.guardar(); return { ok: true, apoyo: true }; }
     if (E.profesPend.filter(p => p.por === E.sesion).length >= 5) return { error: 'limite' };

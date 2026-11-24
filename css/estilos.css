@@ -398,3 +398,4 @@ button.punto-color{padding:0;cursor:pointer;min-height:0}
 .alas-edif.una-fila .ala{grid-template-columns:repeat(6,minmax(36px,1fr));gap:4px;min-width:228px}
 .alas-edif.una-fila .salon-cel{min-height:46px;border-radius:8px}
 .escalera{flex:none;width:22px;border-radius:6px;background:repeating-linear-gradient(0deg,var(--linea) 0 3px,transparent 3px 8px);border:1.5px solid var(--linea)}
+.of-item{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1.5px solid var(--linea);border-radius:14px}
