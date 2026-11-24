@@ -92,8 +92,8 @@ const DB = {
     return E.posts.filter(p => !p.oculto && !E.usuarios[p.autor]?.suspendido && !this.bloqueo(p.autor, yo.id) && !yo.silenciados.includes(p.autor)).sort((a, b) => b.fecha.localeCompare(a.fecha));
   },
   publicar(texto) { texto = texto.trim().slice(0, 1000); if (!texto) return; E.posts.push({ id: uid('post'), autor: E.sesion, texto, fecha: new Date().toISOString(), likes: [], comentarios: [] }); this.guardar(); },
-  meGusta(id) { const p = E.posts.find(x => x.id === id); const i = p.likes.indexOf(E.sesion); if (i >= 0) p.likes.splice(i, 1); else { p.likes.push(E.sesion); if (p.autor !== E.sesion) notificar(p.autor, `A @${this.yo().usuario} le interesa tu publicación`, '#/inicio'); } this.guardar(); },
-  comentar(id, texto) { texto = texto.trim().slice(0, 500); if (!texto) return; const p = E.posts.find(x => x.id === id); p.comentarios.push({ autor: E.sesion, texto, fecha: new Date().toISOString() }); if (p.autor !== E.sesion) notificar(p.autor, `@${this.yo().usuario} comentó tu publicación`, '#/inicio'); this.guardar(); },
+  meGusta(id) { const p = E.posts.find(x => x.id === id); const i = p.likes.indexOf(E.sesion); if (i >= 0) p.likes.splice(i, 1); else { p.likes.push(E.sesion); if (p.autor !== E.sesion) notificar(p.autor, `A @${this.yo().usuario} le interesa tu publicación`, '#/post/' + id); } this.guardar(); },
+  comentar(id, texto) { texto = texto.trim().slice(0, 500); if (!texto) return; const p = E.posts.find(x => x.id === id); p.comentarios.push({ autor: E.sesion, texto, fecha: new Date().toISOString() }); if (p.autor !== E.sesion) notificar(p.autor, `@${this.yo().usuario} comentó tu publicación`, '#/post/' + id); this.guardar(); },
   borrarPost(id) { const p = E.posts.find(x => x.id === id); if (p && (p.autor === E.sesion || this.esAdmin())) p.oculto = true; this.guardar(); },
 
   reportar(tipo, ref, motivo) { E.reportes.push({ id: uid('rep'), por: E.sesion, tipo, ref, motivo, fecha: new Date().toISOString(), estado: 'abierto' }); avisarAdmins('Nuevo reporte: ' + motivo, '#/admin'); this.guardar(); },

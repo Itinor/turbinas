@@ -2,6 +2,7 @@
 UI.comentarios = {};
 VISTAS.inicio = {
   titulo: 'Itinor', nav: 'inicio',
+  montar() { cargarArchivosTablon(); },
   render() {
     const yo = DB.yo(), prox = DB.miAgenda().filter(a => !(a.hechoPor || {})[yo.id] && diasHasta(a.fecha) >= 0)[0];
     const pred = DB.estado.propuestas.find(p => p.tipo === 'prediccion' && p.estado === 'abierta');
@@ -12,18 +13,15 @@ VISTAS.inicio = {
     const accesos = [['profe', 'Profesores', '#/explorar/profesores', '#4B1F7A'], ['mapa', 'Mapa', '#/explorar/mapa', '#1D5FD1'], ['agenda', 'Eventos', '#/explorar/eventos', '#B45309'], ['tienda', 'Compraventa', '#/compraventa', '#4B1F7A'], ['tablon', 'Tablón', '#/tablon', '#B45309']].concat(DB.esAdmin() ? [['admin', 'Admin', '#/admin', '#B42318']] : []);
     return `<div class="pila">
       ${recordatorio}
-      <form class="tarjeta pila" data-form="publicar" style="gap:10px">
-        <label class="campo" for="nuevoPost" style="font-family:Sora,sans-serif;font-size:17px;margin:0">¿Qué está pasando?</label>
-        <textarea id="nuevoPost" name="texto" maxlength="1000" placeholder="Comparte algo con tu comunidad…" style="min-height:70px"></textarea>
-        <div class="fila"><button class="btn">Publicar</button><a class="btn3" href="#/propuestas">Propuestas</a><a class="btn3" href="#/rankings" data-a="irRankComunidad">Rankings</a></div>
-      </form>
+      <button class="tarjeta fila compositor-mini" data-a="nuevoPost">${avatar(yo.id).replace('<a ', '<span ').replace('</a>', '</span>')}<span class="gris" style="flex:1;text-align:left">¿Qué está pasando?</span><span class="btn" style="min-height:40px;padding:0 14px">${icono('camara', 16)}Publicar</span></button>
       <div class="rejilla4">${accesos.map(([i, t, h, c]) => `<a href="${h}" class="tarjeta" style="padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:inherit;font-size:12px;font-weight:700">${icono(i, 22, `style="color:${c}"`)}${t}</a>`).join('')}</div>
-      ${pred ? tarjetaPrediccionMini(pred) : ''}
+      <div class="seccion"><h2>Lo que se comenta</h2></div>
+      ${(() => { const f = DB.feed(), extra = `${pred ? tarjetaPrediccionMini(pred) : ''}
       <a href="#/juegos" class="tarjeta fila" style="flex-wrap:nowrap;text-decoration:none;color:#fff;background:var(--g-marca);border:0">
         <span style="flex:1"><span class="etiqueta">El rincón del castor</span><br><b style="font-family:Sora,sans-serif;font-size:18px">${DB.diarios().trivia ? 'Ya jugaste la trivia de hoy' : 'Trivia del día'}</b><br><span class="peq" style="opacity:.9">${DB.diarios().trivia ? 'Prueba un reto de tu carrera' : 'Acierta 4 de 5 y gana 15 ramitas'}</span></span>
-        <span class="btn" style="min-height:42px">Jugar</span></a>
-      <div class="seccion"><h2>Lo que se comenta</h2></div>
-      ${DB.feed().map(tarjetaPost).join('') || '<p class="vacio">Todavía no hay publicaciones.</p>'}
+        <span class="btn" style="min-height:42px">Jugar</span></a>`; if (!f.length) return extra + '<p class="vacio">Todavía no hay publicaciones. ¡Sé el primero!</p>'; return f.slice(0, 2).map(tarjetaPost).join('') + extra + f.slice(2).map(tarjetaPost).join(''); })()}
+      <button class="fab-tablon" data-a="nuevoPost" aria-label="Nueva publicación">${icono('mas', 26)}</button>
+
     </div>`;
   }
 };
@@ -39,12 +37,12 @@ function tarjetaPost(p) {
   const yo = DB.yo(), le = p.likes.includes(yo.id), abiertos = UI.comentarios[p.id];
   const autor = DB.usuario(p.autor), verif = autor?.verificado === 'si';
   return `<article class="tarjeta post">
-    <div class="cab">${avatar(p.autor)}<div class="quien"><a href="#/perfil/${esc(autor?.usuario)}" style="color:inherit;text-decoration:none"><b>${esc(nombreVisible(p.autor))}</b></a>${verif ? ' <span class="insignia i-azul" style="padding:2px 7px">Verificado</span>' : ''}<br><span class="mini gris">${esc(autor?.carrera || '')} · ${hace(p.fecha)}</span></div>
+    <div class="cab">${avatar(p.autor)}<div class="quien"><a href="#/perfil/${esc(autor?.usuario)}" style="color:inherit;text-decoration:none"><b>${esc(nombreVisible(p.autor))}</b></a>${verif ? ' <span class="insignia i-azul" style="padding:2px 7px">Verificado</span>' : ''}<br><span class="mini gris">${esc(autor?.carrera || '')} · ${hace(p.fecha)}${p.vis === 'carrera' ? ' · solo su carrera' : p.vis === 'amigos' ? ' · solo amigos' : ''}</span></div>
       <button class="icono-btn" data-a="menuPost" data-id="${p.id}" aria-label="Más opciones">${icono('puntos')}</button></div>
-    <p class="texto">${esc(p.texto)}</p>
+    ${p.texto ? `<p class="texto">${textoConMenciones(p.texto)}</p>` : ''}${fotosPost(p)}
     <div class="acciones"><button class="reaccion${le ? ' on' : ''}" data-a="meGusta" data-id="${p.id}" aria-pressed="${le}">Me interesa · ${p.likes.length}</button>
       <button class="reaccion" data-a="verComentarios" data-id="${p.id}" aria-expanded="${!!abiertos}">${p.comentarios.length} comentarios</button></div>
-    ${abiertos ? `<div style="margin-top:10px">${p.comentarios.map((c, ci) => `<div class="coment">${avatar(c.autor)}<div style="flex:1"><b class="peq">${esc(nombreVisible(c.autor))}</b> <span class="mini gris">${hace(c.fecha)}</span><br>${esc(c.texto)}</div>${DB.esAdmin() || c.autor === yo.id ? `<button class="icono-btn" style="color:var(--malTxt);width:36px;height:36px" data-a="eliminar" data-tipo="comentario" data-id="${p.id}" data-extra="${ci}" aria-label="Eliminar comentario">${icono('basura', 16)}</button>` : ''}</div>`).join('')}
+    ${abiertos ? `<div style="margin-top:10px">${p.comentarios.map((c, ci) => `<div class="coment">${avatar(c.autor)}<div style="flex:1"><b class="peq">${esc(nombreVisible(c.autor))}</b> <span class="mini gris">${hace(c.fecha)}</span><br>${textoConMenciones(c.texto)}</div>${DB.esAdmin() || c.autor === yo.id ? `<button class="icono-btn" style="color:var(--malTxt);width:36px;height:36px" data-a="eliminar" data-tipo="comentario" data-id="${p.id}" data-extra="${ci}" aria-label="Eliminar comentario">${icono('basura', 16)}</button>` : ''}</div>`).join('')}
       <form class="fila" data-form="comentar" style="flex-wrap:nowrap;margin-top:8px"><input type="hidden" name="id" value="${p.id}"><label class="oculto" for="c_${p.id}">Comentario</label><input id="c_${p.id}" name="texto" required maxlength="500" placeholder="Escribe un comentario"><button class="btn2" aria-label="Enviar">${icono('enviar', 18)}</button></form></div>` : ''}
   </article>`;
 }
