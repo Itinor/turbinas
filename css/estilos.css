@@ -341,3 +341,4 @@ button.punto-color{padding:0;cursor:pointer;min-height:0}
 .emblema.i-original::after{animation-duration:2.6s}
 @keyframes emblema-brillo{0%,55%{left:-40px}100%{left:calc(100% + 40px)}}
 @media (prefers-reduced-motion:reduce){.emblema::after{animation:none;display:none}}
+.opcion.clara .l{background:var(--suave);color:var(--moradoTxt)}.opcion.clara.ok .l{background:#15803D;color:#fff}.opcion.clara.mal .l{background:#B91C1C;color:#fff}

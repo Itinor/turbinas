@@ -25,7 +25,7 @@ VISTAS.triviapro = {
     const orden = t.orden[t.i], resp = t.eleg;
     return `<div class="tarjeta"><div class="entre"><span class="mini gris">Pregunta ${t.i + 1} de ${t.qs.length} · ${esc(q.materia)}</span><span class="insignia ${q.nivel === 'brutal' ? 'i-rojo' : q.nivel === 'dificil' ? 'i-amarillo' : 'i-morado'}">${NIVELES_TP.find(n => n[0] === q.nivel)?.[1] || ''}</span></div>
       <h2 style="margin:10px 0 14px;white-space:pre-wrap">${esc(q.p)}</h2>
-      <div class="opciones">${orden.map((oi, i) => `<button class="opcion${resp !== null ? (oi === q.c ? ' ok' : oi === resp ? ' mal' : '') : ''}" style="white-space:pre-wrap;text-align:left;height:auto;padding-top:10px;padding-bottom:10px" data-a="tpResp" data-i="${oi}"><span class="l">${'ABCD'[i]}</span>${esc(q.o[oi])}</button>`).join('')}</div>
+      <div class="opciones">${orden.map((oi, i) => `<button class="opcion clara${resp !== null ? (oi === q.c ? ' ok' : oi === resp ? ' mal' : '') : ''}" style="white-space:pre-wrap;text-align:left;height:auto;padding-top:10px;padding-bottom:10px" data-a="tpResp" data-i="${oi}"><span class="l">${'ABCD'[i]}</span>${esc(q.o[oi])}</button>`).join('')}</div>
       ${resp !== null ? `${q.x ? `<div class="tarjeta" style="box-shadow:none;background:var(--suave);margin-top:12px;white-space:pre-wrap"><b class="peq">Por qué</b><p class="peq" style="margin:4px 0 0">${esc(q.x)}</p></div>` : ''}<button class="btn" style="margin-top:14px" data-a="tpSig">${t.i === t.qs.length - 1 ? 'Ver resultado' : 'Siguiente'}</button>` : ''}
       ${q.autor ? `<p class="mini gris" style="margin:12px 0 0">Pregunta de @${esc(DB.usuario(q.autor)?.usuario || 'equipo')}</p>` : ''}</div>`;
   }
