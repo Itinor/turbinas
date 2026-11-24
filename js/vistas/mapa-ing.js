@@ -3,28 +3,31 @@ const rango = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 const EDIF_ING = [
   { id: 'D', nombre: 'Edificio D', desc: 'Aulas 16 a 39', tipo: 'aulas', color: '#E9DDF7', borde: '#4B1F7A',
     pisos: [{ n: 'Planta baja', alas: [rango(16, 21), rango(22, 27)] }, { n: 'Planta alta', alas: [rango(28, 33), rango(34, 39)] }],
-    formas: [{ c: [738, 405], w: 195, h: 72, r: -17 }, { c: [935, 337], w: 195, h: 68, r: -17 }], puente: [826, 352, 22, 46, -17], et: [722, 412] },
+    puntos: ['1118,1186 1488,1088 1511,1148 1148,1254', '1473,1020 1911,974 1918,1057 1503,1103', '1470,1080 1500,1060 1520,1110 1490,1125'], et: [1316, 1172] },
   { id: 'E', nombre: 'Edificio E', desc: 'Aulas 40 a 63', tipo: 'aulas', color: '#DCE8FB', borde: '#174EAD',
     pisos: [{ n: 'Planta baja', alas: [rango(40, 45), rango(46, 51)] }, { n: 'Planta alta', alas: [rango(52, 57), rango(58, 63)] }],
-    formas: [{ c: [758, 488], w: 190, h: 70, r: -17 }, { c: [955, 420], w: 195, h: 68, r: -17 }], puente: [858, 458, 24, 50, -17], et: [745, 495] },
+    puntos: ['1216,1473 1571,1329 1594,1443 1254,1556', '1571,1299 2017,1261 2017,1337 1601,1397', '1560,1320 1600,1300 1615,1420 1575,1440'], et: [1409, 1468] },
   { id: 'C', nombre: 'Edificio C', desc: 'Laboratorios', tipo: 'lab', color: '#DCF5E3', borde: '#14632F', niveles: [
       { n: 'Segundo nivel', cuartos: ['Laboratorio de Sensores Remotos', 'Aula', 'Laboratorio de Cómputo 7', 'Sanitarios'] },
       { n: 'Primer nivel', cuartos: ['Laboratorio de Química', 'Laboratorio de Física', 'Laboratorio de Cómputo 5', 'Laboratorio de Cómputo 6', 'Laboratorio de Automática', 'Oficina de Mantenimiento', 'Laboratorio de Electrónica', 'Laboratorio de Redes', 'Laboratorio de Cómputo 4', 'Laboratorio de Matemáticas y Sistemas Dinámicos', 'Cubículo', 'Cubículo', 'Comedor de Personal', 'Laboratorio Isotópico', 'Clubes Estudiantiles', 'Laboratorio de Simulación y Aleado Mecánico'] },
       { n: 'Planta baja', cuartos: ['Coordinación de Laboratorios Servicio Externo', 'Coordinación de Laboratorios Académicos', 'Oficina', 'Papelería', 'Gimnasio', 'Laboratorio de Cómputo 3', 'Consultorio Médico', 'Laboratorio de Cómputo 2', 'Sanitarios', 'Deportes (exterior)'] },
       { n: 'Sótano 1', dudoso: true, cuartos: ['Laboratorio de Fotogrametría', 'Laboratorio de Geología', 'Laboratorio de Sanitaria', 'Laboratorio de Hidráulica', 'Laboratorio de Cómputo 1', 'Aula de Posgrado'] },
       { n: 'Sótano 2', cuartos: ['Laboratorio de Mineralogía', 'Laboratorio de Metalurgia', 'Laboratorio de Geofísica', 'Almacén de Deportes', 'Laboratorio de Topografía', 'Sanitarios', 'Laboratorio de Materiales', 'Patio de Pruebas', 'Tanques de Gas de Laboratorios', 'Laboratorio de Máquinas y Herramientas', 'Laboratorio de Resonancia Magnética'] }],
-    puntos: '520,458 642,508 560,662 545,695 495,708 418,664', et: [572, 530] },
+    puntos: ['750,1306 990,1544 750,1806 630,1930 394,1700 560,1530'], et: [775, 1700] },
   { id: 'B', nombre: 'Edificio B', desc: 'Edificio de Posgrado', tipo: 'otro', color: '#FFF1C7', borde: '#8A5A00', niveles: [
       { n: 'Planta baja', cuartos: ['Oficina', 'Laboratorio de Cómputo', 'Laboratorio de Cómputo 11', 'Laboratorio de Cómputo 10', 'Laboratorio de Cómputo 9', 'Salón 1', 'Salón 2', 'Salón 3', 'Salón 4', 'Audiovisual 1', 'Escaleras', 'Sanitarios'] }],
-    puntos: '678,572 718,598 580,798 545,772', et: [636, 680] },
-  { id: 'A', nombre: 'Edificio A', desc: 'Cubículos de Maestros', tipo: 'otro', color: '#FFE1D6', borde: '#B45309', puntos: '800,700 838,716 752,842 718,822', et: [788, 772] },
-  { id: 'ADM', nombre: 'Edificio Administrativo', desc: 'Dirección y servicios escolares', tipo: 'otro', color: '#ECE7DF', borde: '#6B5B4B', puntos: '900,722 978,710 1000,672 1036,676 1040,692 1092,690 1092,776 1036,778 1000,770 990,800 908,806', et: [990, 745] },
-  { id: 'BIB', nombre: 'Biblioteca', desc: 'Biblioteca DES de las Ingenierías', tipo: 'otro', color: '#FCE1EC', borde: '#A3245E', puntos: '1160,540 1262,702 1310,734 1330,800 1290,836 1216,822 1074,602', et: [1195, 690] },
-  { id: 'CAF', nombre: 'Cafetería', desc: 'Cafetería central', tipo: 'otro', color: '#FFD3E2', borde: '#A3245E', puntos: '1132,180 1200,180 1226,210 1226,278 1196,308 1132,308 1108,280 1108,210', et: [1166, 268] },
-  { id: 'MAQ', nombre: 'Laboratorio de Máquinas y Herramientas', desc: 'Talleres', tipo: 'lab', color: '#DCF5E3', borde: '#14632F', puntos: '410,665 492,702 460,766 380,726', et: [436, 716], corto: 'Máquinas' },
-  { id: 'RES', nombre: 'Centro de Resonancia Magnética', desc: '', tipo: 'otro', color: '#ECE7DF', borde: '#6B5B4B', puntos: '404,524 440,540 428,562 392,546', et: [416, 544] },
-  { id: 'PLZ', nombre: 'Plaza del Estudiante', desc: 'Punto de reunión 10', tipo: 'otro', color: '#FFF6DA', borde: '#8A5A00', puntos: '1070,205 1106,205 1106,300 1070,300', et: [1088, 255] }
+    puntos: ['1090,1646 1180,1710 850,2186 760,2050'], et: [970, 1910] },
+  { id: 'A', nombre: 'Edificio A', desc: 'Cubículos de Maestros', tipo: 'otro', color: '#FFE1D6', borde: '#B45309', puntos: ['1380,1960 1450,2000 1230,2300 1150,2250'], et: [1300, 2130] },
+  { id: 'ADM', nombre: 'Edificio Administrativo', desc: 'Dirección y servicios escolares', tipo: 'otro', color: '#ECE7DF', borde: '#6B5B4B', puntos: ['1571,2092 1888,1979 1941,2130 1654,2266'], et: [1745, 2140], corto: 'Administrativo' },
+  { id: 'BIB', nombre: 'Biblioteca', desc: 'Biblioteca DES de las Ingenierías', tipo: 'otro', color: '#FCE1EC', borde: '#A3245E', puntos: ['2130,1767 2311,1654 2447,1835 2296,1986'], et: [2290, 1822], corto: 'Biblioteca' },
+  { id: 'CAF', nombre: 'Cafetería', desc: 'Cafetería central', tipo: 'otro', color: '#FFD3E2', borde: '#A3245E', puntos: ['2356,823 2591,823 2591,1012 2356,1012'], et: [2473, 918], corto: 'Cafetería' },
+  { id: 'MAQ', nombre: 'Laboratorio de Máquinas y Herramientas', desc: 'Talleres', tipo: 'lab', color: '#DCF5E3', borde: '#14632F', puntos: ['386,1970 470,1880 586,1980 500,2080'], et: [486, 1980], corto: 'Máquinas' },
+  { id: 'AUD', nombre: 'Auditorio Aguilera Baca', desc: 'Auditorio Fernando Aguilera Baca', tipo: 'otro', color: '#ECE7DF', borde: '#6B5B4B', puntos: ['1790,1639 1828,1594 1903,1624 2039,1616 2039,1730 1843,1730 1843,1669'], et: [1950, 1690], corto: 'Auditorio' },
+  { id: 'PLZ', nombre: 'Plaza del Estudiante', desc: 'Punto de reunión', tipo: 'otro', color: '#FFF6DA', borde: '#8A5A00', puntos: ['2175,831 2349,823 2349,1065 2190,1072'], et: [2262, 960], corto: 'Plaza' },
+  { id: 'CAN', nombre: 'Cancha', desc: 'Cancha deportiva', tipo: 'otro', color: '#DCF5E3', borde: '#14632F', puntos: ['2017,846 2145,846 2145,1065 2017,1065'], et: [2081, 955], corto: 'Cancha' },
+  { id: 'AER', nombre: 'Aerópago', desc: 'Visión de los Aerópagos · punto de reunión', tipo: 'otro', color: '#DCE8FB', borde: '#174EAD', puntos: ['2402,1889 2466,1915 2492,1979 2466,2043 2402,2069 2338,2043 2312,1979 2338,1915'], et: [2402, 1979], corto: 'Aerópago' }
 ];
+const PUNTOS_INTERES = [['1', 'Hangar (Edificio C)'], ['2', 'Gimnasio de pesas (Edificio C)'], ['3', 'Oficina de deportes (Edificio C)'], ['4', 'Árbol de estructuras'], ['5', 'Salón de seminarios (Administrativo)'], ['6', 'Auditorio Aguilera Baca'], ['7', 'Aerópago'], ['8', 'Plaza del Estudiante']];
 const PUNTOS_REUNION = [['1', 'Edificio Administrativo', 1018, 692], ['2a', 'Audiovisual 1 y 2 de Posgrado', 680, 578], ['2b', 'Audiovisual 3 de Posgrado', 557, 757], ['3', 'Explanada de Laboratorios', 508, 568], ['4', 'Lobby de Laboratorios', 586, 606], ['5', 'Área de Cafetería', 1166, 218], ['6', 'Asta Bandera', 617, 438], ['7', 'Área de Biblioteca', 1162, 632], ['8', 'Visión de los Aerópagos', 1275, 792], ['9', 'Sala de Maestros', 705, 490], ['10', 'Plaza del Estudiante', 1088, 252]];
 UI.ing = { sel: null, salon: null };
 const edifDeSalon = n => EDIF_ING.find(e => e.pisos?.some(p => p.alas.some(a => a.includes(n))));
@@ -32,32 +35,29 @@ function numeroSalon(t) { const m = String(t || '').match(/(?:^|[^\d])(\d{1,3})(
 function formaEdif(e, on) {
   const st = `fill="${e.color}" stroke="${e.borde}" stroke-width="3"`;
   if (e.formas) return e.formas.map(f => `<rect x="${f.c[0] - f.w / 2}" y="${f.c[1] - f.h / 2}" width="${f.w}" height="${f.h}" rx="${f.h / 2.2}" transform="rotate(${f.r} ${f.c[0]} ${f.c[1]})" ${st}/>`).join('') + (e.puente ? `<rect x="${e.puente[0] - e.puente[2] / 2}" y="${e.puente[1] - e.puente[3] / 2}" width="${e.puente[2]}" height="${e.puente[3]}" transform="rotate(${e.puente[4]} ${e.puente[0]} ${e.puente[1]})" ${st}/>` : '');
-  return `<polygon points="${e.puntos}" stroke-linejoin="round" ${st}/>`;
+  return [].concat(e.puntos).map(p => `<polygon points="${p}" stroke-linejoin="round" ${st}/>`).join('');
 }
 function svgIngenieria() {
-  const S = UI.ing;
-  const edifs = EDIF_ING.map(e => { const on = S.sel === e.id, chico = ['RES', 'PLZ'].includes(e.id);
-    return `<g class="edif-ing${on ? ' on' : ''}" data-a="ingEdif" data-dbl="ingPlano" data-id="${e.id}" role="button" tabindex="0" aria-label="${esc(e.nombre)}" style="cursor:pointer">${formaEdif(e, on)}${chico ? '' : `<text x="${e.et[0]}" y="${e.et[1]}" text-anchor="middle" dominant-baseline="middle" font-family="Sora,sans-serif" font-weight="900" font-size="${e.id.length === 1 ? 34 : 15}" fill="${e.borde}" pointer-events="none">${e.id.length === 1 ? e.id : esc(e.corto || e.nombre.replace('Edificio ', ''))}</text>`}</g>`; }).join('');
-  const puntos = PUNTOS_REUNION.map(([n, t, x, y]) => `<g aria-hidden="true"><circle cx="${x}" cy="${y}" r="13" fill="#fff" stroke="#1B1530" stroke-width="2"/><text x="${x}" y="${y + 1}" text-anchor="middle" dominant-baseline="middle" font-family="Inter,sans-serif" font-weight="800" font-size="${n.length > 1 ? 10 : 12}" fill="#1B1530">${n}</text></g>`).join('');
-  const rayas = (x1, y1, x2, y2, n) => Array.from({ length: n }, (_, i) => { const t = i / (n - 1), x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t; return `<line x1="${x}" y1="${y - 9}" x2="${x}" y2="${y + 9}" stroke="#fff" stroke-width="2"/>`; }).join('');
-  return `<svg viewBox="340 70 1040 840" width="100%" style="display:block;min-width:680px;touch-action:manipulation" role="img" aria-label="Croquis de la Facultad de Ingeniería">
-    <rect x="340" y="70" width="1040" height="840" fill="#E3F0CF"/>
-    <path d="M372,700 L610,250 Q700,140 830,108 L1160,96" fill="none" stroke="#CFCAD9" stroke-width="58" stroke-linejoin="round"/>
-    <path d="M372,700 L610,250 Q700,140 830,108 L1160,96" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="14 10"/>
-    <text font-family="Inter,sans-serif" font-size="15" font-weight="700" fill="#5E5873"><textPath href="#calleNorte" startOffset="18%">Estacionamiento alumnos</textPath></text>
-    <path id="calleNorte" d="M372,700 L610,250 Q700,140 830,108 L1160,96" fill="none"/>
-    <polygon points="722,580 870,515 890,575 782,640" fill="#CFCAD9"/>${rayas(780, 590, 850, 560, 7)}
-    <text x="805" y="625" font-family="Inter,sans-serif" font-size="12" font-weight="700" fill="#5E5873" transform="rotate(-22 805 625)">Estac. personal</text>
-    <polygon points="835,665 920,632 950,700 892,800 1000,812 1010,850 840,850 808,830" fill="#CFCAD9"/>
-    <path d="M980,905 C1150,870 1400,850 1700,820" fill="none" stroke="#C9BEDF" stroke-width="34"/>
-    <text x="1135" y="895" font-family="Inter,sans-serif" font-size="15" font-weight="700" fill="#5E5873" transform="rotate(-6 1135 895)">Circuito Universitario</text>
-    <text x="1010" y="878" font-family="Inter,sans-serif" font-size="14" font-weight="800" fill="#1B1530">Entrada principal</text>
-    <text x="628" y="200" font-family="Inter,sans-serif" font-size="13" font-weight="800" fill="#1B1530" transform="rotate(-40 628 200)">Entrada norte</text>
-    ${edifs}${puntos}
-    <g transform="translate(1250 410)" aria-hidden="true"><circle r="30" fill="#fff" stroke="#B9B0CF"/><path d="M0,-26 L7,0 L0,26 L-7,0Z" fill="#1B1530"/><text y="-34" text-anchor="middle" font-size="13" font-weight="800" font-family="Inter,sans-serif">N</text></g>
+  const S = UI.ing, T = (x, y, t, tam = 34, color = '#1B1530', extra = '') => `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Inter,sans-serif" font-weight="800" font-size="${tam}" fill="${color}" ${extra}>${t}</text>`;
+  const edifs = EDIF_ING.map(e => { const on = S.sel === e.id, letra = e.id.length === 1;
+    return `<g class="edif-ing${on ? ' on' : ''}" data-a="ingEdif" data-dbl="ingPlano" data-id="${e.id}" role="button" tabindex="0" aria-label="${esc(e.nombre)}" style="cursor:pointer">${formaEdif(e, on)}<text x="${e.et[0]}" y="${e.et[1]}" text-anchor="middle" dominant-baseline="middle" font-family="Sora,sans-serif" font-weight="900" font-size="${letra ? 84 : 38}" fill="${e.borde}" pointer-events="none" paint-order="stroke" stroke="${e.color}" stroke-width="8">${letra ? e.id : esc(e.corto || e.nombre)}</text></g>`; }).join('');
+  const poli = (l, f, st = 'none', w = 0, extra = '') => l.map(p => `<polygon points="${p}" fill="${f}" stroke="${st}" stroke-width="${w}" stroke-linejoin="round" ${extra}/>`).join('');
+  const estac = poli(['996,830 1253,649 1253,574 2982,559 2945,755 2340,747 2008,702 1903,763 1510,800 1283,846 996,982', '370,1510 377,1691 498,1600 483,1480 687,1299 770,1253 690,1240 560,1330', '1283,1661 1510,1556 1691,1631 1706,1782 1585,1857 1480,2100 1400,2340 1370,2445 1300,2300 1390,2000 1300,1870', '2325,1555 2840,1780 3095,1960 3125,2250 2050,2475 1950,2430 2175,2265 2460,2175 2325,2040 2145,2010'], '#D9D3CB', '#B8AFA4', 3);
+  const verde = poli(['996,1057 1208,845 1887,755 1963,845 1963,1359 2234,1313 2250,1419 2144,1600 1963,1872 1812,1812 1706,1616 1525,1510 1253,1600 1193,1434 1057,1253', '695,2265 1042,1737 1148,1676 1283,1661 1510,2008 1374,2446'], '#D8EBC0');
+  const quim = poli(['2711,770 2862,808 2719,1095 2640,1042', '3005,687 3232,740 3300,850 3300,1150 3110,1290 2832,1180 2950,950', '2560,1250 2610,1235 3260,1730 3230,1790', '2350,1430 2400,1410 3100,1940 3060,2000', '1888,1949 2077,1949 2077,2160 1888,2160'], '#E4E1EA', '#B9B3C6', 3);
+  const sub = poli(['506,1580 660,1460 774,1600 630,1740', '820,1480 900,1400 974,1474 900,1550', '650,1850 720,1780 774,1870 720,1930'], '#B8EFD0', '#14632F', 2, 'pointer-events="none"') + poli(['1752,1979 1918,1896 1934,1979 1775,2024'], '#F7F1E6', '#6B5B4B', 2, 'pointer-events="none"');
+  const pines = [['1', 640, 1600], ['2', 712, 1855], ['3', 897, 1475], ['4', 1548, 1246], ['4', 1122, 2024], ['5', 1845, 1965], ['6', 1929, 1600], ['7', 2402, 1920], ['8', 2262, 900]].map(([n, x, y]) => `<g pointer-events="none"><circle cx="${x}" cy="${y}" r="30" fill="#F08A5D" stroke="#fff" stroke-width="6"/>${T(x, y + 2, n, 34, '#fff')}</g>`).join('');
+  const est = [['Alumnos', 1431, 740], ['Alumnos', 2620, 640], ['Personal', 521, 1400], ['Docentes', 1522, 1740], ['Docentes', 2408, 2215], ['Docentes', 1532, 2340]].map(([t, x, y]) => `<g pointer-events="none"><circle cx="${x - 120}" cy="${y}" r="30" fill="#fff" stroke="#C0262D" stroke-width="7"/>${T(x - 120, y + 2, 'E', 34)}${T(x + 20, y + 2, t, 34, '#5E4F40')}</g>`).join('');
+  return `<svg viewBox="180 540 3120 1960" width="100%" style="display:block;min-width:760px;touch-action:manipulation" role="img" aria-label="Croquis de la Facultad de Ingeniería">
+    <rect x="180" y="540" width="3120" height="1960" fill="#E6F2F2"/>
+    ${verde}${estac}${quim}
+    ${T(2950, 1500, 'Facultad de', 40, '#7A738C')}${T(2950, 1550, 'Ciencias Químicas', 40, '#7A738C')}
+    ${edifs}${sub}${pines}${est}
+    ${T(1950, 2470, 'Entrada principal', 36)}
+    <g transform="translate(260 2380)" font-family="Inter,sans-serif" font-size="30" font-weight="700" fill="#5E5873" pointer-events="none"><circle cx="0" cy="0" r="22" fill="#F08A5D"/><text x="34" y="10">Puntos de interés (lista abajo)</text><circle cx="560" cy="0" r="22" fill="#fff" stroke="#C0262D" stroke-width="6"/><text x="594" y="10">Estacionamiento</text></g>
   </svg>`;
 }
-const quitarAc = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const quitarAc = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const tieneSalones = e => !!(e.pisos || e.niveles);
 function panelEdificio(e) {
   if (!e) return '<p class="peq gris" style="margin:0">Toca un edificio para ver qué es. <b>Doble clic</b> (o doble toque) para ver sus salones y laboratorios.</p>';
@@ -80,8 +80,8 @@ function vistaMapaIng() {
   return `<form data-form="buscarIng" class="fila" style="flex-wrap:nowrap"><label class="oculto" for="bsi">Buscar salón o edificio</label><input id="bsi" name="q" list="lugaresIng" placeholder="Busca: 21, SA-42, LC9, química, gimnasio…" autocomplete="off"><datalist id="lugaresIng">${EDIF_ING.map(x => `<option value="${esc(x.nombre)}">`).join('')}${[...new Set(TODOS_CUARTOS().map(x => x.c))].filter(c => !/^(sanitarios|escaleras|cubículo|oficina|aula)$/i.test(c)).map(c => `<option value="${esc(c)}">`).join('')}</datalist><button class="btn2">Buscar</button></form>
     <div class="mapa" id="mapaIng">${svgIngenieria()}</div>
     <div id="panelIng">${panelEdificio(e)}</div>
-    <details class="tarjeta"><summary class="peq" style="cursor:pointer"><b>Puntos de reunión</b></summary><ol class="peq" style="margin:8px 0 0;padding-left:28px">${PUNTOS_REUNION.map(([n, t]) => `<li value="${parseInt(n)}">${n.length > 1 ? `<b>${n}</b> ` : ''}${esc(t)}</li>`).join('')}</ol></details>
-    <p class="mini gris" style="margin:0">Croquis sin medidas reales, basado en el letrero del campus.</p>`;
+    <details class="tarjeta" open><summary class="peq" style="cursor:pointer"><b>Puntos de interés</b></summary><ol class="peq" style="margin:8px 0 0;padding-left:24px">${PUNTOS_INTERES.map(([n, t]) => `<li>${esc(t)}</li>`).join('')}</ol></details>
+    <p class="mini gris" style="margin:0">Croquis sin medidas reales, basado en el mapa oficial de la facultad.</p>`;
 }
 ACC.ingEdif = b => { UI.ing.sel = b.dataset.id; UI.ing.salon = null; UI.ing.cuarto = null; $$('.edif-ing').forEach(g => g.classList.toggle('on', g.dataset.id === UI.ing.sel)); const p = $('#panelIng'); if (p) p.innerHTML = panelEdificio(EDIF_ING.find(x => x.id === UI.ing.sel)); };
 ACC.ingPlano = b => { const e = EDIF_ING.find(x => x.id === b.dataset.id); if (!e) return; if (UI.ing.sel !== e.id) { UI.ing.salon = null; UI.ing.cuarto = null; } UI.ing.sel = e.id; $$('.edif-ing').forEach(g => g.classList.toggle('on', g.dataset.id === e.id)); const p = $('#panelIng'); if (p) p.innerHTML = panelEdificio(e); if (tieneSalones(e)) hojaPlano(e); };
