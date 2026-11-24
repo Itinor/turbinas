@@ -23,7 +23,7 @@ VISTAS.perfil = {
           ${u.bio ? `<p style="margin:10px 0 0">${esc(u.bio)}</p>` : ''}
           <span class="insignia i-morado" style="margin-top:10px">Reputación ${rango} · ${u.reputacion} pts</span>
           <div class="fila" style="justify-content:center;margin-top:12px">${mio ? '<a class="btn3" href="#/editar-perfil">Editar perfil</a><a class="btn3" href="#/horario">Mi horario</a>' + (DB.esAdmin() ? '<a class="btn2" href="#/admin">Administración</a>' : '') : `${botonAmistad(u.id)}${DB.puedeEscribir(u.id) ? `<button class="btn3" data-a="escribirA" data-u="${u.id}">Escribir</button>` : ''}${DB.puedeVerHorario(u.id) ? `<a class="btn3" href="#/horario/${esc(u.usuario)}">Horario</a>` : ''}<button class="icono-btn" data-a="menuPerfil" data-u="${u.id}" aria-label="Más opciones">${icono('puntos')}</button>`}</div></div></section>
-      ${ins.length ? `<div class="fila">${ins.map(i => `<span class="insignia ${INSIGNIAS[i].clase}">${INSIGNIAS[i].texto}</span>`).join('')}</div>` : ''}
+      ${ins.length ? `<div class="emblemas">${ins.map(i => emblema(i)).join('')}</div>` : ''}
       ${barraNotitas(u, mio)}
       ${seccionHorarioPerfil(u, mio)}
       ${seccionCanciones(u, mio)}
@@ -43,6 +43,8 @@ VISTAS.perfil = {
     cargarArchivosTablon(); montarNotitas();
   }
 };
+/* insignia como emblema de juego: marco metálico, banda con brillo y alas a los lados */
+function emblema(k) { const d = INSIGNIAS[k]; if (!d) return ''; return `<span class="emblema e-${d.tono || 'morado'}" title="${esc(d.texto)}"><span class="emblema-ala izq" aria-hidden="true"></span><span class="emblema-marco"><span class="emblema-fondo"><span class="emblema-txt">${esc(d.texto)}</span></span></span><span class="emblema-ala der" aria-hidden="true"></span></span>`; }
 function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).length + DB.estado.propuestas.filter(p => p.autor === u.id).length + DB.estado.rankings.filter(r => r.autor === u.id).length; }
 function reproducir(src, auto, dueno) { const u = DB.usuario(dueno) || Object.values(DB.estado.usuarios).find(x => DB.canciones(x).some(c => c.archivo === src)); const c = u && DB.canciones(u).find(x => x.archivo === src); return REPRO.alternar(c || { archivo: src, titulo: 'Canción' }, u?.id, auto); }
 ACC.playPerfil = b => reproducir(b.dataset.src, false, b.dataset.u);
@@ -82,7 +84,7 @@ VISTAS['editar-perfil'] = {
         <div><label class="campo" for="ryt">YouTube <span class="mini gris">(tu canal o un video)</span></label><input id="ryt" name="redYt" type="url" placeholder="https://www.youtube.com/@tucanal" value="${esc(u.redes?.youtube || '')}" data-orig="${esc(u.redes?.youtube || '')}"></div>
         <div><span class="campo">Publicaciones destacadas <span class="mini gris">(enlaces de Instagram, TikTok o YouTube)</span></span><div class="pila" style="gap:6px">${[0, 1, 2, 3].map(i => `<label class="oculto" for="rd${i}">Destacada ${i + 1}</label><input id="rd${i}" name="dest${i}" type="url" placeholder="https://www.instagram.com/p/…" value="${esc(u.redes?.destacadas?.[i] || '')}" data-orig="${esc(u.redes?.destacadas?.[i] || '')}">`).join('')}</div></div></div>`)}
       ${bloque('Playlists', `<div class="pila" style="gap:6px">${[0, 1, 2].map(i => { const p = u.playlists[i] || {}; return `<div class="rejilla2"><label class="oculto" for="pn${i}">Nombre</label><input id="pn${i}" name="pn${i}" placeholder="Nombre" maxlength="50" value="${esc(p.nombre || '')}" data-orig="${esc(p.nombre || '')}"><label class="oculto" for="pu${i}">Enlace</label><input id="pu${i}" name="pu${i}" type="url" placeholder="https://…" value="${esc(p.url || '')}" data-orig="${esc(p.url || '')}"></div>`; }).join('')}</div>`)}
-      ${bloque('Insignias que se muestran', `<div class="fila">${u.insignias.map(i => `<label class="insignia ${INSIGNIAS[i].clase}" style="cursor:pointer;display:inline-flex;gap:6px;align-items:center"><input type="checkbox" name="ins_${i}" ${u.ocultas.includes(i) ? '' : 'checked'} data-orig="${u.ocultas.includes(i) ? '' : 'on'}">${INSIGNIAS[i].texto}</label>`).join('') || '<span class="gris peq">Aún no tienes insignias.</span>'}</div>`)}
+      ${bloque('Insignias que se muestran', `<div class="fila">${u.insignias.map(i => `<label style="cursor:pointer;display:inline-flex;gap:8px;align-items:center"><input type="checkbox" name="ins_${i}" ${u.ocultas.includes(i) ? '' : 'checked'} data-orig="${u.ocultas.includes(i) ? '' : 'on'}">${emblema(i)}</label>`).join('') || '<span class="gris peq">Aún no tienes insignias.</span>'}</div>`)}
       <button class="btn ancho" id="btnGuardar">Guardar</button></form>`;
   }
 };

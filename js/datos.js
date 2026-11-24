@@ -57,12 +57,12 @@ const CARRERAS = [
 ];
 const AREAS = ['Ciencias básicas', 'Ingeniería', 'Humanidades', 'Química'];
 const INSIGNIAS = {
-  verificado: { texto: 'Estudiante verificado', clase: 'i-azul' },
-  colaborador: { texto: 'Colaborador', clase: 'i-morado' },
-  organizador: { texto: 'Organizador', clase: 'i-amarillo' },
-  original: { texto: 'Original · creador', clase: 'i-original' },
-  fundador: { texto: 'Miembro fundador', clase: 'i-naranja' },
-  tutor: { texto: 'Tutor', clase: 'i-verde' }
+  verificado: { texto: 'Estudiante verificado', clase: 'i-azul', tono: 'azul' },
+  colaborador: { texto: 'Colaborador', clase: 'i-morado', tono: 'morado' },
+  organizador: { texto: 'Organizador', clase: 'i-amarillo', tono: 'oro' },
+  original: { texto: 'Original · creador', clase: 'i-original', tono: 'rojo' },
+  fundador: { texto: 'Miembro fundador', clase: 'i-naranja', tono: 'fuego' },
+  tutor: { texto: 'Tutor', clase: 'i-verde', tono: 'verde' }
 };
 /* Reglas internas (no se muestran como letreros al estudiante) */
 const REGLAS = {

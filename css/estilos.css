@@ -331,3 +331,27 @@ details.ayuda[open] summary{margin-bottom:8px}
 .ayuda-cuerpo ul{padding-left:18px;margin:6px 0}
 .ayuda-cuerpo li{margin:4px 0}
 button.punto-color{padding:0;cursor:pointer;min-height:0}
+
+/* ---------- emblemas (insignias del perfil) ---------- */
+.emblemas{display:flex;flex-wrap:wrap;gap:10px 6px;justify-content:center}
+.emblema{--marco:linear-gradient(180deg,#FFF6C2 0%,#F2C14E 30%,#A8701A 55%,#FFE08A 75%,#B57A1C 100%);--fondo:linear-gradient(180deg,#9B7CFF,#5B2BC9 55%,#3A1785);--brillo:rgba(150,110,255,.65);--ala:#F2C14E;
+  position:relative;display:inline-flex;align-items:center;filter:drop-shadow(0 3px 3px rgba(20,10,40,.35)) drop-shadow(0 0 7px var(--brillo));user-select:none}
+.emblema-marco{display:block;padding:2.5px;background:var(--marco);clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%)}
+.emblema-fondo{position:relative;display:flex;align-items:center;justify-content:center;height:30px;min-width:140px;padding:0 22px;overflow:hidden;background:var(--fondo);clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 50%,calc(100% - 11px) 100%,11px 100%,0 50%)}
+.emblema-fondo::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.10) 0 6px,transparent 6px 14px),linear-gradient(180deg,rgba(255,255,255,.35),transparent 45%,rgba(0,0,0,.18));pointer-events:none}
+.emblema-fondo::after{content:'';position:absolute;top:-20%;bottom:-20%;width:26px;left:-40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-20deg);animation:emblema-brillo 3.6s ease-in-out infinite}
+@keyframes emblema-brillo{0%,55%{left:-40px}100%{left:calc(100% + 40px)}}
+.emblema-txt{position:relative;z-index:1;font:800 11.5px/1 Sora,system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:#fff;white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.55),0 0 6px var(--brillo)}
+.emblema-ala{width:9px;height:18px;background:var(--ala);flex:none}
+.emblema-ala.izq{clip-path:polygon(100% 0,0 50%,100% 100%,60% 50%);margin-right:-1px}
+.emblema-ala.der{clip-path:polygon(0 0,100% 50%,0 100%,40% 50%);margin-left:-1px}
+.e-rojo{--fondo:linear-gradient(180deg,#FF6B5A,#D0161E 50%,#7A0710);--brillo:rgba(255,70,50,.7);--marco:linear-gradient(180deg,#FFF6C2 0%,#FFD34D 30%,#B8741A 55%,#FFE58A 75%,#C07A10 100%);--ala:#FFD34D}
+.e-rojo .emblema-fondo::after{animation-duration:2.4s}
+.e-fuego{--fondo:linear-gradient(180deg,#FFD25C,#F07A12 50%,#A33A06);--brillo:rgba(255,150,40,.7)}
+.e-oro{--fondo:linear-gradient(180deg,#FFF0A0,#E9B52C 50%,#9A6A0A);--brillo:rgba(255,205,70,.7)}
+.e-oro .emblema-txt{color:#3A2600;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.e-azul{--fondo:linear-gradient(180deg,#7FD3FF,#1E7BE0 50%,#0C3E8C);--brillo:rgba(60,160,255,.65);--marco:linear-gradient(180deg,#FFFFFF,#BFD3E6 35%,#6F86A0 55%,#E8F1FA 75%,#7F95AE);--ala:#CFE0F0}
+.e-verde{--fondo:linear-gradient(180deg,#8CF0A8,#1FA851 50%,#0B5A28);--brillo:rgba(60,220,120,.6);--marco:linear-gradient(180deg,#FFFFFF,#BFD3E6 35%,#6F86A0 55%,#E8F1FA 75%,#7F95AE);--ala:#CFE0F0}
+.e-morado{--fondo:linear-gradient(180deg,#B39BFF,#6B33E0 50%,#33127A);--brillo:rgba(150,100,255,.65);--marco:linear-gradient(180deg,#FFFFFF,#C9C2E6 35%,#7A6FA0 55%,#EEEAFA 75%,#8A7FB0);--ala:#D8D0F2}
+@media (prefers-reduced-motion:reduce){.emblema-fondo::after{animation:none;display:none}}
+.e-rojo .emblema-txt::before,.e-rojo .emblema-txt::after{content:'★';color:#FFE58A;margin:0 6px;font-size:10px}
