@@ -1,4 +1,3 @@
-/* Compraventa entre estudiantes con control de quién ve cada publicación */
 'use strict';
 UI.cvFiltro = 'todo'; UI.cvVis = 'todos'; UI.cvTipo = 'venta';
 const VIS = { todos: ['mundo', 'Todos', 'Cualquier estudiante de la red'], amigos: ['grupo', 'Solo amigos', 'Tus amigos en Itinor'], elegidos: ['candado', 'Personas que elijas', 'Solo quien tú agregues'] };

@@ -1,5 +1,3 @@
-/* Trivia nivel ingeniería: preguntas difíciles que escribe el admin (materia, nivel, 4 opciones, una correcta y su explicación).
-   Al jugar, las opciones se revuelven y no se repiten preguntas hasta que se acaban. */
 'use strict';
 const NIVELES_TP = [['normal', 'Normal'], ['dificil', 'Difícil'], ['brutal', 'Brutal']];
 UI.tp = null; UI.tpFiltro = { materia: '', nivel: '' };
@@ -34,7 +32,7 @@ ACC.tpFiltro = b => { UI.tpFiltro[b.dataset.k] = b.dataset.v; refrescar(); };
 ACC.tpSalir = () => { UI.tp = null; refrescar(); };
 ACC.tpEmpezar = () => {
   const f = UI.tpFiltro, pool = DB.estado.triviaPro.filter(q => (!f.materia || q.materia === f.materia) && (!f.nivel || q.nivel === f.nivel)), vistas = tpVistas();
-  /* primero las que nunca ha visto; si ya vio todas, las que vio hace más tiempo */
+
   const nuevas = pool.filter(q => !vistas.includes(q.id)).sort(() => Math.random() - 0.5), viejas = pool.filter(q => vistas.includes(q.id)).sort((a, b) => vistas.indexOf(a.id) - vistas.indexOf(b.id));
   const qs = [...nuevas, ...viejas].slice(0, 10).map(q => q.id);
   UI.tp = { qs, orden: qs.map(() => [0, 1, 2, 3].sort(() => Math.random() - 0.5)), i: 0, ok: 0, eleg: null }; refrescar(); scrollTo(0, 0);
@@ -42,7 +40,6 @@ ACC.tpEmpezar = () => {
 ACC.tpResp = b => { const t = UI.tp; if (t.eleg !== null) return; t.eleg = +b.dataset.i; const q = DB.estado.triviaPro.find(x => x.id === t.qs[t.i]); if (t.eleg === q.c) t.ok++; tpMarcar(q.id); refrescar(); };
 ACC.tpSig = () => { const t = UI.tp; t.i++; t.eleg = null; refrescar(); scrollTo(0, 0); };
 
-/* ---------- administración (pestaña "Trivia" del panel de admin) ---------- */
 UI.admTp = '';
 function admTrivia() {
   const l = DB.estado.triviaPro.filter(q => !UI.admTp || q.materia === UI.admTp).slice().sort((a, b) => a.materia.localeCompare(b.materia) || String(b.f).localeCompare(String(a.f)));

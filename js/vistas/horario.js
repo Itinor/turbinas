@@ -1,4 +1,3 @@
-/* Mi horario: foto del horario y/o lista de clases. Por defecto solo lo ve el dueño; puede compartirlo con quien elija. */
 'use strict';
 const DIAS_H = [['lu', 'Lunes'], ['ma', 'Martes'], ['mi', 'Miércoles'], ['ju', 'Jueves'], ['vi', 'Viernes'], ['sa', 'Sábado']];
 function diasDeClase(t) { const s = String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); return DIAS_H.filter(([k]) => new RegExp('\\b' + k).test(s)).map(([k]) => k); }
@@ -43,14 +42,13 @@ ACC.elegirCompartir = () => {
 };
 FORMS.compartirHorario = d => { const u = DB.yo(), antes = new Set(u.horarioCompartido || []); u.horarioCompartido = Object.keys(d).filter(k => k.startsWith('u_')).map(k => k.slice(2)); u.horarioCompartido.filter(id => !antes.has(id)).forEach(id => notificar(id, `@${u.usuario} compartió su horario contigo`, '#/horario/' + u.usuario)); DB.guardar(); cerrarHoja(); aviso('Listo'); refrescar(); };
 
-/* ---------- horario tipo cuadrícula ---------- */
 ENTRADAS.colorLibre = el => { const r = el.closest('label')?.querySelector('input[type=radio]'); if (r) r.checked = true; const p = $('#puntoLibre'); if (p) p.style.background = el.value; };
-/* texto oscuro o blanco según qué tan oscuro sea el color de la clase */
+
 const textoSobre = c => { const m = /^#?([0-9a-f]{6})$/i.exec(c || ''); if (!m) return '#1B1530'; const n = parseInt(m[1], 16), l = (0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255; return l < 0.55 ? '#fff' : '#1B1530'; };
 const COLORES_CLASE = ['#E9DDF7', '#DCE8FB', '#DCF5E3', '#FFF1C7', '#FFE1D6', '#FCE1EC', '#D9F2F2', '#ECE7DF'];
 const minutos = t => { const [h, m] = String(t || '0:0').split(':').map(Number); return h * 60 + (m || 0); };
 const hhmm = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
-/* convierte el formato viejo {materia, dias, hora, salon} al nuevo con sesiones por día */
+
 function normalizarHorario(u) {
   const l = u.horario || []; let cambio = false;
   const nuevo = l.map((c, i) => { if (c.sesiones) return c; cambio = true; const ini = c.hora || '07:00', fin = hhmm(minutos(ini) + 60);
@@ -72,11 +70,11 @@ function tablaHorario(clases, mio, huecos) {
         return `<button class="ht-clase${s.encima ? ' encima' : ''}" style="top:${(a - ini) * pxMin}px;height:${(b - a) * pxMin - 2}px;left:calc(${s.lane / s.lanes * 100}% + 2px);right:auto;width:calc(${100 / s.lanes}% - 4px);z-index:${s.encima ? 3 : 1};background:${s.c.color || COLORES_CLASE[0]};color:${textoSobre(s.c.color || COLORES_CLASE[0])}" data-a="verClase" data-id="${s.c.id}" ${mio ? '' : 'data-solover="1"'} title="${esc(s.c.materia)} ${s.ini}–${s.fin}"><b${(b - a) * pxMin < 40 ? ' style="-webkit-line-clamp:1"' : ''}>${esc(s.c.materia)}</b>${(b - a) * pxMin < 40 ? '' : `<span>${s.ini}–${s.fin}${s.c.salon ? ' · ' + esc(s.c.salon) : ''}</span>`}</button>`; }).join('')}</div>`).join('')}
     </div></div>`;
 }
-/* ---------- resumen: horas de clase, horas muertas (huecos entre clases), entrada y salida ---------- */
+
 const esLibre = c => /^(receso|descanso|comida|almuerzo|libre|hueco)\b/i.test(String(c.materia || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
 const durTxt = m => { m = Math.round(m); const h = Math.floor(m / 60), r = m % 60; return h && r ? `${h} h ${r} min` : h ? `${h} h` : `${r} min`; };
 const verHuecos = () => { try { return localStorage.getItem('cdu_huecos') !== '0'; } catch { return true; } };
-/* bloques de clase de un día ya unidos (si dos clases se enciman cuentan una vez) */
+
 function bloquesDia(ses) {
   const l = ses.filter(s => !esLibre(s.c || {})).map(s => [minutos(s.ini), Math.max(minutos(s.fin), minutos(s.ini))]).sort((a, b) => a[0] - b[0]), r = [];
   l.forEach(([a, b]) => { const u = r.at(-1); if (u && a <= u[1]) u[1] = Math.max(u[1], b); else r.push([a, b]); });
@@ -120,7 +118,7 @@ function resumenHorario(clases, mio) {
 }
 ACC.resHorario = b => { UI.resHorario = b.dataset.v; refrescar(); };
 CAMBIOS.verHuecos = el => { try { localStorage.setItem('cdu_huecos', el.checked ? '1' : '0'); } catch {} refrescar(); };
-/* formulario: materia + una o varias filas de (días, de, a) */
+
 function hojaClase(c) {
   const filas = c?.sesiones?.length ? agrupar(c.sesiones) : [{ dias: [], ini: '07:00', fin: '09:00' }];
   UI.claseFilas = filas.length; UI.claseEdit = c?.id || null;
@@ -153,8 +151,6 @@ FORMS.guardarClase = d => {
 };
 ACC.quitarClaseId = b => { const u = DB.yo(); u.horario = normalizarHorario(u).filter(x => x.id !== b.dataset.id); DB.guardar(); cerrarHoja(); refrescar(); };
 
-/* clases que se enciman: si una cabe dentro de otra (como un receso), va encima a lo ancho;
-   si de verdad chocan, se ponen lado a lado */
 function carriles(l) {
   const o = l.map(s => ({ ...s, a: minutos(s.ini), b: minutos(s.fin), lane: 0, lanes: 1, encima: false })).sort((x, y) => (y.b - y.a) - (x.b - x.a));
   o.forEach((s, i) => { if (o.slice(0, i).some(x => x.a <= s.a && s.b <= x.b)) s.encima = true; });

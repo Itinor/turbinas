@@ -1,4 +1,3 @@
-/* Chat: grupos de materia y mensajes directos */
 'use strict';
 VISTAS.chat = {
   titulo: ([id]) => { if (!id) return 'Chat'; const c = DB.estado.chats.find(x => x.id === id); return c ? tituloChat(c) : 'Chat'; },
@@ -32,7 +31,7 @@ function vistaConversacion(id) {
     ${zonaEnvio(c)}
     ${c.tipo === 'dm' ? `<button class="btn3" style="align-self:flex-start;color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${c.miembros.find(m => m !== yo)}" data-quien="${c.miembros.find(m => m !== yo)}">${icono('bandera', 16)}Reportar conversación</button>` : ''}</div>`;
 }
-/* ---------- cifrado de punta a punta ---------- */
+
 function vistaPrevia(c, m) { const x = CRIPTO.leer(c, m); if (!x || x.error) return '<i>Mensaje cifrado</i>'; return x.t ? esc(x.t) : x.adjunto ? (esImagenAdj(x.adjunto) ? 'Foto' : 'Archivo: ' + esc(x.adjunto.nombre)) : ''; }
 function zonaEnvio(c) {
   const u = DB.yo();
@@ -56,7 +55,7 @@ FORMS.desbloquearChats = async (d, f) => {
   refrescar();
 };
 ACC.avisarCifrado = b => { const c = DB.estado.chats.find(x => x.id === b.dataset.id); CRIPTO.sinLlave(c).filter(m => m !== DB.yo().id).forEach(m => notificar(m, `@${DB.yo().usuario} quiere escribirte. Entra a Chat y activa tus mensajes cifrados.`, '#/chat/' + c.id)); DB.guardar(); aviso('Le avisamos'); };
-/* capa 8: antes de mandar algo que parece contraseña, NIP o tarjeta, se pregunta */
+
 function datoSensible(t) {
   const s = String(t).toLowerCase(), dig = s.replace(/[\s-]/g, '');
   if (/\b(contrase(ñ|n)a|password|passwd|clave de acceso|nip|cvv|cvc|c[oó]digo de verificaci[oó]n|c[oó]digo de seguridad|token)\b/.test(s)) return 'una contraseña o un código';
@@ -75,7 +74,7 @@ FORMS.enviarMsg = async (d, f, forzar) => {
   if ($('#msg')) $('#msg').value = ''; refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight; $('#msg')?.focus();
 };
 ACC.enviarIgual = () => { const d = UI.pendienteMsg; UI.pendienteMsg = null; cerrarHoja(); if (d) FORMS.enviarMsg(d, null, true); };
-/* código de seguridad: se compara en persona; si coincide, nadie se metió en medio */
+
 ACC.codigoSeguridad = async b => {
   const otro = b.dataset.u, cod = await CRIPTO.codigo(DB.yo().id, otro);
   if (!cod) return aviso('Todavía no tiene llaves de cifrado.');
@@ -113,7 +112,6 @@ ACC.chatAccion = b => { const id = b.dataset.id, q = b.dataset.que; cerrarHoja()
 ACC.menuMsg = b => abrirHoja(`<h2>Mensaje</h2><div class="pila"><button class="btn-peligro ancho" data-a="borrarMsg" data-id="${b.dataset.id}" data-i="${b.dataset.i}">Eliminar para todos</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
 ACC.borrarMsg = b => { DB.borrarMensaje(b.dataset.id, +b.dataset.i); cerrarHoja(); refrescar(); };
 
-/* ---------- fotos y archivos en el chat ---------- */
 function esImagenAdj(a) { return /^image\//.test(a.mime || '') || /\.(png|jpe?g|gif|webp|heic|bmp)$/i.test(a.nombre || ''); }
 function burbujaAdjunto(a, mio) {
   if (esImagenAdj(a)) return `<button class="adj-foto" data-a="abrirAdjunto" data-c="${esc(a.clave)}" data-n="${esc(a.nombre)}" data-img="1" aria-label="Ver foto"><img alt="Foto enviada" data-idb="${esc(a.clave)}"></button>`;

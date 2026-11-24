@@ -1,4 +1,3 @@
-/* Propuestas: predicciones con ramitas (pozo compartido), votaciones y actividades */
 'use strict';
 UI.propTab = 'todas'; UI.apuesta = {};
 VISTAS.propuestas = {

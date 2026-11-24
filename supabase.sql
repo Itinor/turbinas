@@ -1,15 +1,12 @@
--- Cosas de la uni · configuración de Supabase (pégalo completo en SQL Editor y dale Run, una sola vez)
--- MODO PRUEBA: cualquiera con el link puede leer y escribir. Sirve para probar con tus amigos;
--- antes de abrirlo al público hay que pasar a cuentas reales (Supabase Auth) y reglas por usuario.
 
 create sequence if not exists objetos_seq;
 
 create table if not exists public.objetos (
-  k        text primary key,          -- qué es: coleccion/id[/campo/elemento]
-  col      text not null,             -- colección (posts, chats, usuarios…)
-  datos    jsonb,                     -- el contenido
+  k        text primary key,
+  col      text not null,
+  datos    jsonb,
   borrado  boolean not null default false,
-  seq      bigint not null default nextval('objetos_seq'),  -- orden de cambios, para bajar solo lo nuevo
+  seq      bigint not null default nextval('objetos_seq'),
   t        timestamptz not null default now()
 );
 create index if not exists objetos_seq_idx on public.objetos (seq);
@@ -33,7 +30,6 @@ create policy "prueba: cambiar" on public.objetos for update to anon, authentica
 grant select, insert, update on public.objetos to anon, authenticated;
 grant usage, select on sequence objetos_seq to anon, authenticated;
 
--- Archivos (canciones, fotos y PDFs del tablón)
 insert into storage.buckets (id, name, public) values ('archivos', 'archivos', true) on conflict (id) do nothing;
 drop policy if exists "prueba: subir archivos" on storage.objects;
 drop policy if exists "prueba: ver archivos" on storage.objects;

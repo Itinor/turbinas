@@ -1,4 +1,3 @@
-/* Rankings: profesores por área y rankings propuestos por la comunidad */
 'use strict';
 UI.rkTab = 'profes'; UI.rkArea = 'Ciencias básicas';
 VISTAS.rankings = {
@@ -71,7 +70,6 @@ ACC.nuevaArea = () => DB.esAdmin()
 FORMS.nuevaArea = d => { const r = DB.agregarArea(d.nombre); if (r.error) return aviso(r.error); UI.rkArea = r.ok; cerrarHoja(); aviso(r.ya ? 'Esa área ya existe' : 'Área agregada'); refrescar(); };
 ACC.quitarArea = b => { if (DB.quitarArea(b.dataset.n)) { if (UI.rkArea === b.dataset.n) UI.rkArea = DB.areas()[0]; cerrarHoja(); aviso('Área quitada'); refrescar(); } };
 
-/* ---------- Lo más escuchado: canciones y videos que sube la gente ---------- */
 UI.rkMusica = 'semana';
 function rankingMusica() {
   const desde = UI.rkMusica === 'semana' ? Date.now() - 7 * 864e5 : 0, cuenta = new Map();

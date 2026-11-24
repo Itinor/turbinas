@@ -1,22 +1,11 @@
-/* Datos de arranque (ejemplo). Todo esto vive después en la base de datos real.
-   Los nombres de personas y profesores son inventados. */
 'use strict';
-/* Configuración rápida.
-   entrarDirecto: id de una cuenta para entrar sin pantalla de registro (null = mostrar la bienvenida).
-   modoPrueba: true = en la bienvenida cualquiera entra solo con un @usuario (sin correo) y queda verificado.
-   claveAdmin: la clave para entrar como admin desde "Soy admin" en la bienvenida. Cámbiala aquí.
-     (Ojo: el código es público en GitHub; esto es solo para pruebas, el admin real irá en la base de datos.)
-   dineroReal: mientras sea false las ramitas no valen dinero y el admin puede borrar predicciones con ramitas
-     (se devuelve lo apostado). Cuando haya dinero de por medio, ponlo en true y quedan protegidas.
-   propuestasDemo: false = las propuestas arrancan en cero (sin las de ejemplo). */
+
 const CONFIG = {
-  /* servidor: con esto todos los celulares ven lo mismo. La clave publicable es pública por diseño (va en la página).
-     NUNCA pongas aquí la clave secreta (service_role / secret). */
+
   supabase: { url: 'https://rsljgvsnxbpxzgmdyxkb.supabase.co', clave: 'sb_publishable_YjV2xTH6h_D-Mev9BbQWrA_eKvzrl85' },
   entrarDirecto: null,
   modoPrueba: false,
-  /* cuentas del equipo de prueba: en la bienvenida pulsan "Soy admin", ponen la clave y eligen su cuenta.
-     Solo la de Diego es admin; si quieres que alguien más lo sea, ponle admin: true. */
+
   cuentasEquipo: [
     { id: 'u_diego', nombre: 'Yo (admin)', admin: true },
     { id: 'u_diego2', usuario: 'diego', nombre: 'Diego' },
@@ -37,17 +26,15 @@ const CONFIG = {
   claveAdmin: 'castor-admin',
   dineroReal: false,
   propuestasDemo: false,
-  /* datosDemo: false = la app arranca en blanco: sin publicaciones, profes, rankings, chats, eventos,
-     ventas, agenda ni personas de ejemplo. Solo quedan las cuentas del equipo y los niveles oficiales. */
+
   datosDemo: false,
-  /* correos institucionales aceptados para verificarse al instante */
+
   dominiosUni: ['uach.mx'],
-  /* Croquis: pon aquí la ruta de una imagen (por ejemplo 'img/croquis.png', de preferencia 1150 × 970 px)
-     para usarla de fondo del mapa en lugar del dibujo aproximado. Los pines se acomodan encima. */
+
   imagenCroquis: null,
-  /* pagos: el módulo está en js/pagos.js pero apagado. Cámbialo a true solo cuando haya procesador de pagos real. */
+
   pagosActivos: false,
-  /* pagosDemo: muestra la compra de ramitas con la validación de pago, pero NO cobra nada (no hay procesador). */
+
   pagosDemo: true
 };
 const CARRERAS = [
@@ -64,7 +51,7 @@ const INSIGNIAS = {
   fundador: { texto: 'Miembro fundador', clase: 'i-naranja', tono: 'fuego' },
   tutor: { texto: 'Tutor', clase: 'i-verde', tono: 'verde' }
 };
-/* Reglas internas (no se muestran como letreros al estudiante) */
+
 const REGLAS = {
   regaloBienvenida: 50, regaloDiario: 20, premioRacha7: 50,
   limitePropuestasDia: 3, limiteEncuestasDia: 3,
@@ -73,21 +60,18 @@ const REGLAS = {
   umbralRanking: { amigos: 15, salon: 50, generacion: 150 },
   minOpinionesProfe: 15,
   creditosPorRamita: 100, maxCasinoDia: 100, maxCompraDia: 2000,
-  /* arbitraje de predicciones: alguien reporta el resultado con prueba, hay una ventana para disputar
-     y, si nadie disputa y suficientes personas que NO apostaron lo confirman, se reparte solo. */
+
   horasDisputa: 24, confirmacionesMin: 3, premioReportar: 5, premioConfirmar: 2,
-  /* duración de propuestas, en minutos */
+
   duracionMin: 5, duracionMax: 60 * 24 * 30,
-  /* predicción grande: a partir de este pozo, el resultado siempre lo verifica el admin antes de repartir */
+
   pozoGrande: 300
 };
-/* Temas que no pueden ser predicciones con ramitas (alguien de dentro podría saber el resultado) */
+
 const TEMAS_PRIVILEGIADOS = /(examen|parcial|calificaci|reprob|aprob|profe|maestr|tarea|falta|asistencia|baja\b|kardex|kárdex|promedio|embaraz|novi[oa]|cortar|terminar con|despid)/i;
-/* Palabras que mandan un ranking a revisión antes de publicarse */
+
 const PALABRAS_REVISION = /(feo|fea|gord|flac|put[oa]|naco|idiota|estúpid|estupid|pendej|zorr|perr[oa]|tont[oa]|asco|odio|mamad|verg|chin)/i;
 
-/* Croquis del Campus II (UACH), basado en el mapa oficial "¡Ubícate! con el mapa UACH Campus II" (ANFEI 2025)
-   y en el mapa satelital. Coordenadas en un lienzo de 1150 × 970; son aproximadas. */
 const ZONAS_CAMPUS = [
   { id: 'cya', nombre: 'Facultad de Contaduría y Administración', color: '#F7CFE2', borde: '#D9468F', etiqueta: [300, 170], puntos: '70,40 610,10 655,240 600,300 480,355 340,440 245,575 150,560 120,400 60,210' },
   { id: 'fing', nombre: 'Facultad de Ingeniería', color: '#CFE5FB', borde: '#1D5FD1', etiqueta: [470, 455], puntos: '320,480 430,405 600,375 705,385 650,455 610,505 650,605 700,690 560,735 430,722 335,655 305,565' },
@@ -116,7 +100,7 @@ const LUGARES = [
 ];
 const SALONES = [];
 function datosIniciales() {
-  // generador con semilla para que los datos de ejemplo siempre salgan iguales
+
   let s = 42; const rnd = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
   const ahora = Date.now(), haceMin = m => new Date(ahora - m * 60000).toISOString();
   const hoy = fechaLocal();
@@ -181,7 +165,7 @@ function datosIniciales() {
     { id: 'pr_badminton', tipo: 'prediccion', titulo: '¿Quién gana el torneo de bádminton entre carreras?', autor: 'u_diego', fecha: haceMin(60 * 26), cierre: masTarde(2), opciones: ['Ing. en Sistemas', 'Mecatrónica'], apuestas: [], votos: {}, estado: 'abierta' },
     { id: 'pr_posada', tipo: 'votacion', titulo: '¿Qué día prefieren la posada de la facultad?', autor: 'u_equipo', fecha: haceMin(60 * 50), cierre: masTarde(5), opciones: ['Jueves 4', 'Viernes 5', 'Sábado 6'], apuestas: [], votos: { u_mariana: 1, u_luis: 1, u_ana: 0, u_valeria: 1, u_sofia: 2, u_pedro: 1 }, estado: 'abierta' },
     { id: 'pr_fut', tipo: 'actividad', titulo: 'Fut 7 mixto el viernes después de clases', autor: 'u_pedro', fecha: haceMin(60 * 5), cierre: masTarde(3), opciones: [], apuntados: ['u_pedro', 'u_luis', 'u_ana', 'u_jorge', 'u_mariana', 'u_sofia', 'u_valeria', 'u_diego', 'u_equipo', 'u_ana2'].slice(0, 9), cupo: 14, apuestas: [], votos: {}, estado: 'abierta' },
-    // historial para el panel de seguimiento
+
     { id: 'pr_voley', tipo: 'prediccion', titulo: 'Final de voleibol', autor: 'u_equipo', fecha: haceMin(60 * 24 * 9), cierre: masTarde(-7), opciones: ['Industrial', 'Mecatrónica'], apuestas: [], votos: {}, estado: 'abierta' },
     { id: 'pr_robotica', tipo: 'prediccion', titulo: 'Concurso de robótica: ¿quién queda primero?', autor: 'u_equipo', fecha: haceMin(60 * 24 * 12), cierre: masTarde(-10), opciones: ['Equipo Mecatrónica', 'Equipo Sistemas'], apuestas: [], votos: {}, estado: 'abierta' },
     { id: 'pr_posada_asist', tipo: 'prediccion', titulo: '¿Más de 200 personas en la posada pasada?', autor: 'u_equipo', fecha: haceMin(60 * 24 * 20), cierre: masTarde(-15), opciones: ['Sí', 'No'], apuestas: [], votos: {}, estado: 'abierta' }
@@ -192,7 +176,7 @@ function datosIniciales() {
     { id: 'rk_biblio', titulo: '¿Qué lugar es mejor para estudiar?', autor: 'u_equipo', oficial: true, opciones: ['Biblioteca', 'Cafetería', 'Jardines', 'Salón vacío'], votos: {}, nombrados: [], consentimiento: {}, estado: 'aprobado', fecha: haceMin(60 * 24 * 3) },
     { id: 'rk_feo', titulo: '¿Quién es el más feo del salón?', autor: 'u_luis', oficial: false, opciones: ['Por definir'], votos: {}, nombrados: [], consentimiento: {}, estado: 'revision', fecha: haceMin(5) }
   ];
-  // muchos votos para el ranking de comida (público)
+
   for (let k = 0; k < 312; k++) rankings[0].votos['v' + k] = k % 100 < 41 ? 0 : k % 100 < 74 ? 1 : 2;
   for (let k = 0; k < 180; k++) rankings[2].votos['w' + k] = k % 4 === 3 ? 3 : k % 3;
 

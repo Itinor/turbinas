@@ -1,4 +1,3 @@
-/* Administración: moderación, seguimiento de predicciones, alertas, economía y registro */
 'use strict';
 UI.admTab = 'moderacion'; UI.admUsuario = null;
 VISTAS.admin = {
@@ -53,7 +52,7 @@ function admEconomia() {
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:130px">${dias.map(([f, d]) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="display:flex;gap:2px;align-items:flex-end;height:108px"><span style="width:12px;height:${Math.max(2, d.e / mx * 106)}px;background:#4B1F7A;border-radius:4px 4px 0 0"></span><span style="width:12px;height:${Math.max(2, d.s / mx * 106)}px;background:#F5B700;border-radius:4px 4px 0 0"></span></div><span class="mini gris">${new Date(f + 'T12:00').toLocaleDateString('es-MX', { weekday: 'short' }).slice(0, 2)}</span></div>`).join('')}</div></section>
     <section class="tarjeta"><h2 style="margin-bottom:6px">Reglas de equilibrio</h2>${[['Comisión del Fondo del castor', REGLAS.comisionFondo * 100 + '%'], ['Máximo por predicción', REGLAS.maxPorPrediccion], ['Máximo diario en predicciones', REGLAS.maxPrediccionDia], ['Regalo diario', REGLAS.regaloDiario], ['Tope diario en retos', REGLAS.topeRetosDia], ['Ramitas al casino por día', REGLAS.maxCasinoDia], ['Créditos por ramita', REGLAS.creditosPorRamita], ['Propuestas por día', REGLAS.limitePropuestasDia]].map(([t, v]) => `<div class="entre" style="padding:8px 0;border-bottom:1px solid var(--linea)"><span class="peq">${t}</span><b>${v}</b></div>`).join('')}</section>`;
 }
-/* ---------- Registro por días, con filtros ---------- */
+
 UI.reg = UI.reg || {}; Object.assign(UI, { regDia: 'hoy', regTipo: 'todo', regQuien: '' });
 const TIPOS_REG = [['todo', 'Todo'], ['ramitas', 'Ramitas'], ['propuestas', 'Propuestas'], ['publicaciones', 'Publicaciones'], ['tablon', 'Tablón'], ['casino', 'Casino'], ['musica', 'Música'], ['reportes', 'Reportes'], ['cuentas', 'Cuentas']];
 function eventosRegistro() {
@@ -131,7 +130,6 @@ function admContenido() {
 ACC.admCont = b => { UI.admCont = b.dataset.t; refrescar(); };
 ACC.moderarProfe = b => { DB.moderarProfe(b.dataset.id, b.dataset.ok === '1'); refrescar(); };
 
-/* ---------- Usuarios: buscar a alguien y ver lo que hace (los mensajes privados NO se muestran) ---------- */
 UI.admBusca = '';
 function admUsuarios() {
   const q = UI.admBusca.trim().toLowerCase().replace(/^@/, ''), S = DB.estado;
@@ -146,7 +144,7 @@ function filasUsuariosAdm(lista, reportesDe) {
     <span class="fila" style="flex-wrap:nowrap">${avatar(u.id).replace('<a ', '<span ').replace('</a>', '</span>')}<span><b>@${esc(u.usuario)}</b>${u.rol === 'admin' ? ' <span class="insignia i-morado">admin</span>' : ''}${u.suspendido ? ' <span class="insignia i-rojo">suspendido</span>' : ''}<br><span class="mini gris">${esc(u.carrera || '')} · ${u.verificado === 'si' ? 'verificado' : u.verificado === 'pendiente' ? 'en revisión' : 'sin verificar'}</span></span></span>
     <span style="text-align:right"><b>${numero(DB.saldo(u.id))}</b><br>${reportesDe(u.id) ? `<span class="insignia i-rojo">${reportesDe(u.id)} reporte${reportesDe(u.id) > 1 ? 's' : ''}</span>` : ''}</span></button>`).join('') || '<p class="peq gris">Nadie coincide.</p>';
 }
-/* reportes contra alguien: directos (usuario) o sobre algo que publicó */
+
 function reportesContra(id) {
   const S = DB.estado, autorDe = r => r.tipo === 'usuario' ? r.ref : r.tipo === 'post' ? S.posts.find(p => p.id === r.ref)?.autor : r.tipo === 'ranking' ? S.rankings.find(x => x.id === r.ref)?.autor : r.tipo === 'tablon' ? S.tablonItems.find(x => x.id === r.ref)?.autor : r.tipo === 'venta' ? S.ventas.find(x => x.id === r.ref)?.autor : r.quien || null;
   return S.reportes.filter(r => autorDe(r) === id);
@@ -195,8 +193,7 @@ ENTRADAS.admBuscar = el => { UI.admBusca = el.value; const q = el.value.trim().t
 
 UI.admJuego = 'todo';
 ACC.admJuego = b => { UI.admJuego = b.dataset.j; refrescar(); $('#fichaUsuario')?.scrollIntoView(); };
-/* como las gráficas del Royal: resultado acumulado (verde gana, rojo pierde), más la curva que marca la
-   probabilidad (esperanza) y la franja normal (±2 desviaciones). Si la línea se sale de la franja, revisar. */
+
 function graficaCasino(J) {
   if (J.length < 2) return '<p class="peq gris" style="margin:0">Pocas jugadas para graficar.</p>';
   const W = 640, H = 260, n = J.length; let r = 0, e = 0, v = 0; const pts = [[0, 0, 0, 0]];

@@ -1,4 +1,3 @@
-/* Retos académicos: ejercicios generados por plantillas, niveles oficiales y de la comunidad */
 'use strict';
 UI.reto = { dif: 'Aleatorio', p: null, eleg: null, juego: null, crear: { nombre: '', ids: [] }, seg: REGLAS.segundosPorPregunta };
 const COLOR_DIF = { 'Muy fácil': 'i-verde', 'Fácil': 'i-azul', 'Difícil': 'i-naranja', 'Muy difícil': 'i-rojo' };
@@ -39,7 +38,7 @@ VISTAS.retos = {
   },
   montar() { detenerTemporizadores(); const R = UI.reto; if (R.eleg !== null || !$('#reloj')) return; temporizador(() => { R.seg--; const b = $('#reloj span'); if (b) b.style.width = Math.max(0, R.seg / REGLAS.segundosPorPregunta * 100) + '%'; if (R.seg <= 0) { detenerTemporizadores(); responderReto(-1); } }, 1000); }
 };
-/* no repite ejercicios: recuerda los últimos 600 que viste y evita la misma plantilla dos veces seguidas */
+
 function nuevoReto() {
   const R = UI.reto, pool = R.dif === 'Aleatorio' ? T : T.filter(t => t.nivel === R.dif), clave = 'cdu_vistos_' + (DB.yo()?.id || '');
   let vistos = []; try { vistos = JSON.parse(localStorage.getItem(clave) || '[]'); } catch {}

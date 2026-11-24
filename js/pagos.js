@@ -1,13 +1,3 @@
-/* Pagos — APAGADO.
-   Basado en tu archivo "metodo-de-pago.html" (validación Luhn, CVV, PayPal, transferencia),
-   mejorado y adaptado. Mientras CONFIG.pagosActivos sea false, ningún usuario lo ve: solo el
-   admin puede abrir la vista previa en #/metodos-pago (no hay botón hacia ella).
-
-   IMPORTANTE para cuando se active:
-   - Nunca guardar el número completo de la tarjeta ni el CVV. Aquí solo se guarda marca,
-     últimos 4 dígitos y vencimiento. El cobro real lo debe hacer un procesador
-     (Mercado Pago, Stripe, Conekta, etc.), que convierte la tarjeta en un "token".
-   - Validar en el servidor también; la validación de aquí es solo para avisar errores al escribir. */
 'use strict';
 const PAGOS = {
   soloDigitos: v => String(v || '').replace(/\D/g, ''),
@@ -25,14 +15,14 @@ const PAGOS = {
     return 'Tarjeta';
   },
   cvvValido(cvv, numero) { const c = this.soloDigitos(cvv); return this.marca(numero) === 'American Express' ? c.length === 4 : c.length === 3; },
-  /* acepta MM/AA o MM/AAAA; vence al terminar el mes */
+
   vencimientoValido(txt, hoy = new Date()) {
     const m = String(txt || '').trim().match(/^(\d{1,2})\s*\/\s*(\d{2}|\d{4})$/); if (!m) return false;
     const mes = +m[1], anio = m[2].length === 2 ? 2000 + +m[2] : +m[2]; if (mes < 1 || mes > 12) return false;
     return new Date(anio, mes, 1) > hoy && anio <= hoy.getFullYear() + 20;
   },
   correoValido: c => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(c || '').trim()),
-  /* CLABE interbancaria (México): 18 dígitos, el último es dígito verificador con pesos 3,7,1 */
+
   clabeValida(clabe) {
     const n = this.soloDigitos(clabe); if (n.length !== 18) return false;
     const pesos = [3, 7, 1]; let s = 0; for (let i = 0; i < 17; i++) s += (+n[i] * pesos[i % 3]) % 10;
@@ -49,16 +39,16 @@ const PAGOS = {
     else return 'Elige un método.';
     return null;
   },
-  /* lo único que se guarda: nunca el número completo ni el CVV */
+
   resumen(d) {
     if (d.metodo === 'tarjeta') return { id: uid('mp'), metodo: 'tarjeta', marca: this.marca(d.numero), ultimos: this.soloDigitos(d.numero).slice(-4), vence: d.vence.trim(), titular: d.titular.trim().slice(0, 60) };
     if (d.metodo === 'paypal') return { id: uid('mp'), metodo: 'paypal', correo: d.correo.trim().replace(/^(.).*(@.*)$/, '$1•••$2') };
     return { id: uid('mp'), metodo: 'transferencia', ultimos: this.soloDigitos(d.clabe).slice(-4) };
   },
-  /* paquetes de ramitas pensados para cuando se active (precios de ejemplo) */
+
   paquetes: [{ ramitas: 100, mxn: 10 }, { ramitas: 550, mxn: 50 }, { ramitas: 1200, mxn: 100 }],
   compradoHoy(u = DB.yo()) { const hoy = fechaLocal(); return DB.movimientos(u.id).filter(m => m.tipo === 'compra' && fechaLocal(new Date(m.f)) === hoy).reduce((s, m) => s + m.monto, 0); },
-  /* compra de prueba: valida los datos como si fuera real, pero no cobra nada */
+
   comprarDemo(i, d) {
     if (!CONFIG.pagosDemo) return { error: 'Las compras no están disponibles.' };
     const p = this.paquetes[i]; if (!p) return { error: 'Elige un paquete.' };
@@ -73,7 +63,7 @@ const PAGOS = {
     const u = DB.yo(); u.metodosPago = (u.metodosPago || []).concat(this.resumen(d)).slice(-3); DB.guardar(); return { ok: true };
   },
   quitarMetodo(id) { const u = DB.yo(); u.metodosPago = (u.metodosPago || []).filter(m => m.id !== id); DB.guardar(); },
-  /* cobro: aquí se conectaría el procesador. Mientras esté apagado, no hace nada. */
+
   async comprar(paquete, metodoId) {
     if (!CONFIG.pagosActivos) return { error: 'Los pagos no están activos.' };
     return { error: 'Falta conectar el procesador de pagos.' };

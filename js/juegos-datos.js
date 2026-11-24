@@ -1,4 +1,3 @@
-/* Bancos de los juegos diarios. Se pueden ampliar sin tocar el resto del código. */
 'use strict';
 const TRIVIA = [
   { p: '¿Cuál es la derivada de una constante?', o: ['0', '1', 'La misma constante', 'x'], c: 0 },
@@ -33,5 +32,5 @@ const LOGICA = [
   { p: '5, 10, 20, 35, 55, ?', r: 80, pista: 'Las diferencias son 5, 10, 15, 20, 25…' },
   { p: '1, 8, 27, 64, ?', r: 125, pista: 'Son cubos perfectos.' }
 ];
-/* Índice del día: todos ven lo mismo el mismo día */
+
 function indiceDelDia(n, sal = 0) { const d = new Date(); const k = d.getFullYear() * 400 + d.getMonth() * 31 + d.getDate() + sal; return ((k * 2654435761) >>> 0) % n; }

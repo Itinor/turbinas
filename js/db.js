@@ -1,6 +1,3 @@
-/* Capa de datos y reglas de la red.
-   Hoy guarda todo en el navegador (localStorage). Para pasar a un servidor (Supabase, Firebase…)
-   solo hay que reescribir este archivo: las pantallas llaman a DB.* y no tocan el almacenamiento. */
 'use strict';
 const CLAVE = 'cosasdelauni_v8';
 let E = null;
@@ -13,7 +10,7 @@ const DB = {
     return E;
   },
   VERSION: 8,
-  /* rellena lo que falte (cuentas del equipo, tablones fijos, listas vacías) */
+
   completar() {
     ['triviaPro', 'escuchas', 'bitacora', 'jugadas', 'lugares', 'lugaresPend', 'profesPend', 'tablones', 'tablonItems', 'notifs', 'reportes', 'libro', 'posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes'].forEach(k => { if (!Array.isArray(E[k])) E[k] = []; });
     E.usuarios = E.usuarios || {}; asegurarEquipo(); asegurarTablones();
@@ -23,7 +20,6 @@ const DB = {
   reiniciar() { localStorage.removeItem(CLAVE); E = null; this.cargar(); },
   get estado() { return E; },
 
-  /* ---------- Sesión ---------- */
   yo() { return E.sesion ? E.usuarios[E.sesion] : null; },
   usuario(id) { return E.usuarios[id]; },
   porUsuario(nombre) { return Object.values(E.usuarios).find(u => u.usuario === String(nombre).replace(/^@/, '').toLowerCase()); },
@@ -58,11 +54,9 @@ const DB = {
   },
   esAdmin() { return this.yo()?.rol === 'admin'; },
 
-  /* ---------- Ramitas ---------- */
   saldo(id = E.sesion) { return E.libro.reduce((s, m) => m.u === id ? s + m.monto : s, 0); },
   movimientos(id) { return E.libro.filter(m => m.u === id).slice().reverse(); },
 
-  /* ---------- Privacidad ---------- */
   sonAmigos(a, b) { return a === b || !!E.usuarios[a]?.amigos.includes(b); },
   bloqueo(a, b) { return !!(E.usuarios[a]?.bloqueados.includes(b) || E.usuarios[b]?.bloqueados.includes(a)); },
   verNombreReal(dueno, quien = E.sesion) {
@@ -77,7 +71,7 @@ const DB = {
     const d = E.usuarios[dueno]; if (!d || dueno === quien || this.bloqueo(dueno, quien)) return false;
     return d.privacidad.escribir === 'todos' || (d.privacidad.escribir === 'amigos' && this.sonAmigos(dueno, quien));
   },
-  /* ---------- Amigos con solicitud ---------- */
+
   estadoAmistad(id) { const yo = this.yo(), o = E.usuarios[id]; if (!o || id === yo.id) return 'yo'; if (yo.amigos.includes(id)) return 'amigos'; if ((yo.solicitudes || []).includes(id)) return 'recibida'; if ((o.solicitudes || []).includes(yo.id)) return 'enviada'; return 'nada'; },
   pedirAmistad(id) { const yo = this.yo(), o = E.usuarios[id], e = this.estadoAmistad(id); if (e === 'recibida') return this.aceptarAmistad(id); if (e !== 'nada') return; o.solicitudes = o.solicitudes || []; o.solicitudes.push(yo.id); notificar(id, `@${yo.usuario} quiere ser tu amigo`, '#/amigos'); this.guardar(); },
   aceptarAmistad(id) { const yo = this.yo(), o = E.usuarios[id]; if (!o) return; yo.solicitudes = (yo.solicitudes || []).filter(x => x !== id); if (!yo.amigos.includes(id)) yo.amigos.push(id); if (!o.amigos.includes(yo.id)) o.amigos.push(yo.id); notificar(id, `@${yo.usuario} aceptó tu solicitud de amistad`, '#/perfil/' + yo.usuario); this.guardar(); },
@@ -88,12 +82,11 @@ const DB = {
   bloquear(id) { const yo = this.yo(); if (!yo.bloqueados.includes(id)) yo.bloqueados.push(id); yo.amigos = yo.amigos.filter(x => x !== id); E.usuarios[id].amigos = E.usuarios[id].amigos.filter(x => x !== yo.id); this.guardar(); },
   desbloquear(id) { const yo = this.yo(); yo.bloqueados = yo.bloqueados.filter(x => x !== id); this.guardar(); },
   silenciar(id) { const yo = this.yo(); if (!yo.silenciados.includes(id)) yo.silenciados.push(id); this.guardar(); },
-  /* varias canciones por perfil; la primera también queda como u.cancion */
+
   canciones(u = this.yo()) { if (!u) return []; if (!u.canciones) u.canciones = u.cancion ? [u.cancion] : []; return u.canciones; },
   guardarCanciones(lista) { const u = this.yo(); u.canciones = lista.slice(0, 8); u.cancion = u.canciones[0] || null; this.guardar(); },
   actualizarPerfil(cambios) { Object.assign(this.yo(), cambios); this.guardar(); },
 
-  /* ---------- Publicaciones ---------- */
   feed() {
     const yo = this.yo();
     return E.posts.filter(p => !p.oculto && !E.usuarios[p.autor]?.suspendido && !this.bloqueo(p.autor, yo.id) && !yo.silenciados.includes(p.autor)).sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -103,7 +96,6 @@ const DB = {
   comentar(id, texto) { texto = texto.trim().slice(0, 500); if (!texto) return; const p = E.posts.find(x => x.id === id); p.comentarios.push({ autor: E.sesion, texto, fecha: new Date().toISOString() }); if (p.autor !== E.sesion) notificar(p.autor, `@${this.yo().usuario} comentó tu publicación`, '#/inicio'); this.guardar(); },
   borrarPost(id) { const p = E.posts.find(x => x.id === id); if (p && (p.autor === E.sesion || this.esAdmin())) p.oculto = true; this.guardar(); },
 
-  /* ---------- Reportes ---------- */
   reportar(tipo, ref, motivo) { E.reportes.push({ id: uid('rep'), por: E.sesion, tipo, ref, motivo, fecha: new Date().toISOString(), estado: 'abierto' }); avisarAdmins('Nuevo reporte: ' + motivo, '#/admin'); this.guardar(); },
   resolverReporte(id, accion) {
     const r = E.reportes.find(x => x.id === id); r.estado = accion;
@@ -111,10 +103,8 @@ const DB = {
     this.guardar();
   },
 
-  /* ---------- Límites diarios (internos) ---------- */
   limites() { const u = this.yo(); if (u.limites.fecha !== fechaLocal()) u.limites = { fecha: fechaLocal(), propuestas: 0, encuestas: 0, apostado: 0, retos: 0 }; return u.limites; },
 
-  /* ---------- Propuestas: predicciones, votaciones y actividades ---------- */
   crearPropuesta({ tipo, titulo, opciones, cierre, minutos, cupo }) {
     if (minutos) { minutos = Math.round(Number(minutos)); if (!(minutos >= REGLAS.duracionMin)) return { error: `La duración mínima es de ${REGLAS.duracionMin} minutos.` }; minutos = Math.min(minutos, REGLAS.duracionMax); cierre = new Date(Date.now() + minutos * 6e4).toISOString(); }
     else if (cierre && cierreMs(cierre) - Date.now() < REGLAS.duracionMin * 6e4) return { error: `Tiene que cerrar al menos en ${REGLAS.duracionMin} minutos.` };
@@ -164,7 +154,7 @@ const DB = {
     Object.entries(porU).forEach(([u, m]) => { mover(u, m, 'devolucion', p.id); notificar(u, `${motivo}: "${p.titulo}"`, '#/propuestas'); });
     p.estado = 'anulada'; p.resueltaPor = p.resueltaPor || 'admin'; this.bitacora('anuló', p, motivo); this.guardar();
   },
-  /* ---------- Arbitraje ---------- */
+
   porArbitrar(p) { return p.tipo === 'prediccion' && p.estado === 'abierta' && yaCerro(p); },
   esGrande(p) { return p.tipo === 'prediccion' && this.pozo(p) >= REGLAS.pozoGrande; },
   bitacora(accion, p, extra = '') { (E.bitacora = E.bitacora || []).push({ f: new Date().toISOString(), u: E.sesion, accion, ref: p.id, titulo: p.titulo, extra: String(extra).slice(0, 200) }); if (E.bitacora.length > 2000) E.bitacora.splice(0, E.bitacora.length - 2000); },
@@ -216,7 +206,7 @@ const DB = {
     A.confirman.forEach(u => { if (A.op === p.ganadora) { mover(u, REGLAS.premioConfirmar, 'premio', 'confirmar resultado'); mover('FONDO', -REGLAS.premioConfirmar, 'premio', p.id); } });
     A.disputan.forEach(d => { if (d.op != null && d.op === p.ganadora) { mover(d.u, REGLAS.premioReportar, 'premio', 'disputa correcta'); mover('FONDO', -REGLAS.premioReportar, 'premio', p.id); } });
   },
-  /* ---------- Editar propuestas ---------- */
+
   puedeEditar(p) { if (!p || (p.autor !== E.sesion && !this.esAdmin())) return false; return p.estado === 'abierta' && !this.tieneParticipacion(p); },
   tieneParticipacion(p) { return p.apuestas.length > 0 || Object.keys(p.votos).length > 0 || p.apuntados.some(u => u !== p.autor); },
   editarPropuesta(id, d) {
@@ -238,7 +228,6 @@ const DB = {
   },
   congelar(id) { const p = E.propuestas.find(x => x.id === id); p.estado = p.estado === 'congelada' ? 'abierta' : 'congelada'; this.guardar(); },
 
-  /* ---------- Rankings de la comunidad ---------- */
   etapaRanking(r) { const n = Object.keys(r.votos).length, U = REGLAS.umbralRanking; return r.oficial ? 3 : n >= U.generacion ? 3 : n >= U.salon ? 2 : n >= U.amigos ? 1 : 0; },
   rankingVisible(r, quien = E.sesion) {
     if (r.estado === 'quitado' || r.estado === 'rechazado') return false;
@@ -265,23 +254,20 @@ const DB = {
   votarRanking(id, op) { const r = E.rankings.find(x => x.id === id); r.votos[E.sesion] = op; this.guardar(); return { ok: true }; },
   moderarRanking(id, estado) { const r = E.rankings.find(x => x.id === id); r.estado = estado; notificar(r.autor, estado === 'aprobado' ? `Tu ranking "${r.titulo}" ya está publicado` : `Tu ranking "${r.titulo}" no se publicó`, '#/rankings'); this.guardar(); },
 
-  /* ---------- Profesores ---------- */
   calificacion(p) { const o = p.opiniones; if (!o.length) return null; return o.reduce((s, x) => s + (x.claridad + x.justo + x.puntual) / 3, 0) / o.length; },
   motivoFrecuente(p) { const c = {}; p.opiniones.forEach(o => { if (o.motivo) c[o.motivo] = (c[o.motivo] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0] || ''; },
   opinar(id, datos) { if (this.yo().verificado !== 'si') return { error: 'verificar' }; const p = E.profes.find(x => x.id === id); p.opiniones = p.opiniones.filter(o => o.u !== E.sesion); p.opiniones.push({ u: E.sesion, ...datos, fecha: new Date().toISOString() }); this.guardar(); return { ok: true }; },
 
-  /* ---------- Compraventa ---------- */
   ventaVisible(v, quien = E.sesion) { if (v.autor === quien) return true; if (v.estado === 'vendido' || this.bloqueo(v.autor, quien)) return false; return v.vis === 'todos' || (v.vis === 'amigos' && this.sonAmigos(v.autor, quien)) || (v.vis === 'elegidos' && v.elegidos.includes(quien)); },
   publicarVenta(d) { const ids = (d.elegidos || []).map(n => this.porUsuario(n)?.id).filter(Boolean); E.ventas.push({ id: uid('v'), autor: E.sesion, titulo: d.titulo.trim().slice(0, 100), tipo: d.tipo, precio: Number(d.precio) || 0, vis: d.vis, elegidos: ids, fecha: new Date().toISOString() }); this.guardar(); },
 
-  /* ---------- Chat ---------- */
   misChats() { return E.chats.filter(c => c.miembros.includes(E.sesion) && !(c.tipo === 'dm' && this.bloqueo(...c.miembros)) && !(c.quitado?.[E.sesion] && (c.mensajes.at(-1)?.f || '') <= c.quitado[E.sesion])).sort((a, b) => (b.mensajes.at(-1)?.f || '').localeCompare(a.mensajes.at(-1)?.f || '')); },
   chatCon(id) {
     let c = E.chats.find(x => x.tipo === 'dm' && x.miembros.includes(id) && x.miembros.includes(E.sesion));
     if (!c) { if (!this.puedeEscribir(id)) return null; c = { id: uid('ch'), tipo: 'dm', nombre: '', miembros: [E.sesion, id], mensajes: [], fijado: null }; E.chats.push(c); this.guardar(); }
     return c;
   },
-  /* mensaje cifrado: el servidor solo guarda {e: texto revuelto} */
+
   enviarCifrado(chatId, e) { const c = E.chats.find(x => x.id === chatId); if (!c) return; c.miembros.filter(m => m !== E.sesion && this.sinLeerDe(c, m) === 0).forEach(m => notificar(m, c.tipo === 'grupo' ? `Mensajes nuevos en ${c.nombre}` : `@${this.yo().usuario} te escribió`, '#/chat/' + c.id)); c.mensajes.push({ u: E.sesion, f: new Date().toISOString(), e }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
   enviar(chatId, texto, adjunto) { texto = String(texto || '').trim().slice(0, 1000); if (!texto && !adjunto) return; const c = E.chats.find(x => x.id === chatId); c.miembros.filter(m => m !== E.sesion && this.sinLeerDe(c, m) === 0).forEach(m => notificar(m, c.tipo === 'grupo' ? `Mensajes nuevos en ${c.nombre}` : `@${this.yo().usuario} te escribió`, '#/chat/' + c.id)); c.mensajes.push({ u: E.sesion, t: texto, f: new Date().toISOString(), ...(adjunto ? { adjunto } : {}) }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
   visibles(c) { const desde = c.vaciado?.[E.sesion] || 0; return c.mensajes.map((m, i) => ({ ...m, i })).slice(desde); },
@@ -293,23 +279,20 @@ const DB = {
   sinLeerDe(c, u) { const s = E.sesion; E.sesion = u; const n = this.sinLeer(c); E.sesion = s; return n; },
   sinLeer(c) { const v = (c.leido || {})[E.sesion]; const desde = Math.max(v ?? 0, c.vaciado?.[E.sesion] || 0); return c.mensajes.slice(desde).filter(m => m.u !== E.sesion && !m.sistema).length; },
 
-  /* ---------- Agenda ---------- */
   miAgenda() { return E.agenda.filter(a => a.u === E.sesion || (a.compartidoEn && E.chats.find(c => c.id === a.compartidoEn)?.miembros.includes(E.sesion))).sort((a, b) => a.fecha.localeCompare(b.fecha)); },
   agregarRecordatorio(d) { E.agenda.push({ id: uid('ag'), u: E.sesion, titulo: d.titulo.trim().slice(0, 100), tipo: d.tipo, fecha: d.fecha, hora: d.hora || '', lugar: d.lugar || '', hecho: false }); this.guardar(); },
   alternarHecho(id) { const a = E.agenda.find(x => x.id === id); a.hechoPor = a.hechoPor || {}; a.hechoPor[E.sesion] = !a.hechoPor[E.sesion]; this.guardar(); },
   compartirRecordatorio(id, chatId) { const a = E.agenda.find(x => x.id === id), c = E.chats.find(x => x.id === chatId); a.compartidoEn = chatId; c.fijado = a.id; c.mensajes.push({ u: E.sesion, t: `Recordatorio: ${a.titulo} · ${fechaBonita(a.fecha)}${a.hora ? ' ' + a.hora : ''}`, f: new Date().toISOString() }); c.miembros.forEach(m => m !== E.sesion && notificar(m, `Nuevo recordatorio en ${c.nombre}: ${a.titulo}`, '#/agenda')); this.guardar(); },
   borrarRecordatorio(id) { E.agenda = E.agenda.filter(a => !(a.id === id && a.u === E.sesion)); this.guardar(); },
 
-  /* ---------- Croquis del campus ---------- */
   lugares() { const oc = E.lugaresOcultos || []; return LUGARES.filter(l => !oc.includes(l.id)).concat(E.lugares); },
   proponerLugar(d) { E.lugaresPend.push({ id: uid('lg'), nombre: d.nombre.trim().slice(0, 60), como: d.como.trim().slice(0, 200), x: Math.round(d.x), y: Math.round(d.y), tipo: 'salon', zona: d.zona || '', por: E.sesion, fecha: new Date().toISOString() }); avisarAdmins('Lugar propuesto para el mapa: ' + d.nombre, '#/admin'); this.guardar(); },
   moderarLugar(id, ok) { const i = E.lugaresPend.findIndex(l => l.id === id); if (i < 0) return; const l = E.lugaresPend.splice(i, 1)[0]; if (ok) { E.lugares.push(l); const u = E.usuarios[l.por]; if (u) { u.reputacion += 1; mover(u.id, 10, 'premio', 'lugar en el mapa'); } } notificar(l.por, ok ? `"${l.nombre}" ya está en el mapa. +10 ramitas` : `"${l.nombre}" no se agregó al mapa`, '#/explorar/mapa'); this.guardar(); },
 
-  /* ---------- Eliminar contenido (admin o autor) ---------- */
   autorDe(tipo, id) { const L = { post: E.posts, propuesta: E.propuestas, ranking: E.rankings, venta: E.ventas, nivel: E.niveles, tablonItem: E.tablonItems, tablon: E.tablones }[tipo]; return L?.find(x => x.id === id)?.autor; },
-  /* Las predicciones con ramitas apostadas nunca se eliminan (ni el admin): así queda constancia de quién apostó y quién ganó */
+
   conRamitas(id) { const p = E.propuestas.find(x => x.id === id); return !!(p && p.tipo === 'prediccion' && p.apuestas.length); },
-  /* con dinero real nadie borra predicciones con ramitas; mientras no, solo el admin (devolviendo lo apostado) */
+
   protegida(id) { return this.conRamitas(id) && (CONFIG.dineroReal || !this.esAdmin()); },
   puedeEliminar(tipo, id) { if (tipo === 'propuesta' && this.protegida(id)) return false; return this.esAdmin() || (this.autorDe(tipo, id) && this.autorDe(tipo, id) === E.sesion); },
   eliminar(tipo, id, extra) {
@@ -336,9 +319,9 @@ const DB = {
   agregarArea(nombre) { nombre = String(nombre || '').trim().replace(/\s+/g, ' ').slice(0, 40); if (nombre.length < 3) return { error: 'Escribe el nombre del área.' };
     const ya = this.areas().find(a => this.claveNombre(a) === this.claveNombre(nombre)); if (ya) return { ok: ya, ya: true }; this.areas().push(nombre); this.guardar(); return { ok: nombre }; },
   quitarArea(nombre) { if (!this.esAdmin() || E.profes.some(p => p.area === nombre)) return false; E.areas = this.areas().filter(a => a !== nombre); this.guardar(); return true; },
-  /* ---------- Tablón ---------- */
+
   puedeFijar(t) { return this.tablonVisible(t) && (!t.oficial || this.esAdmin()); },
-  /* una escucha por persona, canción y día (para el ranking de música) */
+
   registrarEscucha(dueno, clave, titulo) {
     const yo = E.sesion; if (!yo || !dueno || !clave || dueno === yo) return;
     let h = 0; for (const c of clave) h = (Math.imul(h, 31) + c.charCodeAt(0)) | 0;
@@ -386,15 +369,12 @@ const DB = {
   crearProfe(d) { const ar = this.agregarArea(d.area); E.profes.push({ id: uid('p'), nombre: d.nombre.trim().slice(0, 60), area: ar.ok || d.area, materias: d.materias.split(',').map(m => m.trim()).filter(Boolean).slice(0, 6), opiniones: [] }); this.guardar(); },
   crearEvento(d) { E.eventos.push({ id: uid('ev'), titulo: d.titulo.trim().slice(0, 100), fecha: d.fecha, hora: d.hora || '', lugar: d.lugar.trim().slice(0, 60), interesados: 0 }); this.guardar(); },
 
-  /* ---------- Eventos ---------- */
   interesEvento(id) { const k = E.sesion + ':' + id; E.interesEventos[k] = !E.interesEventos[k]; const ev = E.eventos.find(x => x.id === id); ev.interesados += E.interesEventos[k] ? 1 : -1; this.guardar(); },
 
-  /* ---------- Notificaciones ---------- */
   misNotifs() { return E.notifs.filter(n => n.u === E.sesion).slice().reverse(); },
   sinLeerNotifs() { return E.notifs.filter(n => n.u === E.sesion && !n.leida).length; },
   leerNotifs() { E.notifs.forEach(n => { if (n.u === E.sesion) n.leida = true; }); this.guardar(); },
 
-  /* ---------- Juegos, rachas y premios ---------- */
   diarios() { const u = this.yo(); if (u.diarios.fecha !== fechaLocal()) u.diarios = { fecha: fechaLocal(), regalo: u.diarios.regalo }; return u.diarios; },
   completarDiario(cual, premio) {
     const d = this.diarios(); if (d[cual]) return 0; d[cual] = true;
@@ -416,7 +396,6 @@ const DB = {
   crearNivel(nombre, ids) { E.niveles.push({ id: uid('nv'), nombre: nombre.trim().slice(0, 60), autor: E.sesion, oficial: this.esAdmin(), ids, likes: 0, likers: [], jugadas: 0, nuevo: true }); this.guardar(); },
   gustarNivel(id) { const n = E.niveles.find(x => x.id === id); const i = n.likers.indexOf(E.sesion); if (i >= 0) { n.likers.splice(i, 1); n.likes--; } else { n.likers.push(E.sesion); n.likes++; } this.guardar(); },
 
-  /* ---------- Casino (ruleta y tragamonedas): 1 ramita = 100 créditos ---------- */
   creditos() { return this.yo()?.creditos || 0; },
   jugadaCasino({ juego, apuesta, pago, ev, v }) { const u = this.yo(); if (!u || !(apuesta > 0)) return; (E.jugadas = E.jugadas || []).push({ u: u.id, juego, apuesta: Math.round(apuesta), pago: Math.round(pago || 0), ev: Number(ev) || 0, v: Number(v) || null, f: new Date().toISOString() }); if (E.jugadas.length > 20000) E.jugadas.splice(0, E.jugadas.length - 20000); },
   setCreditos(n) { const u = this.yo(); if (!u) return; u.creditos = Math.max(0, Math.floor(Number(n) || 0)); this.guardar(); },
@@ -434,27 +413,25 @@ const DB = {
     u.creditos -= r * REGLAS.creditosPorRamita; mover(u.id, r, 'casino', 'cobro de créditos'); this.guardar(); return { ok: r };
   },
 
-  /* ---------- Verificación ---------- */
   verificarCorreo(correo) { const u = this.yo(); u.verificado = 'si'; u.correoUni = correo; if (!u.insignias.includes('verificado')) u.insignias.push('verificado'); this.guardar(); },
   correoInstitucional(c) { const d = String(c || '').toLowerCase().trim().split('@')[1] || ''; return (CONFIG.dominiosUni || []).some(x => d === x || d.endsWith('.' + x)); },
   enviarCredencial(nombreArchivo, tipo = 'documento') { const u = this.yo(); u.verificado = 'pendiente'; u.documento = nombreArchivo; u.tipoDocumento = tipo; avisarAdmins(`@${u.usuario} envió ${tipo} para verificarse`, '#/admin'); this.guardar(); },
   aprobarVerificacion(id, ok) { const u = E.usuarios[id]; u.verificado = ok ? 'si' : 'no'; u.documento = null; if (ok && !u.insignias.includes('verificado')) u.insignias.push('verificado'); notificar(id, ok ? 'Ya estás verificado como estudiante' : 'No pudimos verificar tu documento; intenta con tu correo de la uni', '#/verificar'); this.guardar(); },
 
-  /* ---------- Panel de administración ---------- */
   alertas() {
     const out = [];
     E.propuestas.filter(p => p.tipo === 'prediccion' && p.estado === 'abierta').forEach(p => {
-      // muchas cuentas del mismo grupo apostando fuerte al mismo lado en poco tiempo
+
       const fuertes = p.apuestas.filter(a => a.monto >= 40);
       const grupos = {}; fuertes.forEach(a => { const u = E.usuarios[a.u]; const k = u.carrera + ' ' + u.gen + '|' + a.op; (grupos[k] = grupos[k] || []).push(a); });
       Object.entries(grupos).forEach(([k, lista]) => { const t = lista.map(a => new Date(a.f).getTime()).sort((x, y) => x - y); let s = { size: 0 };
         for (let i = 0; i < t.length; i++) { let j = i; while (j + 1 < t.length && t[j + 1] - t[i] <= 30 * 60000) j++; if (j - i + 1 > s.size) s = { size: j - i + 1 }; }
         if (s.size >= 3) out.push({ id: 'rapida:' + p.id + k, nivel: 'Alta', titulo: 'Apuestas fuertes de último minuto', detalle: `${s.size} cuentas de ${k.split('|')[0]} apostaron fuerte a "${p.opciones[+k.split('|')[1]]}" en menos de 30 min.`, prop: p.id }); });
     });
-    // rachas de aciertos imposibles
+
     const st = {}; E.propuestas.filter(p => p.estado === 'resuelta').forEach(p => { const vistos = new Set(); p.apuestas.forEach(a => { if (vistos.has(a.u)) return; vistos.add(a.u); st[a.u] = st[a.u] || { n: 0, g: 0 }; st[a.u].n++; if (a.op === p.ganadora) st[a.u].g++; }); });
     Object.entries(st).forEach(([u, s]) => { if (s.n >= 3 && s.g / s.n >= 0.75) out.push({ id: 'racha:' + u, nivel: 'Media', titulo: 'Aciertos fuera de lo normal', detalle: `@${E.usuarios[u].usuario} acertó ${s.g} de ${s.n} predicciones.`, usuario: u }); });
-    // cuentas en el mismo dispositivo
+
     const d = {}; Object.values(E.usuarios).forEach(u => (d[u.dispositivo] = d[u.dispositivo] || []).push(u));
     Object.values(d).forEach(l => { if (l.length >= 3) out.push({ id: 'disp:' + l[0].dispositivo, nivel: 'Media', titulo: 'Varias cuentas en el mismo dispositivo', detalle: l.map(u => '@' + u.usuario).join(', ') + ' entraron desde el mismo teléfono.' }); });
     return out.filter(a => !E.alertasCerradas[a.id]);
@@ -479,7 +456,6 @@ const DB = {
   }
 };
 
-/* ---------- funciones internas ---------- */
 function mover(u, monto, tipo, ref, fecha, id) {
   if (id && E.libro.some(m => m.id === id)) return;
   E.libro.push({ id: id || uid('m'), f: fecha || new Date().toISOString(), u, monto, tipo, ref: ref || '', disp: E.usuarios[u]?.dispositivo || '' });
@@ -488,24 +464,23 @@ function notificar(u, texto, link, extra) { if (!E.usuarios[u]) return; E.notifs
 function avisarAdmins(texto, link) { Object.values(E.usuarios).filter(u => u.rol === 'admin').forEach(u => notificar(u.id, texto, link)); }
 function dispositivoActual() { let d; try { d = localStorage.getItem('cdu_disp'); if (!d) { d = 'disp-' + Math.random().toString(36).slice(2, 8); localStorage.setItem('cdu_disp', d); } } catch (e) { d = 'disp-local'; } return d; }
 
-/* Arma el historial de ejemplo: regalos, apuestas pasadas y predicciones resueltas */
 function sembrarLibro() {
   const hace = m => new Date(Date.now() - m * 60000).toISOString();
   Object.values(E.usuarios).forEach(u => mover(u.id, REGLAS.regaloBienvenida + 250, 'regalo', 'bienvenida', u.creado));
   for (let d = 6; d >= 0; d--) Object.keys(E.usuarios).forEach((u, i) => { if ((i + d) % 3 !== 0) mover(u, 20, 'diario', 'regalo del día', hace(60 * 24 * d + i * 7)); if ((i * 3 + d) % 4 === 0) mover(u, 15 + (i % 3) * 10, 'reto', 'retos', hace(60 * 24 * d + 100 + i)); });
   const ap = (pid, u, op, monto, mins) => { const p = E.propuestas.find(x => x.id === pid); p.apuestas.push({ u, op, monto, f: hace(mins) }); mover(u, -monto, 'apuesta', pid, hace(mins)); };
-  // historial: jorge acierta casi todo
+
   ap('pr_robotica', 'u_jorge', 0, 50, 60 * 24 * 11); ap('pr_robotica', 'u_pedro', 1, 30, 60 * 24 * 11); ap('pr_robotica', 'u_diego', 1, 20, 60 * 24 * 11); ap('pr_robotica', 'u_sofia', 1, 25, 60 * 24 * 11);
   ap('pr_voley', 'u_jorge', 1, 40, 60 * 24 * 8); ap('pr_voley', 'u_valeria', 0, 30, 60 * 24 * 8); ap('pr_voley', 'u_sofia', 0, 20, 60 * 24 * 8); ap('pr_voley', 'u_mariana', 1, 20, 60 * 24 * 8);
   ap('pr_posada_asist', 'u_jorge', 0, 50, 60 * 24 * 16); ap('pr_posada_asist', 'u_pedro', 1, 25, 60 * 24 * 16); ap('pr_posada_asist', 'u_valeria', 1, 30, 60 * 24 * 16);
   const sesion = E.sesion; E.sesion = null;
   DB.resolver('pr_robotica', 0); DB.resolver('pr_voley', 1); DB.resolver('pr_posada_asist', 0);
   E.notifs = []; E.sesion = sesion;
-  // la predicción abierta: apuestas normales y un bloque sospechoso reciente
+
   ap('pr_badminton', 'u_diego', 0, 25, 60 * 20); ap('pr_badminton', 'u_pedro', 0, 15, 60 * 18); ap('pr_badminton', 'u_sofia', 0, 30, 60 * 10); ap('pr_badminton', 'u_valeria', 0, 20, 60 * 9); ap('pr_badminton', 'u_mariana', 1, 30, 60 * 6);
   ap('pr_badminton', 'u_jorge', 1, 50, 18); ap('pr_badminton', 'u_luis', 1, 50, 14); ap('pr_badminton', 'u_ana', 1, 50, 9);
 }
-window.DB = DB; // para que los juegos dentro de la red (iframe) puedan usar las ramitas
+window.DB = DB;
 
 function limpiarPropuestas() {
   const ids = new Set(E.propuestas.map(p => p.id));
@@ -514,7 +489,6 @@ function limpiarPropuestas() {
   E.notifs = E.notifs.filter(n => !/predicci|propuest/i.test(n.texto));
 }
 
-/* crea las cuentas del equipo de prueba si todavía no existen en este navegador */
 function asegurarEquipo() {
   let cambio = false;
   (CONFIG.cuentasEquipo || []).forEach(c => {
@@ -529,10 +503,8 @@ function asegurarEquipo() {
   if (cambio) DB.guardar();
 }
 
-/* hash simple para la demo; con la base de datos real, la contraseña la maneja el servidor (Supabase Auth) */
 function hashClave(t) { let h1 = 0xdeadbeef, h2 = 0x41c6ce57; t = 'cdu:' + t; for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); } h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909); return (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16); }
 
-/* deja la app en blanco: solo admin, cuenta del equipo oficial y niveles oficiales */
 function vaciarDemo() {
   const quedan = new Set(['u_diego', 'u_equipo']);
   Object.keys(E.usuarios).forEach(id => { if (!quedan.has(id)) delete E.usuarios[id]; });
@@ -545,7 +517,6 @@ function vaciarDemo() {
   Object.keys(E.usuarios).forEach(id => mover(id, REGLAS.regaloBienvenida, 'regalo', 'bienvenida', null, 'bienv_' + id));
 }
 
-/* tablones fijos: Universidad (solo el equipo publica), Eventos de alumnos y General */
 function asegurarTablones() {
   const base = [{ id: 'tb_uni', nombre: 'Universidad', oficial: true, desc: 'Conferencias, avisos y eventos de la universidad' }, { id: 'tb_eventos', nombre: 'Eventos de alumnos', desc: 'Organiza algo y ve quién se apunta', tipoDefecto: 'evento' }, { id: 'tb_general', nombre: 'General', desc: 'Trabajos, apuntes y lo que sea' }];
   base.forEach((b, i) => { const t = E.tablones.find(x => x.id === b.id); if (t) Object.assign(t, { oficial: !!b.oficial, desc: b.desc, tipoDefecto: b.tipoDefecto || null }); else E.tablones.splice(i, 0, { ...b, chat: null, autor: 'u_diego', fecha: new Date().toISOString() }); });

@@ -1,4 +1,3 @@
-/* Perfil, editar perfil, ajustes, verificación, notificaciones y ramitas */
 'use strict';
 const SERVICIOS = [[/spotify\.com/, 'Spotify', 'i-verde'], [/music\.apple\.com/, 'Apple Music', 'i-rojo'], [/music\.youtube\.com|youtube\.com|youtu\.be/, 'YouTube Music', 'i-rojo'], [/soundcloud\.com/, 'SoundCloud', 'i-naranja'], [/deezer\.com/, 'Deezer', 'i-morado']];
 const servicioDe = url => SERVICIOS.find(([r]) => r.test(url)) || [null, 'Enlace', 'i-azul'];
@@ -43,7 +42,7 @@ VISTAS.perfil = {
     cargarArchivosTablon(); montarNotitas();
   }
 };
-/* insignia con el estilo de la app y un destello que la recorre */
+
 function emblema(k) { const d = INSIGNIAS[k]; if (!d) return ''; return `<span class="insignia emblema ${d.clase}" title="${esc(d.texto)}"><span class="emblema-txt">${esc(d.texto)}</span></span>`; }
 function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).length + DB.estado.propuestas.filter(p => p.autor === u.id).length + DB.estado.rankings.filter(r => r.autor === u.id).length; }
 function reproducir(src, auto, dueno) { const u = DB.usuario(dueno) || Object.values(DB.estado.usuarios).find(x => DB.canciones(x).some(c => c.archivo === src)); const c = u && DB.canciones(u).find(x => x.archivo === src); return REPRO.alternar(c || { archivo: src, titulo: 'Canción' }, u?.id, auto); }
@@ -66,7 +65,6 @@ ACC.amistad = b => { const id = b.dataset.u, q = b.dataset.que;
 ACC.amigo = b => ACC.amistad({ dataset: { u: b.dataset.u, que: 'pedir' } });
 ACC.menuPerfil = b => abrirHoja(`<div class="pila" style="gap:8px">${DB.esAdmin() ? `<button class="btn-peligro ancho" data-a="suspender" data-u="${b.dataset.u}">${DB.usuario(b.dataset.u).suspendido ? 'Reactivar cuenta' : 'Suspender cuenta (admin)'}</button>` : ''}<button class="btn3 ancho" style="color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${b.dataset.u}" data-quien="${b.dataset.u}">${icono('bandera', 18)}Reportar perfil</button><button class="btn3 ancho" data-a="bloquear" data-u="${b.dataset.u}">${icono('bloquear', 18)}Bloquear</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
 
-/* ---------- Editar perfil (los cambios se marcan en amarillo) ---------- */
 VISTAS['editar-perfil'] = {
   titulo: 'Editar perfil', nav: 'perfil', atras: '#/perfil',
   render() {
@@ -108,7 +106,6 @@ FORMS.guardarPerfil = d => {
   aviso('Perfil actualizado'); ir('#/perfil');
 };
 
-/* ---------- Ajustes ---------- */
 VISTAS.ajustes = {
   titulo: 'Ajustes', nav: 'perfil', atras: '#/perfil',
   render() {
@@ -137,7 +134,6 @@ ACC.cerrarSesion = () => { UI.salioManual = true; DB.salir(); UI.reg.paso = 0; i
 ACC.reiniciarDatos = () => abrirHoja(`<h2>¿Borrar todo?</h2><p class="gris">Se borran las cuentas y publicaciones de prueba guardadas en este navegador y vuelven los datos de ejemplo.</p><div class="pila"><button class="btn-peligro ancho" data-a="confirmarReinicio">Sí, borrar</button><button class="btn3 ancho" data-a="cerrarHoja">Cancelar</button></div>`);
 ACC.confirmarReinicio = () => { DB.reiniciar(); UI.reg.paso = 0; cerrarHoja(); ir('#/bienvenida'); };
 
-/* ---------- Verificación ---------- */
 UI.verif = { metodo: 'correo', codigo: null, correo: '' };
 VISTAS.verificar = {
   titulo: 'Verificación', nav: 'perfil', atras: '#/perfil',
@@ -160,7 +156,6 @@ FORMS.codigoVerif = d => { if (d.c !== UI.verif.codigo) return aviso('Ese códig
 CAMBIOS.tipoDoc = el => { UI.verif.tipo = el.value; };
 CAMBIOS.credencial = el => { if (el.files[0]) { DB.enviarCredencial(el.files[0].name, (UI.verif.tipo || 'Credencial de la universidad').toLowerCase()); aviso('Recibido. Te avisamos cuando lo revisemos.'); refrescar(); } };
 
-/* ---------- Notificaciones ---------- */
 VISTAS.notificaciones = {
   titulo: 'Notificaciones', nav: 'inicio',
   render() {
@@ -174,7 +169,6 @@ VISTAS.notificaciones = {
 };
 ACC.consentir = b => { DB.responderConsentimiento(b.dataset.id, b.dataset.v === '1'); aviso(b.dataset.v === '1' ? 'Listo, aparecerás en el ranking' : 'No aparecerás en ese ranking'); refrescar(); };
 
-/* ---------- Ramitas ---------- */
 const NOMBRE_MOV = { regalo: 'Regalo', diario: 'Regalo del día', reto: 'Reto académico', juego: 'Juego diario', racha: 'Premio de racha', apuesta: 'Predicción', ganancia: 'Acertaste una predicción', devolucion: 'Devolución', premio: 'Premio', casino: 'Ruleta y tragamonedas', compra: 'Compra de ramitas' };
 VISTAS.ramitas = {
   titulo: 'Tus ramitas', nav: 'perfil', atras: '#/perfil',
@@ -207,12 +201,11 @@ CAMBIOS.audioSubir = async el => {
   catch { aviso('No pudimos guardar el archivo en este celular.'); }
 };
 
-/* disco de vinilo; en el centro la portada del archivo si trae */
 function vinilo(c) {
   const ok = c?.portada && /^data:image\/(jpeg|png|webp);base64,/.test(c.portada);
   return `<span class="vinilo${REPRO.sonando(c?.archivo) ? ' girando' : ''}" data-vinilo="${esc(c?.archivo || '')}" aria-hidden="true"><span class="etiqueta-disco" style="${ok ? `background:#4B1F7A url('${c.portada}') center/cover` : ''}"></span></span>`;
 }
-/* lee la portada incrustada en MP3 (ID3v2.2–2.4) o M4A/MP4 (covr); de un video toma un cuadro */
+
 async function extraerPortada(f) {
   if (/^video\//.test(f.type) || /\.(mp4|mov|webm|m4v)$/i.test(f.name || '')) { const v = await cuadroDeVideo(f).catch(() => null); if (v) return v; }
   const buf = new Uint8Array(await f.slice(0, Math.min(f.size, 40 * 1024 * 1024)).arrayBuffer());
@@ -242,7 +235,7 @@ async function extraerPortada(f) {
   if (!/^image\//.test(mime)) mime = img[0] === 0x89 ? 'image/png' : 'image/jpeg';
   return reducirImagen(new Blob([img], { type: mime }), 256);
 }
-/* toma un cuadro del video (al segundo 1) como portada */
+
 function cuadroDeVideo(f) {
   return new Promise((ok, mal) => { const v = document.createElement('video'), url = URL.createObjectURL(f); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
     const fin = r => { URL.revokeObjectURL(url); r(); };
@@ -252,7 +245,6 @@ function cuadroDeVideo(f) {
     v.addEventListener('error', () => { clearTimeout(t); fin(() => mal(new Error('video'))); }); });
 }
 
-/* redes vinculadas: se ven dentro de la app con el reproductor oficial de cada red */
 function embedRed(url) {
   const u = String(url || ''); let m = /^https:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/([A-Za-z0-9_-]{5,40})/.exec(u); if (m) return { red: 'instagram', src: `https://www.instagram.com/${m[2]}/${m[3]}/embed` };
   m = /^https:\/\/(www\.)?tiktok\.com\/@[A-Za-z0-9._]+\/video\/(\d{8,25})/.exec(u); if (m) return { red: 'tiktok', src: `https://www.tiktok.com/embed/v2/${m[2]}` };
@@ -270,7 +262,6 @@ VISTAS.redes = {
   }
 };
 
-/* ---------- Canciones del perfil ---------- */
 function embedMusica(url) {
   const u = String(url || '');
   let m = /open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|playlist|album|episode)\/([A-Za-z0-9]+)/.exec(u); if (m) return { servicio: 'Spotify', src: `https://open.spotify.com/embed/${m[1]}/${m[2]}`, alto: m[1] === 'track' ? 80 : 352 };
@@ -306,7 +297,6 @@ ACC.cancionEnlace = () => abrirHoja(`<form class="pila" data-form="cancionEnlace
 FORMS.cancionEnlace = d => { const url = urlSegura(d.enlace.trim()); if (!url) return aviso('Ese enlace no es válido.'); const l = DB.canciones(); if (l.length >= 8) return aviso('Máximo 8 canciones.'); const em = embedMusica(url);
   l.push({ titulo: d.titulo.trim() || (em ? 'Canción de ' + em.servicio : 'Mi canción'), artista: d.artista.trim(), enlace: url, archivo: '', portada: null, agregada: new Date().toISOString() }); DB.guardarCanciones(l); cerrarHoja(); pintarListaCanciones(); aviso(em ? `Agregada. Se escucha con el reproductor de ${em.servicio}.` : 'Agregada como enlace.'); };
 
-/* videos y publicaciones destacadas, a la vista en el perfil */
 function seccionDestacados(u, mio) {
   const l = (u.redes?.destacadas || []).map(embedRed).filter(Boolean); if (!l.length) return '';
   return `<section class="tarjeta"><h2 style="margin-bottom:8px">${mio ? 'Mis destacados' : 'Destacados'}</h2><div class="pila" style="gap:10px">${l.map((e, i) => {
@@ -317,7 +307,6 @@ function seccionDestacados(u, mio) {
   }).join('')}</div></section>`;
 }
 
-/* ---------- Amigos ---------- */
 UI.amigosTab = 'amigos'; UI.buscaGente = '';
 VISTAS.amigos = {
   titulo: 'Amigos', nav: 'perfil', atras: '#/perfil',

@@ -1,20 +1,13 @@
-/* Sincronización con Supabase.
-   La app sigue trabajando con su estado local (E) y, cada vez que guarda, sube a Supabase solo lo que cambió.
-   Cada pocos segundos baja lo que cambiaron los demás. Así todos ven lo mismo en distintos celulares.
-
-   Cómo se guarda: una tabla `objetos` donde cada fila es una cosa (una publicación, un usuario, un mensaje…).
-   Las listas que varias personas llenan a la vez (mensajes de un chat, apuestas, votos, comentarios, likes…)
-   van fila por fila, para que dos personas escribiendo al mismo tiempo no se pisen. */
 'use strict';
 const SYNC = (() => {
   const CFG = CONFIG.supabase || {};
   const activo = !!(CFG.url && CFG.clave);
   const CLAVE_META = 'cdu_sync_v1';
-  /* colecciones (listas con id) y el mapa de usuarios */
+
   const COLS = ['posts', 'propuestas', 'rankings', 'eventos', 'ventas', 'chats', 'agenda', 'niveles', 'profes', 'notifs', 'reportes', 'libro', 'jugadas', 'bitacora', 'tablones', 'tablonItems', 'lugares', 'lugaresPend', 'profesPend', 'escuchas', 'triviaPro'];
   const MAPAS = ['usuarios'];
   const LOCALES = ['sesion', 'version', 'semilla'];
-  /* campos que se guardan elemento por elemento: a = lista de objetos, p = lista de valores, m = mapa */
+
   const SUB = {
     chats: { mensajes: 'a', leido: 'm', vaciado: 'm', quitado: 'm' },
     posts: { comentarios: 'a', likes: 'p' },
@@ -33,7 +26,6 @@ const SYNC = (() => {
   const guardarMeta = () => { try { localStorage.setItem(CLAVE_META, JSON.stringify(meta)); } catch {} };
   const ordenar = arr => arr.sort((a, b) => String(a.f || a.fecha || '').localeCompare(String(b.f || b.fecha || '')) || String(a.id).localeCompare(String(b.id)));
 
-  /* ---------- estado → filas ---------- */
   function filas() {
     const R = new Map();
     const item = (col, it, id) => {
@@ -53,7 +45,6 @@ const SYNC = (() => {
     return R;
   }
 
-  /* ---------- filas → estado ---------- */
   function buscar(col, id) { if (MAPAS.includes(col)) return E[col]?.[id]; return (E[col] || []).find(x => x.id === id); }
   function aplicar(fila) {
     const seg = fila.k.split('/').map(dec), [col, id, f, el] = seg;
@@ -84,7 +75,6 @@ const SYNC = (() => {
     return true;
   }
 
-  /* ---------- red ---------- */
   async function bajar(desde) {
     const todas = []; let ultimo = desde;
     for (let vuelta = 0; vuelta < 200; vuelta++) {
@@ -101,7 +91,6 @@ const SYNC = (() => {
     }
   }
 
-  /* sube lo que cambió desde la última vez */
   async function subir() {
     if (!activo || !listo) return;
     if (subiendo) { otraVez = true; return; }
@@ -117,7 +106,6 @@ const SYNC = (() => {
     if (otraVez) { otraVez = false; setTimeout(subir, 50); }
   }
 
-  /* baja lo que cambiaron los demás */
   async function traer() {
     if (!activo || !listo || subiendo) return;
     try {
@@ -128,7 +116,7 @@ const SYNC = (() => {
         meta.cursor = Math.max(meta.cursor, f.seq);
         if (meta.hechos[f.k] === h) return;
         const loc = locales.get(f.k), hl = loc ? hash(estable(loc.datos)) : 'X';
-        if (hl !== (meta.hechos[f.k] ?? 'X') && hl !== h) return; /* hay un cambio local sin subir: gana el local */
+        if (hl !== (meta.hechos[f.k] ?? 'X') && hl !== h) return;
         if (aplicar(f)) { meta.hechos[f.k] = h; cambio = true; }
       });
       guardarMeta();
@@ -144,7 +132,6 @@ const SYNC = (() => {
   }
   function estado(e) { document.documentElement.dataset.sync = e; }
 
-  /* primer arranque: si nunca se ha sincronizado este navegador, lo de Supabase manda */
   async function iniciar() {
     if (!activo) return;
     try { meta = JSON.parse(localStorage.getItem(CLAVE_META) || 'null') || meta; } catch {}
@@ -177,7 +164,6 @@ const SYNC = (() => {
   }
   function programar() { if (!activo) return; clearTimeout(temporizador); temporizador = setTimeout(subir, 250); }
 
-  /* archivos (canciones, fotos y PDFs del tablón) en Supabase Storage */
   async function subirArchivo(clave, blob) {
     if (!activo) return false;
     try { const r = await fetch(`${CFG.url}/storage/v1/object/archivos/${clave.split('/').map(enc).join('/')}`, { method: 'POST', headers: { apikey: CFG.clave, 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'true' }, body: blob }); if (!r.ok) console.warn('[sync] archivo', r.status, await r.text()); return r.ok; }

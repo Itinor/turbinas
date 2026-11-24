@@ -1,5 +1,3 @@
-/* Palabras para los juegos de palabras y definiciones en vivo de Wikcionario (licencia CC BY-SA).
-   Cada persona recibe palabras distintas cada día (se mezclan con su id), así no se pueden pasar las respuestas. */
 'use strict';
 const PALABRAS_ES = `alma amor año agua aire alto arte ave azul baño beso boca bola bota brazo cama cara casa cielo cine coche
 cola copa cosa cruz cuna dado dedo diente día dios dolor duda edad eje fama faro fe fila flor foca foto fuego gato gota gris
@@ -29,7 +27,7 @@ talento tambor tarea teatro teclado tiempo tijera timbre tobillo tomate tormenta
 tuerca tumba universo uña vacío valor vapor vecino veneno ventana verano verde vestido viaje viejo violín visita volcán
 zanahoria`.split(/\s+/).filter(Boolean);
 const sinAcentos = w => w.toUpperCase().normalize('NFD').replace(/(?![̃])[̀-ͯ]/g, '').normalize('NFC');
-/* número al azar estable para una persona y un día */
+
 function semillaPersonal(sal) { const u = ((typeof DB !== 'undefined' && DB.yo()?.id) || 'anon') + (typeof modoLibre === 'function' && modoLibre() ? '|libre' + UI.libreN + '|' + (UI.libreBase = UI.libreBase || Math.random()) : ''); let h = 2166136261; for (const c of u + '|' + fechaLocal() + '|' + sal) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function azar(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function palabraPersonal() {
@@ -38,7 +36,6 @@ function palabraPersonal() {
   const w = l[Math.floor(r() * l.length)]; return { palabra: w, sol: sinAcentos(w), largo };
 }
 
-/* ---------- Definiciones (Wikcionario, en vivo) ---------- */
 const DEFINICIONES = {
   cache: (() => { try { return JSON.parse(localStorage.getItem('cdu_def') || '{}'); } catch { return {}; } })(),
   guardar() { try { const k = Object.keys(this.cache); if (k.length > 600) k.slice(0, k.length - 600).forEach(x => delete this.cache[x]); localStorage.setItem('cdu_def', JSON.stringify(this.cache)); } catch {} },
@@ -49,7 +46,7 @@ const DEFINICIONES = {
     if (palabra) { const raiz = palabra.toLowerCase().slice(0, Math.max(4, palabra.length - 2)); t = t.replace(new RegExp(raiz + '\\p{L}*', 'giu'), '___'); }
     return t.replace(/^[,;:.\s]+/, '');
   },
-  /* lee el wikitexto de una entrada y saca las acepciones en español */
+
   extraer(wiki, palabra) {
     const ini = wiki.search(/==\s*\{\{\s*lengua\s*\|\s*es\s*\}\}\s*==/i); if (ini < 0) return [];
     const resto = wiki.slice(ini + 5), fin = resto.search(/\n==\s*\{\{\s*lengua\s*\|/i), sec = fin >= 0 ? resto.slice(0, fin) : resto;
@@ -57,7 +54,7 @@ const DEFINICIONES = {
     sec.split('\n').forEach(l => { const m = /^;\s*\d+[^:\n]*?:\s*(.+)$/.exec(l); if (m) { const d = this.limpiar(m[1], palabra); if (d.length > 3) defs.push(d); } });
     return defs;
   },
-  /* pide las que falten en un solo viaje (hasta 40 a la vez) */
+
   async de(palabras) {
     const faltan = palabras.filter(p => !(p in this.cache));
     for (let i = 0; i < faltan.length; i += 40) {
@@ -75,7 +72,6 @@ const DEFINICIONES = {
   enlace: p => `https://es.wiktionary.org/wiki/${encodeURIComponent(p)}`
 };
 
-/* ---------- Crucigrama automático ---------- */
 function armarCrucigrama(seed, N = 12, cuantas = 9) {
   const r = azar(seed), cand = PALABRAS_ES.filter(w => { const n = [...sinAcentos(w)].length; return n >= 4 && n <= 8 && !/ü/.test(w); }).sort(() => r() - 0.5).slice(0, 80);
   const g = Array.from({ length: N }, () => Array(N).fill(null)), puestas = [];
@@ -95,13 +91,12 @@ function armarCrucigrama(seed, N = 12, cuantas = 9) {
     for (let f = 0; f < N; f++) for (let c = 0; c < N; c++) for (const h of [true, false]) { const k = cabe(s, f, c, h); if (k > 0 && (!mejor || k > mejor.k)) mejor = { f, c, h, k }; }
     if (mejor) poner(w, s, mejor.f, mejor.c, mejor.h);
   }
-  /* numerar */
+
   const inicio = {}; let n = 0;
   puestas.sort((a, b) => a.f - b.f || a.c - b.c).forEach(p => { const k = p.f + ',' + p.c; if (!inicio[k]) inicio[k] = ++n; p.n = inicio[k]; });
   return { N, grid: g, palabras: puestas, inicio };
 }
 
-/* ---------- Trivia de cultura general (se mezcla con la de la carrera) ---------- */
 const TRIVIA_GENERAL = [
   { p: '¿Cuál es el río más largo de América?', o: ['Misisipi', 'Amazonas', 'Paraná', 'Bravo'], c: 1 },
   { p: '¿En qué año llegó el ser humano a la Luna?', o: ['1965', '1969', '1972', '1959'], c: 1 },

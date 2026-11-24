@@ -1,4 +1,3 @@
-/* Tablón: trabajos, PDFs, fotos y notas, como un corcho; también en lista ordenada */
 'use strict';
 UI.tablon = { vista: 'corcho', filtro: 'todo' };
 const COLORES_NOTA = { amarillo: '#FFF3A6', rosa: '#FFD6E0', azul: '#DCE8FB', verde: '#DCF5E3' };
@@ -23,9 +22,9 @@ VISTAS.tablon = {
   },
   montar() { cargarArchivosTablon(); }
 };
-/* columnas: cuántos caben a lo ancho (1 a 4); hacia abajo, los que haya */
-const colsTablon = k => { try { const v = +localStorage.getItem('itinor_cols_' + k); return v >= 1 && v <= 4 ? v : (k === 'lista' ? 1 : 2); } catch { return k === 'lista' ? 1 : 2; } };
-const selCols = k => `<span class="cols-sel" role="group" aria-label="Columnas"><span>Columnas</span>${[1, 2, 3, 4].map(n => `<button class="${colsTablon(k) === n ? 'on' : ''}" data-a="colsTablon" data-k="${k}" data-n="${n}" aria-label="${n} columna${n > 1 ? 's' : ''}">${n}</button>`).join('')}</span>`;
+
+const colsTablon = k => { try { const v = +localStorage.getItem('itinor_cols_' + k); return v === 1 || v === 4 ? v : (k === 'lista' ? 1 : 4); } catch { return k === 'lista' ? 1 : 4; } };
+const selCols = k => `<span class="cols-sel" role="group" aria-label="Acomodo">${[[4, 'mosaico', 'Ver en cuadrícula de 4'], [1, 'renglones', 'Ver uno debajo de otro']].map(([n, ic, t]) => `<button class="${colsTablon(k) === n ? 'on' : ''}" data-a="colsTablon" data-k="${k}" data-n="${n}" aria-label="${t}" title="${t}">${icono(ic, 18)}</button>`).join('')}</span>`;
 ACC.colsTablon = b => { try { localStorage.setItem('itinor_cols_' + b.dataset.k, b.dataset.n); } catch {} refrescar(); };
 function listaTablones() {
   const ts = DB.misTablones(), fijos = ['tb_uni', 'tb_eventos', 'tb_general'];
@@ -37,7 +36,7 @@ function listaTablones() {
 }
 function corcho(items, vacio, preview) {
   const N = preview ? 2 : colsTablon('corcho'), cols = Array(N).fill(12), tag = preview ? 'span' : 'button'; let html = '';
-  /* ancho aproximado de cada columna para calcular qué tan altas quedan las fotos */
+
   const anchoCol = Math.min(420, ((Math.min(window.innerWidth || 800, 1100) - (window.innerWidth >= 900 ? 300 : 60)) / N) - 20);
   const alto = { nota: 150, archivo: 190, foto: 215, evento: 175 };
   items.forEach(it => {
@@ -61,7 +60,7 @@ function filaTablon(it) {
     ${it.tipo === 'foto' || esImagen(it) ? `<span class="foto-pin" style="width:64px;height:64px;flex:none" data-idb="${esc(it.archivo.clave)}" data-como="fondo"></span>` : `<span class="doc-pin" style="width:52px;height:64px;flex:none">${icono('archivo', 22)}</span>`}
     <span style="flex:1;min-width:0">${it.fijado ? '<span class="mini" style="font-weight:800;color:#B42318">FIJADO · </span>' : ''}<b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.titulo || (it.tipo === 'foto' ? 'Foto' : it.archivo.nombre))}</b><span class="mini gris">${quien}${it.archivo?.peso ? ' · ' + pesoBonito(it.archivo.peso) : ''}</span></span></button>`;
 }
-/* los archivos viven en este celular (IndexedDB) hasta conectar el servidor */
+
 async function cargarArchivosTablon() {
   for (const el of $$('[data-idb]')) {
     if (el.dataset.listo) continue; el.dataset.listo = '1';
@@ -138,13 +137,12 @@ ACC.apuntarseTablon = b => { DB.apuntarseTablon(b.dataset.id); refrescar(); ACC.
 
 function esImagen(it) { return it.tipo === 'archivo' && (/^image\//.test(it.archivo?.mime || '') || /\.(png|jpe?g|gif|webp|heic|bmp)$/i.test(it.archivo?.nombre || '')); }
 
-/* portada de un tablón como collage: lo que más interacción tiene queda encima y más al centro */
 function collage(items, vacio) {
   if (!items.length) return `<div class="corcho" style="height:100%">${vacio}</div>`;
   const top = items.slice().sort((a, b) => DB.interaccion(b) - DB.interaccion(a) || b.fecha.localeCompare(a.fecha)).slice(0, 9);
   const n = top.length, html = top.map((it, i) => {
     const g = giro(it.id), h2 = (g.dx * 37 + i * 11) % 100;
-    /* el más visto al centro; los demás alrededor, un poco más chicos */
+
     const ancho = i === 0 ? 48 : 40 - Math.min(10, i);
     const left = i === 0 ? 26 : ((i % 2 ? 2 : 56) + (h2 % 12));
     const topPx = i === 0 ? 40 : 6 + ((Math.floor((i - 1) / 2) * 70) + (h2 % 30)) % 200;

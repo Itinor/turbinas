@@ -1,4 +1,3 @@
-/* Agenda: exámenes, entregas y proyectos con cuenta regresiva, compartibles en un grupo */
 'use strict';
 UI.agendaDia = null;
 const TIPO_AG = { Examen: ['i-amarillo', '#F5B700'], Entrega: ['i-azul', '#1D5FD1'], Proyecto: ['i-morado', '#4B1F7A'], Evento: ['i-verde', '#15803D'] };

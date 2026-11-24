@@ -1,4 +1,3 @@
-/* Herramientas: graficadora (con lector de fórmulas seguro) y métodos numéricos */
 'use strict';
 const COLORES_FN = ['#4B1F7A', '#1D5FD1', '#FF9F1C', '#15803D'];
 UI.graf = { fns: ['x^3 - 3x', 'sen(x)', '', ''], cx: 0, cy: 0, esc: 45, area: { on: false, a: 0, b: 2 }, ver: { raices: true, extremos: true, inflexion: true, cortes: true, derivada: false } };
@@ -38,18 +37,18 @@ function iniciarGraficadora() {
     for (let x = x0; X(x) < W; x += paso) { ctx.beginPath(); ctx.moveTo(X(x), 0); ctx.lineTo(X(x), H); ctx.stroke(); if (Math.abs(x) > paso / 2) ctx.fillText(+x.toPrecision(6) + '', X(x) + 3, Math.min(H - 4, Math.max(14, Y(0) + 14))); }
     for (let y = y0; Y(y) > 0; y += paso) { ctx.beginPath(); ctx.moveTo(0, Y(y)); ctx.lineTo(W, Y(y)); ctx.stroke(); if (Math.abs(y) > paso / 2) ctx.fillText(+y.toPrecision(6) + '', Math.min(W - 40, Math.max(4, X(0) + 4)), Y(y) - 3); }
     ctx.strokeStyle = tinta; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, Y(0)); ctx.lineTo(W, Y(0)); ctx.moveTo(X(0), 0); ctx.lineTo(X(0), H); ctx.stroke();
-    // área bajo f
+
     const f0 = grafCompiladas[0];
     if (G.area.on && f0 && G.area.b > G.area.a) { ctx.fillStyle = 'rgba(255,159,28,.28)'; ctx.beginPath(); ctx.moveTo(X(G.area.a), Y(0)); const n = 300; for (let k = 0; k <= n; k++) { const x = G.area.a + (G.area.b - G.area.a) * k / n, y = f0(x); ctx.lineTo(X(x), Y(Number.isFinite(y) ? y : 0)); } ctx.lineTo(X(G.area.b), Y(0)); ctx.closePath(); ctx.fill(); }
     grafCompiladas.forEach((f, i) => { if (!f) return; ctx.strokeStyle = COLORES_FN[i]; ctx.lineWidth = 3; ctx.beginPath(); let pen = false, prev = null;
       for (let px = 0; px <= W; px++) { const y = f(xv(px)), py = Y(y); if (!Number.isFinite(y) || Math.abs(py) > H * 4 || (prev !== null && Math.abs(py - prev) > H)) { pen = false; prev = null; continue; } if (pen) ctx.lineTo(px, py); else { ctx.moveTo(px, py); pen = true; } prev = py; }
       ctx.stroke(); });
-    // derivada de f (punteada)
+
     const xmin = xv(0), xmax = xv(W), V = G.ver;
     if (V.derivada && f0) { const h = 1e-4; ctx.strokeStyle = COLORES_FN[0]; ctx.setLineDash([7, 6]); ctx.lineWidth = 2; ctx.beginPath(); let pen = false;
       for (let px = 0; px <= W; px += 2) { const x = xv(px), y = (f0(x + h) - f0(x - h)) / (2 * h), py = Y(y); if (!Number.isFinite(y) || Math.abs(py) > H * 4) { pen = false; continue; } if (pen) ctx.lineTo(px, py); else { ctx.moveTo(px, py); pen = true; } }
       ctx.stroke(); ctx.setLineDash([]); }
-    // puntos notables: raíces, máximos, mínimos, inflexión, cruces y corte con el eje y
+
     const pts = [], N = Math.min(1200, Math.max(300, W)), dx = (xmax - xmin) / N;
     const refina = (g, a, b) => { let ga = g(a); for (let k = 0; k < 60; k++) { const m = (a + b) / 2, gm = g(m); if (ga * gm <= 0) b = m; else { a = m; ga = gm; } } return (a + b) / 2; };
     const cambios = (g, cb) => { let a = xmin, ga = g(a); for (let k = 1; k <= N; k++) { const b = xmin + k * dx, gb = g(b); if (Number.isFinite(ga) && Number.isFinite(gb) && ga * gb < 0 && Math.abs(ga - gb) < 1e3) cb(refina(g, a, b), ga, gb); else if (gb === 0 && Number.isFinite(ga) && ga !== 0) cb(b, ga, gb); a = b; ga = gb; } };
@@ -104,7 +103,6 @@ ACC.centrar = () => { Object.assign(UI.graf, { cx: 0, cy: 0, esc: 45 }); UI.graf
 
 function pestanasHerr(act) { return `<div class="pestanas">${[['', 'Graficadora'], ['calculadora', 'Calculadora'], ['metodos', 'Métodos numéricos']].map(([k, t]) => `<a class="pastilla${act === k ? ' on' : ''}" style="display:inline-grid;place-items:center;text-decoration:none;color:inherit" href="#/herramientas${k ? '/' + k : ''}">${t}</a>`).join('')}</div>`; }
 
-/* ---------- Calculadora científica ---------- */
 UI.calc = { expr: '', res: '', ans: 0, grados: true, hist: (() => { try { return JSON.parse(localStorage.getItem('cdu_calc') || '[]'); } catch (e) { return []; } })() };
 const TECLAS = [['DEG', 'sen(', 'cos(', 'tan(', '(', ')'], ['asen(', 'acos(', 'atan(', '^', 'x²', '⌫'], ['senh(', 'cosh(', 'tanh(', 'x³', '1/x', 'C'], ['raiz(', 'cbrt(', 'ln(', 'log(', 'abs(', '!'], ['7', '8', '9', '/', 'eˣ', '10ˣ'], ['4', '5', '6', '*', 'pi', 'e'], ['1', '2', '3', '-', 'EXP', 'Ans'], ['0', '.', '+', '=']];
 const INSERTA = { 'x²': '^2', 'x³': '^3', '1/x': '^(-1)', 'eˣ': 'e^(', '10ˣ': '10^(', 'EXP': '*10^(' };

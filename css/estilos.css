@@ -1,11 +1,9 @@
-/* Cosas de la uni — estilos generales
-   Colores de marca: morado (principal), amarillo y naranja (acción), azul (información). */
 :root{
   --morado:#4B1F7A; --azul:#1D5FD1; --amarillo:#FFC93C; --naranja:#FF9F1C;
   --fondo:#F7F5FB; --tarjeta:#FFFFFF; --tinta:#1B1530; --gris:#5E5873; --linea:#E6E1F0; --suave:#F3EFFA;
   --moradoTxt:#4B1F7A; --azulTxt:#174EAD; --okBg:#DCF5E3; --okTxt:#14632F; --malBg:#FEE2E2; --malTxt:#991B1B;
   --avisoBg:#FFF6DA; --avisoTxt:#5C4300;
-  --g-accion:#FFC93C;   /* antes degradado; ahora color sólido como en el diseño original */
+  --g-accion:#FFC93C;
   --g-marca:#4B1F7A;
   --g-banda:linear-gradient(120deg,#4B1F7A 50%,#2B3FA8 80%,#1D5FD1);
   --radio:18px; --sombra:0 8px 24px rgba(27,21,48,.06);
@@ -27,7 +25,6 @@ button{cursor:pointer}
 .oculto{position:absolute!important;left:-9999px}
 sup,sub{font-size:.62em}
 
-/* ---------- Estructura ---------- */
 .shell{display:flex;min-height:100vh}
 .lado{display:none}
 .principal{flex:1;display:flex;flex-direction:column;min-height:100vh;padding-bottom:84px}
@@ -60,7 +57,6 @@ main#vista{flex:1;width:100%;max-width:880px;margin:0 auto;padding:16px}
   main#vista{padding:24px}
 }
 
-/* ---------- Piezas ---------- */
 .tarjeta{background:var(--tarjeta);border:1px solid var(--linea);border-radius:var(--radio);padding:16px;box-shadow:var(--sombra)}
 .pila{display:flex;flex-direction:column;gap:14px}
 .fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -102,7 +98,6 @@ textarea{resize:vertical;min-height:80px}
 .barra-prog>span{display:block;height:100%;border-radius:999px;background:var(--g-marca)}
 .barra-prog.am>span{background:var(--g-accion)}
 
-/* Publicaciones */
 .post .cab{display:flex;align-items:center;gap:10px}
 .post .cab .quien{flex:1}
 .post .cab b{font-size:15px}
@@ -112,7 +107,6 @@ textarea{resize:vertical;min-height:80px}
 .reaccion.on{background:var(--suave);color:var(--moradoTxt);border-color:transparent}
 .coment{display:flex;gap:8px;padding:8px 0;border-top:1px solid var(--linea);font-size:14px}
 
-/* Hoja inferior y avisos */
 .velo{position:fixed;inset:0;z-index:60;background:rgba(27,21,48,.5);display:flex;align-items:flex-end;justify-content:center}
 .hoja{width:100%;max-width:560px;max-height:88vh;overflow-y:auto;background:var(--tarjeta);border-radius:24px 24px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom))}
 .hoja .asa{width:42px;height:5px;border-radius:999px;background:var(--linea);margin:0 auto 10px}
@@ -120,7 +114,6 @@ textarea{resize:vertical;min-height:80px}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:80;background:#1B1530;color:#fff;padding:12px 18px;border-radius:14px;font-weight:600;font-size:14px;max-width:92vw;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 @media(prefers-reduced-motion:no-preference){.toast{animation:sube .25s ease}.aparece{animation:aparece .25s ease}@keyframes sube{from{opacity:0;transform:translate(-50%,10px)}}@keyframes aparece{from{opacity:.4;transform:scale(.98)}}}
 
-/* Retos y juegos */
 .problema{background:linear-gradient(150deg,#4B1F7A,#3A2A8F 60%,#1D5FD1);color:#fff;border-radius:24px;padding:20px clamp(14px,4vw,28px) 22px;position:relative;overflow:hidden}
 .expr{background:#fff;color:#1B1530;border-radius:18px;padding:20px 14px;text-align:center;font-family:Sora,sans-serif;font-weight:600;font-size:clamp(21px,5.4vw,32px);line-height:1.5;overflow-x:auto}
 .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.78em;line-height:1.15;margin:0 .12em}
@@ -155,34 +148,29 @@ textarea{resize:vertical;min-height:80px}
 .teclado button.v{background:#15803D;color:#fff}.teclado button.a{background:#E0A100}.teclado button.g{background:#6B6480;color:#fff}
 .marco-juego{width:100%;height:min(78vh,760px);border:0;border-radius:18px;background:#000}
 
-/* Baraja */
 .mesa{background:radial-gradient(circle at center,#5B3A99,#3A1F6B);border-radius:22px;min-height:200px;display:flex;align-items:center;justify-content:center;gap:18px;padding:20px;border:4px solid #2E1757}
 .carta,.reverso{width:100px;height:140px;border-radius:14px;box-shadow:0 12px 24px rgba(0,0,0,.3)}
 .carta{background:#fff;color:#1B1530;display:flex;flex-direction:column;justify-content:space-between;padding:10px;font-weight:900}
 .carta.roja{color:#D7263D}.carta .c{font-size:44px;text-align:center}
 .reverso{background:repeating-linear-gradient(45deg,#FFC93C 0 8px,#FF9F1C 8px 16px);border:5px solid #fff}
 
-/* Tablas */
 .tabla{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th{text-align:left;font-size:12px;color:var(--gris);padding:8px;border-bottom:1px solid var(--linea);white-space:nowrap}
 td{padding:9px 8px;border-bottom:1px solid var(--linea);vertical-align:middle}
 td.num,th.num{text-align:right;white-space:nowrap}
 
-/* Graficadora */
 .lienzo{position:relative;height:min(62vh,520px);border-radius:18px;overflow:hidden;border:1px solid var(--linea);background:var(--tarjeta);touch-action:none}
 .lienzo canvas{position:absolute;inset:0;width:100%;height:100%}
 .lienzo .coord{position:absolute;left:10px;top:10px;background:var(--tarjeta);border:1px solid var(--linea);border-radius:10px;padding:4px 8px;font-size:12px;font-family:Sora,sans-serif}
 .fn-fila{display:flex;align-items:center;gap:8px}
 .fn-fila .color{width:14px;height:14px;border-radius:50%;flex:none}
 
-/* Mapa */
 .mapa{position:relative;border-radius:18px;overflow-x:auto;overflow-y:hidden;background:#E3F0CF;border:1px solid var(--linea)}
 .mapa g[role=button]:focus{outline:none}.mapa g[role=button]:focus-visible path,.mapa g[role=button]:focus-visible ellipse{stroke:#FFC93C;stroke-width:6}
 .mapa .ed{position:absolute;border:1px solid var(--linea);border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#1B1530;text-align:center;padding:2px}
 .mapa .ed.on{outline:3px solid var(--naranja)}
 
-/* vinilo de la canción del perfil */
 .vinilo{width:60px;height:60px;border-radius:50%;flex:none;position:relative;display:grid;place-items:center;
   background:radial-gradient(circle,#111 0 30%,transparent 31%),repeating-radial-gradient(circle,#1a1a1a 0 2px,#2b2b2b 2px 3px);box-shadow:0 0 0 2px #2b2b2b,inset 0 0 0 1px #000}
 .vinilo::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 30deg,transparent 0 40deg,rgba(255,255,255,.14) 50deg,transparent 70deg 210deg,rgba(255,255,255,.1) 230deg,transparent 250deg)}
@@ -192,7 +180,6 @@ td.num,th.num{text-align:right;white-space:nowrap}
 @keyframes girar{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.vinilo.girando{animation-duration:8s}}
 
-/* mini reproductor que sigue sonando en toda la app */
 .mini-repro{position:fixed;left:8px;right:8px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:29;display:flex;align-items:center;gap:6px;background:#1B1530;color:#fff;border-radius:16px;padding:8px 8px 8px 10px;box-shadow:0 8px 24px rgba(27,21,48,.3)}
 .mini-repro .icono-btn{color:#fff}
 .mini-repro .mini-btn{background:#FFC93C;color:#1B1530;border-radius:50%}
@@ -200,7 +187,6 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .principal:has(.mini-repro){padding-bottom:150px}
 @media (min-width:900px){.mini-repro{left:auto;right:20px;bottom:20px;width:400px}.principal:has(.mini-repro){padding-bottom:90px}}
 
-/* tablón */
 .corcho{position:relative;border-radius:18px;border:8px solid #8A5A2B;box-shadow:inset 0 0 24px rgba(0,0,0,.25);overflow:hidden;display:flex;
   background-color:#C9965B;background-image:radial-gradient(rgba(90,55,20,.35) 1px,transparent 1.5px),radial-gradient(rgba(255,235,200,.25) 1px,transparent 1.5px);background-size:9px 9px,13px 13px;background-position:0 0,4px 6px}
 .pin-tablon{position:absolute;width:calc(50% - 22px);max-width:230px;box-sizing:border-box;background:#fff;border:0;padding:10px 10px 8px;text-align:left;color:#1B1530;box-shadow:0 6px 14px rgba(0,0,0,.3);font:inherit;cursor:pointer}
@@ -227,7 +213,6 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .tapa-sync{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--fondo,#F6F3FB);text-align:center;font-weight:700;color:var(--moradoTxt)}
 .tapa-sync p{margin:8px 0 0}
 
-/* crucigrama */
 .crucigrama{display:grid;gap:2px;max-width:min(100%,460px);margin:0 auto;background:#1B1530;padding:2px;border-radius:10px}
 .crucigrama .cn{aspect-ratio:1;background:#1B1530}
 .crucigrama .cc{aspect-ratio:1;background:#fff;position:relative;display:block}
@@ -249,7 +234,6 @@ td.num,th.num{text-align:right;white-space:nowrap}
 .adj-doc{display:flex;align-items:center;gap:10px;border:0;background:rgba(255,255,255,.18);color:inherit;border-radius:12px;padding:8px 10px;margin:0 -4px 6px;cursor:pointer;font:inherit;max-width:240px}
 .adj-doc:not(.mio){background:var(--tarjeta)}
 
-/* barra de desplazamiento minimalista: delgada, sin flechas y solo visible mientras te mueves */
 html{scrollbar-width:thin;scrollbar-color:transparent transparent}
 html.desplazando{scrollbar-color:rgba(75,31,122,.45) transparent}
 *::-webkit-scrollbar{width:6px;height:6px}
@@ -268,14 +252,13 @@ html.desplazando *{scrollbar-color:rgba(75,31,122,.45) transparent}
 .medalla{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#1B1530;flex:none}.medalla.m1{background:#FFC93C}.medalla.m2{background:#D9D9E3}.medalla.m3{background:#E8B48A}
 
 .i-original{background:linear-gradient(90deg,#FFC93C,#FF9F1C);color:#1B1530;font-weight:800;box-shadow:0 0 0 1.5px #4B1F7A inset}
-/* visor de documentos */
+
 .hoja.grande{max-width:960px;height:92vh;max-height:92vh;display:flex;flex-direction:column;padding-bottom:12px}
 .visor-cuerpo{flex:1;min-height:0;overflow:auto;background:#EEE9F6;border-radius:14px;padding:8px}
 .visor-cuerpo canvas{display:block;width:100%;height:auto;margin:0 auto 8px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:4px}
 .visor-cuerpo iframe{width:100%;height:100%;min-height:70vh;border:0;border-radius:8px;background:#fff}
 .visor-cuerpo pre{white-space:pre-wrap;word-break:break-word;margin:0;padding:12px;background:#fff;border-radius:8px;font-size:13px}
 
-/* horario en cuadrícula */
 .horario-tabla{margin-top:10px;border:1.5px solid #E8D9D4;border-radius:14px;overflow:hidden;background:#FFFCFA}
 .ht-cab{display:grid;grid-template-columns:46px repeat(var(--cols),1fr);background:#F4E6E1;font-size:12px;font-weight:700;color:#5B4A47;text-align:center;text-transform:uppercase;letter-spacing:.04em}
 .ht-cab span{padding:8px 2px;border-left:1px solid #E8D9D4}.ht-cab span:first-child{border-left:0;text-transform:none}
@@ -332,7 +315,6 @@ details.ayuda[open] summary{margin-bottom:8px}
 .ayuda-cuerpo li{margin:4px 0}
 button.punto-color{padding:0;cursor:pointer;min-height:0}
 
-/* ---------- emblemas (insignias del perfil): mismo estilo de la app + destello ---------- */
 .emblemas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .emblema{position:relative;overflow:hidden;isolation:isolate;padding:5px 12px;font-size:12.5px}
 .emblema-txt{position:relative;z-index:1}
@@ -352,7 +334,7 @@ button.punto-color{padding:0;cursor:pointer;min-height:0}
 
 .cols-sel{display:inline-flex;align-items:center;gap:2px;background:var(--suave);border-radius:12px;padding:3px;flex:none}
 .cols-sel span{font-size:12px;font-weight:700;color:var(--gris,#6B6680);padding:0 6px}
-.cols-sel button{min-width:30px;height:30px;border:0;border-radius:9px;background:transparent;font:inherit;font-weight:800;font-size:13px;cursor:pointer;color:inherit}
+.cols-sel button{display:grid;place-items:center;min-width:34px;height:32px;border:0;border-radius:9px;background:transparent;font:inherit;font-weight:800;font-size:13px;cursor:pointer;color:inherit}
 .cols-sel button.on{background:var(--tarjeta,#fff);box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--moradoTxt)}
 .rejilla-tablones{display:grid;gap:22px 16px;grid-template-columns:repeat(var(--n,1),minmax(0,1fr))}
 .rejilla-tablones[data-n="3"] .vista-corcho,.rejilla-tablones[data-n="4"] .vista-corcho{height:230px}

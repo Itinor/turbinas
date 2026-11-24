@@ -1,4 +1,3 @@
-/* Crear cuenta / entrar */
 'use strict';
 UI.reg = { paso: 0, entrada: 'entrar', modo: 'correo', clave: '', contacto: '', doc: null, carrera: null, gen: null, semestre: null, vis: 'amigos', usuario: '', nombre: '' };
 VISTAS.bienvenida = {
@@ -71,7 +70,7 @@ ACC.regModo = b => { UI.reg.modo = b.dataset.m; pintar(); };
 ACC.regDemo = b => { DB.entrar(b.dataset.u); ir('#/inicio'); };
 ACC.regCarrera = b => { UI.reg.carrera = b.dataset.c; pintar(); };
 ACC.regVis = b => { UI.reg.vis = b.dataset.v; pintar(); };
-/* capa 8: contraseñas que se adivinan en segundos */
+
 const CLAVES_COMUNES = ['12345678', '123456789', '1234567890', 'password', 'contraseña', 'contrasena', 'qwertyuiop', 'qwerty123', '11111111', '00000000', 'iloveyou', 'abc12345', 'password1', '87654321', 'asdfghjk', 'uach2024', 'uach2025', 'uach2026', 'mexico123', 'teamo123', 'aaaaaaaa'];
 function revisarFuerza(p, u = {}) {
   const s = String(p || ''), l = s.toLowerCase();
@@ -101,7 +100,7 @@ FORMS.regPaso2 = d => {
   if (pass) CRIPTO.abrirConClave(nuevo, pass).catch(e => console.warn(e));
   r.paso = 3; location.hash = '#/bienvenida'; pintar();
 };
-/* entradas en vivo */
+
 document.addEventListener('input', e => {
   const k = e.target.dataset?.entrada; if (!k) return;
   if (k === 'regUsuario') { UI.reg.usuario = e.target.value.toLowerCase(); revisarUsuario(); const p = $('#prevU'); if (p) p.textContent = '@' + (UI.reg.usuario || 'tu.usuario'); }

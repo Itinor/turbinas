@@ -1,4 +1,3 @@
-/* El rincón del castor: racha, retos académicos, diarios, mejores de la semana y juegos */
 'use strict';
 const JUEGOS_EXTERNOS = {
   runner: { nombre: 'Runner', desc: 'Corre, salta y no te caigas', src: 'juegos/runner/index.html?v=202611231638', ico: 'runner', tinte: '#FFF6DA', color: '#8A5A00' },
@@ -32,7 +31,6 @@ VISTAS.juegos = {
   }
 };
 
-/* ---------- Juegos individuales ---------- */
 UI.trivia = null; UI.palabra = null; UI.logica = null; UI.baraja = { hist: [] };
 VISTAS.juego = {
   titulo: ([k, m]) => m === 'libre' ? ({ trivia: 'Trivia', palabra: 'Palabra', logica: 'Lógica', crucigrama: 'Crucigrama', significa: '¿Qué significa?' }[k] || 'Juego') + ' · libre' : ({ trivia: 'Trivia del día', palabra: 'Palabra del día', logica: 'Reto de lógica', crucigrama: 'Crucigrama del día', significa: '¿Qué significa?', baraja: 'La Baraja' }[k] || JUEGOS_EXTERNOS[k]?.nombre || 'Juego'), nav: 'juegos', atras: '#/juegos',
@@ -91,7 +89,6 @@ ACC.tecla = b => {
 document.addEventListener('keydown', e => { if (ruta().nombre !== 'juego' || ruta().params[0] !== 'palabra' || e.target.matches('input,textarea')) return; const k = e.key.toUpperCase(); if (k === 'BACKSPACE') ACC.tecla({ dataset: { k: 'borrar' } }); else if (k === 'ENTER') ACC.tecla({ dataset: { k: 'enviar' } }); else if (/^[A-ZÑ]$/.test(k)) ACC.tecla({ dataset: { k } }); });
 ACC.logicaResp = b => { const L = UI.logica; if (L.eleg !== null) return; L.eleg = +b.dataset.v; const q = LOGICA[semillaPersonal('logica') % LOGICA.length]; premiarDiario('logica', L.eleg === q.r ? 10 : 0); refrescar(); };
 
-/* ---------- La Baraja (oráculo del chisme) ---------- */
 const PALOS = [['♥', 'roja'], ['♦', 'roja'], ['♣', ''], ['♠', '']], VALORES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const RESP = { SÍ: ['Sí, no te hagas.', 'Sí, las cartas ya te quemaron.', 'Sí, pero actúa normal.', 'Sí, la baraja habló claro.'], NO: ['No, ahí no es.', 'No, ni le muevas.', 'No, la baraja dijo que nel.', 'No, y sin llorar.'], 'TAL VEZ': ['Tal vez… aquí falta chisme.', 'Tal vez, pregunta más específico.', 'Tal vez, la novela apenas empieza.', 'Tal vez… esto se va a poner bueno.'] };
 const PREG_RANDOM = ['¿Mi crush me va a hablar pronto?', '¿Voy a pasar el examen?', '¿Alguien está hablando de mí?', '¿Hoy va a pasar algo interesante?', '¿Me van a contestar el mensaje?', '¿Esta semana se arma el chisme?', '¿Me conviene decir la verdad?'];
@@ -123,7 +120,6 @@ async function cargarDefiniciones() {
   cajas.forEach(c => { const p = c.dataset.def, d = r[p]; c.querySelector('p').outerHTML = d && d.length ? `<ol class="peq" style="margin:6px 0 0;padding-left:18px">${d.map(x => `<li>${esc(x)}</li>`).join('')}</ol>${FUENTE_DEF}` : `<p class="peq gris" style="margin:4px 0 0">${d ? 'No encontramos su significado.' : 'Sin conexión para buscar su significado.'} <a href="${DEFINICIONES.enlace(p)}" target="_blank" rel="noopener noreferrer">Buscar en Wikcionario</a></p>`; });
 }
 
-/* ---------- Crucigrama del día (cada quien el suyo) ---------- */
 function vistaCrucigrama(d) {
   if (!UI.cruci || UI.cruci.clave !== claveJuego()) UI.cruci = { clave: claveJuego(), data: armarCrucigrama(semillaPersonal('cruci')), resp: {}, defs: null, dir: true, mal: {}, fin: !!d.crucigrama };
   const C = UI.cruci, X = C.data;
@@ -150,7 +146,6 @@ ACC.revisarCruci = () => {
   refrescar();
 };
 
-/* ---------- ¿Qué significa? (cada quien el suyo) ---------- */
 function vistaSignifica(d) {
   if (!UI.signi || UI.signi.clave !== claveJuego()) {
     const r = azar(semillaPersonal('significa')), ws = PALABRAS_ES.filter(w => w.length >= 4).sort(() => r() - 0.5).slice(0, 10);
@@ -168,7 +163,6 @@ function vistaSignifica(d) {
 }
 ACC.signiResp = b => { const S = UI.signi; if (S.eleg !== null) return; S.eleg = +b.dataset.i; premiarDiario('significa', S.eleg === 0 ? 10 : 0); refrescar(); };
 
-/* ---------- modo libre (para relajarse): mismos juegos, sin ramitas, uno tras otro ---------- */
 UI.libreN = 0;
 function modoLibre() { const r = ruta(); return r.nombre === 'juego' && r.params[1] === 'libre'; }
 function claveJuego() { return fechaLocal() + '|' + (DB.yo()?.id || '') + '|' + (modoLibre() ? 'L' + UI.libreN : 'D'); }

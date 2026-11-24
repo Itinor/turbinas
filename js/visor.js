@@ -1,4 +1,3 @@
-/* Visor de documentos: ver fotos, PDF, Word, PowerPoint, Excel y texto sin descargarlos. */
 'use strict';
 const VISOR = {
   pdfjs: null,

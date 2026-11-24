@@ -1,4 +1,3 @@
-/* Inicio: recordatorio más cercano, publicar, accesos rápidos y lo que se comenta */
 'use strict';
 UI.comentarios = {};
 VISTAS.inicio = {

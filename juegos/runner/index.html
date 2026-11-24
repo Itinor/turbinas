@@ -1,8 +1,6 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Runner · Itinor</title><style>
-*{box-sizing:border-box;margin:0;padding:0;user-select:none;touch-action:none}html,body{width:100%;height:100%;overflow:hidden}body{background:#f3f1ea;font-family:"Comic Sans MS","Trebuchet MS",Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:16px;color:#171717}.shell{width:min(1180px,96vw);display:grid;grid-template-columns:minmax(320px,900px) 250px;gap:20px}.card{position:relative;width:100%;aspect-ratio:16/9;background:#fbfaf5;border:3px solid #171717;box-shadow:10px 10px 0 rgba(0,0,0,.13);overflow:hidden}canvas{position:absolute;inset:0;width:100%;height:100%;outline:none;background:#fbfaf5}.screen{position:absolute;inset:0;z-index:20;background:rgba(251,250,245,.96);display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:12px;padding:24px}.screen.show{display:flex}.title{font-size:38px;letter-spacing:2px;color:#4B1F7A}.sub{max-width:650px;font-size:17px;line-height:1.3}.play{width:108px;height:108px;border:3px solid #111;background:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:4px 4px 0 rgba(0,0,0,.13)}.tri{width:0;height:0;border-top:31px solid transparent;border-bottom:31px solid transparent;border-left:49px solid #4B1F7A;margin-left:10px}.word{border:0;background:transparent;font-family:inherit;font-size:25px;cursor:pointer}.word:hover{text-decoration:underline;text-decoration-thickness:4px}.touch{position:absolute;inset:0;z-index:12;pointer-events:none}.move{position:absolute;left:22px;bottom:20px;display:flex;gap:14px;pointer-events:auto}.act{position:absolute;right:22px;bottom:20px;display:flex;gap:14px;pointer-events:auto}.btn{width:70px;height:70px;border:4px solid #111;border-radius:18px;background:rgba(255,255,255,.72);display:grid;place-items:center;font-size:35px;font-weight:900;cursor:pointer;transition:.06s;box-shadow:3px 3px 0 rgba(0,0,0,.15)}.btn.txt{font-size:16px}.btn.active{transform:scale(.82);background:rgba(220,220,220,.94)}.pause,.gear{position:absolute;top:14px;z-index:13;width:48px;height:48px;border:3px solid #111;border-radius:50%;background:rgba(255,255,255,.75);font-size:24px;font-weight:900;cursor:pointer;display:none}.pause{right:14px}.gear{right:70px}.pause.show,.gear.show{display:block}.note{position:absolute;left:12px;bottom:8px;z-index:13;font-size:12px}.panel{background:#fbfaf5;border-left:8px solid #111;padding:16px;min-height:270px}.panel h2{font-size:27px;font-weight:400;margin-bottom:10px}.panel p{font-size:16px;line-height:1.3;margin:7px 0}.deslizar{width:min(420px,88%);display:grid;grid-template-columns:90px 1fr 44px;gap:12px;align-items:center;font-size:18px}.slider input{accent-color:#111;width:100%}.tag{font-size:14px;background:#eee;border:2px solid #111;padding:4px 8px;border-radius:8px}@media(max-width:900px){body{align-items:flex-start;padding:10px}.shell{grid-template-columns:1fr}.panel{border-left:0;border-top:8px solid #111}.btn{width:62px;height:62px}}
-</style><style>
-.es-tactil .panel,.es-tactil .note{display:none}
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Runner · Itinor</title><style>*{box-sizing:border-box;margin:0;padding:0;user-select:none;touch-action:none}html,body{width:100%;height:100%;overflow:hidden}body{background:#f3f1ea;font-family:"Comic Sans MS","Trebuchet MS",Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:16px;color:#171717}.shell{width:min(1180px,96vw);display:grid;grid-template-columns:minmax(320px,900px) 250px;gap:20px}.card{position:relative;width:100%;aspect-ratio:16/9;background:#fbfaf5;border:3px solid #171717;box-shadow:10px 10px 0 rgba(0,0,0,.13);overflow:hidden}canvas{position:absolute;inset:0;width:100%;height:100%;outline:none;background:#fbfaf5}.screen{position:absolute;inset:0;z-index:20;background:rgba(251,250,245,.96);display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:12px;padding:24px}.screen.show{display:flex}.title{font-size:38px;letter-spacing:2px;color:#4B1F7A}.sub{max-width:650px;font-size:17px;line-height:1.3}.play{width:108px;height:108px;border:3px solid #111;background:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:4px 4px 0 rgba(0,0,0,.13)}.tri{width:0;height:0;border-top:31px solid transparent;border-bottom:31px solid transparent;border-left:49px solid #4B1F7A;margin-left:10px}.word{border:0;background:transparent;font-family:inherit;font-size:25px;cursor:pointer}.word:hover{text-decoration:underline;text-decoration-thickness:4px}.touch{position:absolute;inset:0;z-index:12;pointer-events:none}.move{position:absolute;left:22px;bottom:20px;display:flex;gap:14px;pointer-events:auto}.act{position:absolute;right:22px;bottom:20px;display:flex;gap:14px;pointer-events:auto}.btn{width:70px;height:70px;border:4px solid #111;border-radius:18px;background:rgba(255,255,255,.72);display:grid;place-items:center;font-size:35px;font-weight:900;cursor:pointer;transition:.06s;box-shadow:3px 3px 0 rgba(0,0,0,.15)}.btn.txt{font-size:16px}.btn.active{transform:scale(.82);background:rgba(220,220,220,.94)}.pause,.gear{position:absolute;top:14px;z-index:13;width:48px;height:48px;border:3px solid #111;border-radius:50%;background:rgba(255,255,255,.75);font-size:24px;font-weight:900;cursor:pointer;display:none}.pause{right:14px}.gear{right:70px}.pause.show,.gear.show{display:block}.note{position:absolute;left:12px;bottom:8px;z-index:13;font-size:12px}.panel{background:#fbfaf5;border-left:8px solid #111;padding:16px;min-height:270px}.panel h2{font-size:27px;font-weight:400;margin-bottom:10px}.panel p{font-size:16px;line-height:1.3;margin:7px 0}.deslizar{width:min(420px,88%);display:grid;grid-template-columns:90px 1fr 44px;gap:12px;align-items:center;font-size:18px}.slider input{accent-color:#111;width:100%}.tag{font-size:14px;background:#eee;border:2px solid #111;padding:4px 8px;border-radius:8px}@media(max-width:900px){body{align-items:flex-start;padding:10px}.shell{grid-template-columns:1fr}.panel{border-left:0;border-top:8px solid #111}.btn{width:62px;height:62px}}
+</style><style>.es-tactil .panel,.es-tactil .note{display:none}
 .es-tactil .touch{position:relative;inset:auto;height:96px;margin-top:10px;pointer-events:auto}
 .es-tactil .btn{width:76px;height:76px;font-size:38px}
 .es-tactil .btn.txt{font-size:15px}
@@ -12,8 +10,7 @@
 <section class="screen" id="overLayer"><div class="title">¡TE CAÍSTE!</div><p class="sub" id="overInfo"></p><button class="word" id="retryBtn">Intentar otra vez</button><button class="word" id="overMenuBtn">Menú</button></section><section class="screen" id="pauseLayer"><div class="title">PAUSA</div><button class="word" id="resumeBtn">Continuar</button><button class="word" id="restartBtn">Reiniciar</button><button class="word" id="menuBtn">Menú</button><button class="word" id="settingsBtnPause">Opciones</button></section>
 <section class="screen" id="settingsLayer"><div class="title">OPCIONES</div><div class="slider"><span>Música</span><input id="musicRange" type="range" min="0" max="100" value="38"><span id="musicVal">38</span></div><div class="slider"><span>Sonido</span><input id="sfxRange" type="range" min="0" max="100" value="70"><span id="sfxVal">70</span></div><button class="word" id="closeSettingsBtn">Volver</button><p class="sub"> </p></section>
 <div class="touch"><div class="move"><div class="btn" id="leftBtn">←</div><div class="btn" id="rightBtn">→</div></div><div class="act"><div class="btn" id="jumpBtn">↑</div><div class="btn txt" id="slideBtn">SLIDE</div></div></div><div class="note">Toca el juego para activar teclado y sonido</div></main><aside class="panel"><h2>Controles</h2><p><strong>←/A:</strong> frenar o retroceder.</p><p><strong>→/D:</strong> correr.</p><p><strong>↑/W:</strong> salto.</p><p><strong>↓/S:</strong> slide(deslizar).</p><p></aside></div>
-<script>
-const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),W=960,H=540;
+<script>const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),W=960,H=540;
 const menuLayer=document.getElementById('menuLayer'),pauseLayer=document.getElementById('pauseLayer'),settingsLayer=document.getElementById('settingsLayer'),pauseBtn=document.getElementById('pauseBtn'),gearBtn=document.getElementById('gearBtn');
 const playBtn=document.getElementById('playBtn'),playIconBtn=document.getElementById('playIconBtn'),classicBtn=document.getElementById('classicBtn'),resumeBtn=document.getElementById('resumeBtn'),restartBtn=document.getElementById('restartBtn'),menuBtn=document.getElementById('menuBtn'),settingsBtnPause=document.getElementById('settingsBtnPause'),closeSettingsBtn=document.getElementById('closeSettingsBtn');
 const musicRange=document.getElementById('musicRange'),sfxRange=document.getElementById('sfxRange'),musicVal=document.getElementById('musicVal'),sfxVal=document.getElementById('sfxVal');
@@ -65,7 +62,7 @@ function checkCheckpoints(){if(!checkpointsEnabled)return;for(let i=0;i<checkpoi
 function updatePlayer(dt){player.speedT=Math.max(0,player.speedT-dt);player.coyote=player.grounded?.11:Math.max(0,player.coyote-dt);if(keys.jump)player.jumpBuffer=.12;else player.jumpBuffer=Math.max(0,player.jumpBuffer-dt);let prevY=player.y,wasGround=player.grounded,input=(keys.right?1:0)-(keys.left?1:0),max=player.speedT>0?980:PHYS.maxSpeed+Math.min(240,player.x/110);if(player.slideT>0)max*=1.06;if(input){let acc=player.grounded?PHYS.accel:PHYS.airAccel;player.vx+=input*acc*dt;player.facing=input>0?1:-1}else if(player.grounded){player.vx-=Math.sign(player.vx)*Math.min(Math.abs(player.vx),PHYS.friction*dt)}let braking=player.grounded&&input&&Math.sign(input)!==Math.sign(player.vx)&&Math.abs(player.vx)>130;if(braking){player.vx-=Math.sign(player.vx)*PHYS.brakeFriction*dt;player.runDust-=dt;if(player.runDust<=0){addDust(player.x+player.w/2,player.y+player.h,4,'rgba(109,63,192,.28)');player.runDust=.045}}player.vx=Math.max(-max*.82,Math.min(max,player.vx));if(keys.down&&player.grounded&&Math.abs(player.vx)>165&&player.slideT<=0){player.slideT=.43;player.vx*=PHYS.slideBoost;addDust(player.x+player.w/2,player.y+player.h,10,'rgba(0,0,0,.25)')}if(player.slideT>0)player.slideT-=dt;if(player.jumpBuffer>0&&player.coyote>0&&player.slideT<=0){player.vy=-PHYS.jump-Math.min(160,Math.abs(player.vx)*.14);player.grounded=false;player.coyote=0;player.jumpBuffer=0;player.onPlatform=null;addDust(player.x+player.w/2,player.y+player.h,8,'rgba(0,0,0,.22)')}if(!keys.jumpHeld&&player.vy<0)player.vy*=Math.pow(PHYS.jumpCut,dt*10);player.vy+=PHYS.gravity*dt;player.x+=player.vx*dt;player.y+=player.vy*dt;player.grounded=false;ensureWorldAhead();checkSpeedPads();let bounced=checkBouncePads(prevY),g=bounced?null:groundAt(player.x,player.y,player.w,player.h,prevY);if(g){player.y=g.y-player.h;player.vy=0;player.grounded=true;if(g.p!==player.onPlatform){damageBreak(g.p);player.onPlatform=g.p}if(g.sl&&Math.abs(player.vx)>80)player.vx+=(-g.sl)*PHYS.slopeBoost*dt*60;if(!wasGround)addDust(player.x+player.w/2,player.y+player.h,7,'rgba(0,0,0,.22)')}else player.onPlatform=null;if(player.y>H+180){shake=8;playSfx('fall');if(checkpointsEnabled)respawnAtCheckpoint();else{const d=Math.floor(player.x/50);bestDist=Math.max(bestDist,d);try{localStorage.setItem('runnerBestDist',bestDist)}catch(e){}document.getElementById('overInfo').textContent=`Llegaste a ${d} m · ${score} pts · tu mejor: ${bestDist} m`;gameState='over';syncScreens();playRandomMusic('menu')}}checkCheckpoints();for(const c of coins){if(!c.taken&&Math.hypot((player.x+player.w/2)-c.x,(player.y+40)-c.y)<34){c.taken=true;score+=c.gold?5:1;best=Math.max(best,score);localStorage.setItem('runnerBest',best);playSfx('orb');addDust(c.x,c.y,8,c.gold?'rgba(246,170,0,.55)':'rgba(109,63,192,.45)')}}if(player.x<0){player.x=0;player.vx=0}if(player.slideT>0)player.state='slide';else if(!player.grounded)player.state=player.vy<0?'jump':'fall';else if(braking)player.state='brake';else if(Math.abs(player.vx)>60)player.state='run';else player.state='idle';let target=Math.max(0,player.x-W*.34);cameraX+=(target-cameraX)*Math.min(1,dt*6.8)}
 function updateAnim(dt){player.frameT+=dt;let sp=player.state==='run'?Math.max(.055,.12-Math.abs(player.vx)/9000):.16;if(player.frameT>sp){player.frameT=0;player.frame++}particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=280*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);shake=Math.max(0,shake-dt*18);updateBreakables(dt);if(gameState==='playing'&&player.x>6500&&gameplayGroup!=='hardcore'&&Math.random()<.002){gameplayGroup='hardcore';playRandomMusic('hardcore')}}
 function drawBg(){
-  // Cielo/fondo base estilo papel
+
   let sky=ctx.createLinearGradient(0,0,0,H);
   sky.addColorStop(0,'#fff7df');
   sky.addColorStop(.55,'#fbfaf5');
@@ -73,7 +70,6 @@ function drawBg(){
   ctx.fillStyle=sky;
   ctx.fillRect(0,0,W,H);
 
-  // Sol suave de fondo
   ctx.save();
   ctx.translate(750-cameraX*.035,95);
   ctx.fillStyle='rgba(246,170,0,.16)';
@@ -85,7 +81,6 @@ function drawBg(){
   ctx.stroke();
   ctx.restore();
 
-  // Capas de montañas con parallax
   function mountainLayer(parallax,baseY,height,color,stroke,step,rough){
     ctx.save();
     ctx.translate(-cameraX*parallax,0);
@@ -105,7 +100,6 @@ function drawBg(){
       let y5=baseY-height*(.48+Math.cos(i*1.9)*rough);
       let y6=baseY;
 
-      // Silueta principal
       ctx.beginPath();
       ctx.moveTo(p1,y1);
       ctx.lineTo(p2,y2);
@@ -119,7 +113,6 @@ function drawBg(){
       ctx.fill();
       ctx.stroke();
 
-      // Cortes internos / nieve estilizada
       ctx.strokeStyle='rgba(17,17,17,.13)';
       ctx.lineWidth=2.5;
       ctx.beginPath();
@@ -133,7 +126,6 @@ function drawBg(){
       ctx.lineTo(p3+35,y3+62);
       ctx.stroke();
 
-      // Textura mínima para que no se vea plano
       ctx.strokeStyle='rgba(109,63,192,.12)';
       ctx.lineWidth=2;
       for(let j=0;j<4;j++){
@@ -152,12 +144,10 @@ function drawBg(){
     ctx.restore();
   }
 
-  // Montañas lejanas, medias y cercanas
   mountainLayer(.08,410,190,'rgba(109,63,192,.045)','rgba(17,17,17,.15)',520,.08);
   mountainLayer(.15,435,230,'rgba(67,160,71,.045)','rgba(17,17,17,.22)',480,.10);
   mountainLayer(.26,470,260,'rgba(255,255,255,.55)','rgba(17,17,17,.34)',430,.12);
 
-  // Nubes simples, atrás de las plataformas
   ctx.save();
   ctx.translate(-cameraX*.06,0);
   ctx.strokeStyle='rgba(17,17,17,.16)';
@@ -178,7 +168,6 @@ function drawBg(){
   }
   ctx.restore();
 
-  // Horizonte ondulado suave
   ctx.save();
   ctx.strokeStyle='rgba(17,17,17,.13)';
   ctx.lineWidth=4;
@@ -202,6 +191,5 @@ function drawDanger(){ctx.save();let sx=1815-cameraX;ctx.strokeStyle='#6D3FC0';c
 function hud(){const d=Math.floor(player.x/50);if(d>bestDist&&gameState==='playing'){bestDist=d;if(d%25===0)try{localStorage.setItem('runnerBestDist',bestDist)}catch(e){}}ctx.save();ctx.fillStyle='rgba(255,255,255,.86)';ctx.strokeStyle='#4B1F7A';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(14,14,300,74,14);ctx.fill();ctx.stroke();ctx.fillStyle='#1B1530';ctx.font='bold 26px Trebuchet MS, Arial';ctx.fillText(d+' m',28,48);ctx.font='15px Trebuchet MS, Arial';ctx.fillStyle='#5E5873';ctx.fillText('Mejor: '+bestDist+' m',28,72);ctx.fillStyle='#B45309';ctx.font='bold 18px Trebuchet MS, Arial';ctx.fillText('★ '+score+' pts',170,48);ctx.font='14px Trebuchet MS, Arial';ctx.fillStyle='#5E5873';ctx.fillText(coins.filter(c=>c.taken).length+' orbes',170,72);if(player.speedT>0){ctx.fillStyle='#FF9F1C';ctx.font='bold 22px Trebuchet MS, Arial';ctx.fillText('¡TURBO!',W/2-40,48)}ctx.restore()}
 function syncBtns(){leftBtn.classList.toggle('active',keys.left);rightBtn.classList.toggle('active',keys.right);jumpBtn.classList.toggle('active',keys.jump);slideBtn.classList.toggle('active',keys.down)}
 function update(dt){if(gameState!=='playing')return;updatePlayer(dt);updateAnim(dt)}function draw(){ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);drawBg();drawDanger();drawPlatforms();drawBouncePads();drawCoins();drawCheckpoints();drawNotes();drawPlayer();drawParticles();hud();ctx.restore();syncBtns()}function loop(t){let dt=Math.min(.033,(t-lastTime)/1000||0);lastTime=t;update(dt);draw();requestAnimationFrame(loop)}syncScreens();requestAnimationFrame(loop);
-</script><script>
-(function(){const t=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;if(!t)return;document.documentElement.classList.add('es-tactil');const tc=document.querySelector('.touch'),card=document.querySelector('.card');card.after(tc)})();
+</script><script>(function(){const t=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;if(!t)return;document.documentElement.classList.add('es-tactil');const tc=document.querySelector('.touch'),card=document.querySelector('.card');card.after(tc)})();
 </script></body></html>

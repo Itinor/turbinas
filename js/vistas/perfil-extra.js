@@ -1,7 +1,5 @@
-/* Extras del perfil: horario dentro del perfil, música de fondo, notitas de visitantes y la sección de Ayuda. */
 'use strict';
 
-/* ---------- horario en el perfil (respeta quién lo puede ver) ---------- */
 function seccionHorarioPerfil(u, mio) {
   if (!DB.puedeVerHorario(u.id)) return '';
   const clases = normalizarHorario(u), hay = clases.some(c => (c.sesiones || []).length);
@@ -15,7 +13,6 @@ const horarioPlegado = () => { try { return localStorage.getItem('itinor_horario
 document.addEventListener('dblclick', e => { const el = e.target.closest?.('[data-dbl]'); if (!el) return; e.preventDefault(); window.getSelection?.()?.removeAllRanges(); ACC[el.dataset.dbl]?.(el); });
 ACC.plegarHorarioPerfil = () => { try { localStorage.setItem('itinor_horario_plegado', horarioPlegado() ? '0' : '1'); } catch {} refrescar(); };
 
-/* ---------- música de fondo: clic derecho (o mantener presionado) sobre una canción de tu perfil ---------- */
 function menuCancion(i) {
   const u = DB.yo(), c = DB.canciones(u)[+i]; if (!c?.archivo) return;
   const es = u.fondoMusica === c.archivo;
@@ -31,7 +28,6 @@ document.addEventListener('contextmenu', e => { const el = e.target.closest?.('[
   document.addEventListener('pointermove', e => { if (t && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) cancelar(); });
 })();
 
-/* ---------- notitas: como las que se dejaban en el pupitre ---------- */
 const PAPELES = ['#FFF3A6', '#FFD3E2', '#CDEBFF', '#D5F5D0', '#FFFFFF'];
 const MAX_NOTITAS = 40, MAX_POR_PERSONA = 3;
 DB.puedeDejarNotita = function (dueno, quien = DB.yo()?.id) {
@@ -49,9 +45,9 @@ function barraNotitas(u, mio) {
   if (!puede && !l.length) return '';
   return `<div class="notitas-barra fila">${puede ? `<button class="btn" style="min-height:40px" data-a="dejarNotita" data-u="${u.id}">${icono('lapiz', 16)}Dejar notita</button>` : ''}${l.length ? `<button class="btn3" style="min-height:40px" data-a="ocultarNotitas">${UI.ocultarNotitas ? 'Ver' : 'Ocultar'} notitas · ${l.length}</button>` : ''}${mio && l.length ? `<button class="btn3" style="min-height:40px" data-a="limpiarNotitas" title="Alt + L">Limpiar</button>` : ''}</div>`;
 }
-function montarNotitas() { /* nada que medir por ahora: las notitas se acomodan solas con left en % y top en px */ }
+function montarNotitas() {  }
 ACC.ocultarNotitas = () => { UI.ocultarNotitas = !UI.ocultarNotitas; refrescar(); };
-/* 1) eliges dónde pegarla tocando el perfil; 2) la escribes o la dibujas */
+
 ACC.dejarNotita = b => {
   if (!DB.puedeDejarNotita(b.dataset.u)) return aviso('No puedes dejar notitas en este perfil.');
   UI.colocando = b.dataset.u; document.body.classList.add('colocando-notita'); aviso('Toca donde quieras pegar tu notita');
@@ -115,10 +111,9 @@ ACC.verNotita = b => {
 };
 ACC.quitarNotita = b => { const u = DB.usuario(b.dataset.u); u.notitas = (u.notitas || []).filter(x => x.id !== b.dataset.id); DB.guardar(); cerrarHoja(); refrescar(); };
 ACC.limpiarNotitas = () => { const u = DB.yo(); if (!(u.notitas || []).length) return aviso('No tienes notitas.'); if (!confirm('¿Quitar todas las notitas de tu perfil?')) return; u.notitas = []; DB.guardar(); aviso('Perfil limpio'); refrescar(); };
-/* Alt + L en tu propio perfil: limpiar notitas */
+
 document.addEventListener('keydown', e => { if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'l' || e.key === 'L' || e.code === 'KeyL')) { const r = ruta(); if (r.nombre === 'perfil' && (!r.params[0] || r.params[0] === DB.yo()?.usuario)) { e.preventDefault(); ACC.limpiarNotitas(); } } if (e.key === 'Escape' && UI.colocando) { UI.colocando = null; document.body.classList.remove('colocando-notita'); } });
 
-/* ---------- Ayuda ---------- */
 const AYUDA = [
   ['candado', 'Chats cifrados', `<p>Tus mensajes y archivos van <b>cifrados de punta a punta</b>: se cifran en tu celular y solo se descifran en el de la otra persona. El servidor solo guarda texto revuelto; ni el admin los puede leer.</p>
     <ul><li>La primera vez en cada dispositivo te pedimos tu contraseña para abrir tus chats.</li><li><b>Código de seguridad:</b> en Opciones del chat. Compárenlo en persona; si coincide, márquenlo como verificado. Si su llave cambia, te avisamos.</li><li><b>Bloquear chats en este dispositivo:</b> úsalo en computadoras prestadas o de la uni.</li><li>Si olvidas tu contraseña, nadie puede recuperar tus mensajes viejos. Así funciona el cifrado de verdad.</li></ul>`],

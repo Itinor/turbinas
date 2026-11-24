@@ -1,4 +1,3 @@
-/* Explorar: mapa del campus, profesores y eventos */
 'use strict';
 UI.mapa = { sel: 'auditorio', filtro: 'todos', proponer: false, punto: null };
 VISTAS.explorar = {
@@ -30,7 +29,6 @@ FORMS.buscarSalon = d => { const q = d.q.trim().toLowerCase(); if (!q) return; c
 ACC.interesEvento = b => { DB.interesEvento(b.dataset.id); refrescar(); };
 ACC.eventoAgenda = b => { const e = DB.estado.eventos.find(x => x.id === b.dataset.id); DB.agregarRecordatorio({ titulo: e.titulo, tipo: 'Evento', fecha: e.fecha, hora: e.hora, lugar: e.lugar }); aviso('Agregado a tu agenda'); };
 
-/* Ficha de un profesor */
 VISTAS.profe = {
   titulo: 'Profesor', nav: 'explorar', atras: '#/explorar/profesores',
   render([id]) {
@@ -55,7 +53,6 @@ VISTAS.profe = {
 document.addEventListener('change', e => { if (e.target.type === 'radio' && e.target.closest('[role=radiogroup]')) { e.target.closest('[role=radiogroup]').querySelectorAll('label').forEach(l => l.classList.toggle('on', l.contains(e.target))); } });
 FORMS.opinar = d => { const r = DB.opinar(d.id, { claridad: +d.claridad, justo: +d.justo, puntual: +d.puntual, motivo: d.motivo }); if (r.error === 'verificar') return pedirVerificacion(); aviso('Gracias, tu opinión cuenta'); refrescar(); };
 
-/* ---------- Croquis del Campus II ---------- */
 const FILTROS_MAPA = [['todos', 'Todo'], ['fing', 'Ingeniería'], ['cya', 'Contaduría'], ['fcq', 'Químicas'], ['estacionamiento', 'Estacionamientos'], ['cafeteria', 'Cafetería']];
 function lugarVisible(l) { const f = UI.mapa.filtro; return f === 'todos' || l.zona === f || l.tipo === f; }
 function svgCampus() {

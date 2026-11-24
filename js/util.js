@@ -1,5 +1,3 @@
-/* Utilidades compartidas: escape de texto, fechas, íconos, avisos, hoja inferior
-   y un lector de fórmulas SEGURO (no usa eval ni Function). */
 'use strict';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -7,7 +5,6 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const uid = (p = 'id') => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const MENOS = '−';
 
-/* ---------- Fechas ---------- */
 function fechaLocal(d = new Date()) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function sumarDias(fecha, n) { const d = new Date(fecha + 'T12:00:00'); d.setDate(d.getDate() + n); return fechaLocal(d); }
 function diasHasta(fecha) { const a = new Date(fechaLocal() + 'T12:00:00'), b = new Date(fecha + 'T12:00:00'); return Math.round((b - a) / 864e5); }
@@ -17,7 +14,7 @@ function hace(iso) {
   if (s < 86400) return 'hace ' + Math.floor(s / 3600) + ' h'; if (s < 172800) return 'ayer';
   return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
-/* cierre: puede ser 'AAAA-MM-DD' (cierra al terminar ese día) o fecha y hora completas */
+
 function cierreMs(c) { return !c ? Infinity : String(c).length === 10 ? new Date(c + 'T23:59:59').getTime() : new Date(c).getTime(); }
 function yaCerro(p) { return Date.now() >= cierreMs(p.cierre); }
 function faltaTexto(c) {
@@ -27,23 +24,23 @@ function faltaTexto(c) {
   return Math.round(h / 24) + ' d';
 }
 function cierreBonito(c) { return String(c).length === 10 ? fechaBonita(c) : new Date(c).toLocaleString('es-MX', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); }
-/* archivos grandes (canciones) en IndexedDB; con la base de datos real irán a Supabase Storage */
+
 const ARCHIVOS = {
   _db: null,
   abrir() { return this._db || (this._db = new Promise((ok, mal) => { const r = indexedDB.open('cdu_archivos', 1); r.onupgradeneeded = () => r.result.createObjectStore('a'); r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error); })); },
   async guardarLocal(clave, blob) { const db = await this.abrir(); return new Promise((ok, mal) => { const t = db.transaction('a', 'readwrite'); t.objectStore('a').put(blob, clave); t.oncomplete = () => ok(clave); t.onerror = () => mal(t.error); }); },
   async guardar(clave, blob) { await this.guardarLocal(clave, blob); if (typeof SYNC !== 'undefined' && SYNC.activo) SYNC.subirArchivo(clave, blob); return clave; },
   async leerLocal(clave) { const db = await this.abrir(); return new Promise((ok, mal) => { const r = db.transaction('a').objectStore('a').get(clave); r.onsuccess = () => ok(r.result || null); r.onerror = () => mal(r.error); }); },
-  /* primero lo busca en este celular; si no está, lo baja del servidor y lo guarda */
+
   async leer(clave) { const l = await this.leerLocal(clave).catch(() => null); if (l) return l; if (typeof SYNC === 'undefined' || !SYNC.activo) return null; const b = await SYNC.bajarArchivo(clave); if (b) this.guardarLocal(clave, b).catch(() => {}); return b; }
 };
-/* reduce una imagen a un cuadrado de `lado` px y la devuelve como dataURL (jpg) */
+
 function reducirImagen(archivo, lado = 256) {
   return new Promise((ok, mal) => { const img = new Image(), url = URL.createObjectURL(archivo);
     img.onload = () => { const c = document.createElement('canvas'); c.width = c.height = lado; const m = Math.min(img.width, img.height); c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, lado, lado); URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.85)); };
     img.onerror = () => { URL.revokeObjectURL(url); mal(new Error('imagen')); }; img.src = url; });
 }
-/* opciones que se pueden ir agregando (rankings, predicciones, votaciones) */
+
 const MAX_OPCIONES = 12;
 function campoOpciones(pref, valores = []) {
   const n = Math.max(4, valores.length);
@@ -56,7 +53,6 @@ function fechaBonita(f) { return new Date(f + 'T12:00:00').toLocaleDateString('e
 function inicioSemana(d = new Date()) { const x = new Date(d); const dia = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dia); x.setHours(0, 0, 0, 0); return x; }
 const numero = n => new Intl.NumberFormat('es-MX').format(n);
 
-/* ---------- Íconos (trazos SVG) ---------- */
 const RUTAS = {
   inicio: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
   propuestas: 'M5 21V4M5 4h11l-2 4 2 4H5',
@@ -84,6 +80,8 @@ const RUTAS = {
   profe: 'M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5',
   grupo: 'M9 11a3 3 0 1 0 0-6a3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M17 11a3 3 0 1 0 0-6M21 20a6 6 0 0 0-4-5.6',
   mundo: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18',
+  mosaico: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  renglones: 'M4 5h16v4H4zM4 15h16v4H4z',
   candado: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5z',
   bandera: 'M5 21V4M5 4h11l-2 4 2 4H5',
   bloquear: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM5.6 5.6l12.8 12.8',
@@ -124,7 +122,6 @@ function castor(t = 40) {
   return `<svg width="${t}" height="${t}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="10" cy="10" r="5" fill="#8A5A3B"/><circle cx="30" cy="10" r="5" fill="#8A5A3B"/><ellipse cx="20" cy="21" rx="14" ry="13" fill="#A86E47"/><ellipse cx="20" cy="26" rx="8" ry="6" fill="#E8C9A6"/><circle cx="14.5" cy="18" r="2" fill="#1B1530"/><circle cx="25.5" cy="18" r="2" fill="#1B1530"/><ellipse cx="20" cy="22.5" rx="3" ry="2" fill="#1B1530"/><rect x="17.6" y="28" width="4.8" height="5" rx="1" fill="#FFFFFF" stroke="#1B1530" stroke-width="1"/><line x1="20" y1="28" x2="20" y2="33" stroke="#1B1530" stroke-width="1"/></svg>`;
 }
 
-/* ---------- Avisos y hoja inferior ---------- */
 let _toastT;
 function aviso(msg) {
   $('.toast')?.remove(); clearTimeout(_toastT);
@@ -142,10 +139,6 @@ function abrirHoja(html) {
 function cerrarHoja() { $('#velo')?.remove(); }
 if (typeof document !== 'undefined') document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarHoja(); });
 
-/* ---------- Lector de fórmulas seguro ----------
-   Acepta: + - * / ^, paréntesis, x, pi, e, números y funciones
-   sen/sin, cos, tan, asen/asin, acos, atan, raiz/sqrt, exp, ln, log, abs, piso/floor, techo/ceil.
-   Multiplicación implícita: 2x, 3sen(x), (x+1)(x-1). */
 const FUNCS = { sin: Math.sin, sen: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, asen: Math.asin, acos: Math.acos, atan: Math.atan, sqrt: Math.sqrt, raiz: Math.sqrt, exp: Math.exp, ln: Math.log, log: Math.log10, abs: Math.abs, sinh: Math.sinh, senh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, cbrt: Math.cbrt, floor: Math.floor, piso: Math.floor, ceil: Math.ceil, techo: Math.ceil };
 function compilarFormula(texto, opciones = {}) {
   const GRADOS = !!opciones.grados, TRIG = ['sin', 'sen', 'cos', 'tan'], ATRIG = ['asin', 'asen', 'acos', 'atan'];
@@ -159,7 +152,7 @@ function compilarFormula(texto, opciones = {}) {
     if (/[0-9.]/.test(c)) { let j = i; while (j < src.length && /[0-9.]/.test(src[j])) j++; const n = Number(src.slice(i, j)); if (!Number.isFinite(n)) throw new Error('Número no válido'); tk.push({ t: 'n', v: n }); i = j; }
     else if (/[a-z]/.test(c)) {
       let j = i; while (j < src.length && /[a-z]/.test(src[j])) j++; let w = src.slice(i, j);
-      // separar palabras pegadas como "xsen" o "pix"
+
       while (w) {
         const f = Object.keys(FUNCS).concat(['pi', 'x', 'e']).sort((a, b) => b.length - a.length).find(k => w.startsWith(k));
         if (!f) throw new Error('No conozco "' + w + '"');
@@ -171,7 +164,7 @@ function compilarFormula(texto, opciones = {}) {
     else if ('+-*/^()!'.includes(c)) { tk.push({ t: c }); i++; }
     else throw new Error('Carácter no permitido: ' + c);
   }
-  // multiplicación implícita
+
   const tk2 = [];
   tk.forEach((t, k) => { const p = tk2[tk2.length - 1]; if (p && (p.t === 'n' || p.t === 'x' || p.t === ')' || p.t === '!') && (t.t === 'n' || t.t === 'x' || t.t === 'f' || t.t === '(')) tk2.push({ t: '*' }); tk2.push(t); });
   let p = 0;

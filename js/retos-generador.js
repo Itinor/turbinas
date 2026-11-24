@@ -1,4 +1,3 @@
-/* Generador de ejercicios de Cálculo por plantillas */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const R = (rng,a,b)=>a+Math.floor(rng()*(b-a+1));
 const RNZ = (rng,a,b)=>{let v=0;while(v===0)v=R(rng,a,b);return v;};
@@ -8,11 +7,11 @@ const neg = s=>MENOS+s;
 function num(v){return v<0?neg(String(-v)):String(v);}
 function frHtml(f){const s=f.n<0?MENOS:'';const n=Math.abs(f.n);return f.d===1?s+n:`${s}<span class="fr"><span>${n}</span><span>${f.d}</span></span>`;}
 function xp(p){return p===0?'':p===1?'x':`x<sup>${p}</sup>`;}
-/* coeficiente (entero o fracción) delante de un cuerpo; sin signo si abs */
+
 function coef(c,body,abs){const f=typeof c==='number'?{n:c,d:1}:c;const sg=f.n<0&&!abs?MENOS:'';const n=Math.abs(f.n);
   if(!body)return sg+(f.d===1?n:frHtml({n,d:f.d}));
   if(f.d===1)return sg+(n===1?'':n)+body;return sg+frHtml({n,d:f.d})+body;}
-/* une términos [c, cuerpo] con signos */
+
 function suma(ts){let out='';ts.filter(t=>(typeof t[0]==='number'?t[0]:t[0].n)!==0).forEach((t,i)=>{const v=typeof t[0]==='number'?t[0]:t[0].n;
   if(i===0)out+=coef(t[0],t[1]);else out+=(v<0?` ${MENOS} `:' + ')+coef(t[0],t[1],true);});return out||'0';}
 const sen = b=>`sen(${b===1?'':b}x)`, cos = b=>`cos(${b===1?'':b}x)`;
@@ -113,7 +112,7 @@ const T = [
       porque:`Partes con u = x, dv = ${E}dx: v = ${E}/${num(a)}. Queda x${E}/${num(a)} ${MENOS} ∫${E}/${num(a)} dx.`,
       check:{k:'anti',f:x=>x*Math.exp(a*x),F:x=>Math.exp(a*x)*(x/a-1/(a*a))} }; }
   const b=R(r,2,12), esCos=tipo===2;
-  /* ∫x sen(bx) = −x cos(bx)/b + sen(bx)/b² ; ∫x cos(bx) = x sen(bx)/b + cos(bx)/b² */
+
   const ok=esCos?`${coef(fr(1,b),'x')}${sen(b)} + ${frHtml(fr(1,b*b))}${cos(b)} + C`:`${coef(fr(-1,b),'x')}${cos(b)} + ${frHtml(fr(1,b*b))}${sen(b)} + C`;
   return { pregunta:'Resuelve la integral', expr:`∫ x${esCos?cos(b):sen(b)} dx`, ok,
     malas:esCos?[`${coef(fr(1,b),'x')}${sen(b)} ${MENOS} ${frHtml(fr(1,b*b))}${cos(b)} + C`,`${coef(fr(-1,b),'x')}${sen(b)} + ${frHtml(fr(1,b*b))}${cos(b)} + C`,`${coef(fr(1,2),'x<sup>2</sup>')}${sen(b)} + C`,`x${sen(b)} + ${cos(b)} + C`]

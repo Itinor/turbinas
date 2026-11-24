@@ -6,8 +6,7 @@
   <title>Métodos Numéricos</title>
   <link rel="icon" href="../icono.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; scroll-behavior: smooth; }
+  <style>    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; scroll-behavior: smooth; }
     body { background-color: #f4f4f4; color: #222; }
     .navbar {
       background-color: #333; padding: 15px; text-align: center; position: fixed;
@@ -151,7 +150,6 @@
 
     @media(max-width: 760px) { .grid, .options { grid-template-columns: 1fr; } .navbar { gap: 5px; } .navbar a { padding: 10px; } }
 
-    /* Colores de Itinor */
     body{background:#F7F5FB;color:#1B1530;font-family:Inter,system-ui,sans-serif}
     *{font-family:Inter,system-ui,sans-serif}
     .cdu-barra{position:sticky;top:0;z-index:10;display:flex;gap:16px;align-items:center;padding:14px 20px;color:#fff;background:linear-gradient(120deg,#4B1F7A 50%,#1D5FD1)}
@@ -170,7 +168,7 @@
     .entrada-legible{border-left-color:#1D5FD1}
     .tabla th{background:#4B1F7A}
     .condiciones{border-left-color:#FF9F1C;background:#FFF6DA}
-  </style>
+</style>
 </head>
 <body>
   <header class="cdu-barra"><a href="../index.html#/herramientas" target="_top">← Herramientas</a><b>Métodos numéricos</b></header>
@@ -322,8 +320,7 @@
   </div>
 
   <script src="../js/util.js"></script>
-  <script>
-    const metodos = ['gauss','biseccion','newton','simpson13','simpson38','regla245','interpolacion','lagrange','minimos'];
+  <script>    const metodos = ['gauss','biseccion','newton','simpson13','simpson38','regla245','interpolacion','lagrange','minimos'];
     const salida = document.getElementById('salida');
     const canvas = document.getElementById('grafica');
     const ctx = canvas.getContext('2d');
@@ -358,7 +355,7 @@
     }
 
     function crearFuncion(expr) {
-      // Lector seguro (js/util.js): no ejecuta texto como código
+
       return compilarFormula(expr);
     }
 
@@ -624,11 +621,9 @@ function resolverBiseccion() {
         f(p)
       ]);
 
-      // criterio de paro
       if (Math.abs(f(p)) < tol)
         break;
 
-      // actualización del intervalo
       if (f(a) * f(p) > 0)
         a = p;
       else
@@ -897,6 +892,6 @@ dibujarArea(f, a, b, xs, "Regla 2/45");
       ctx.fillStyle='#e74c3c'; datos.forEach(p=>{ctx.beginPath();ctx.arc(m.sx(p.x),m.sy(p.y),5,0,Math.PI*2);ctx.fill();});
       ctx.fillStyle='#143659'; ctx.font='18px Arial'; ctx.fillText('Mínimos Cuadrados',55,28);
     }
-  </script>
+</script>
 </body>
 </html>
