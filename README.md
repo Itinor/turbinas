@@ -1,4 +1,4 @@
-# Cosas de la uni
+# Itinor
 
 Red social independiente hecha por y para estudiantes. Esta es la versión web completa (HTML, CSS y JavaScript sin frameworks), lista para probarse en el navegador y, después, convertirse en app de celular.
 

@@ -58,7 +58,7 @@ body{min-height:100vh;background:radial-gradient(circle at 15% 5%,rgba(255,159,2
 <div class="modal" id="chartsModal"><div class="modal-box chart-modal-box"><h2>Gráficas de la sesión <small style="font-size:12px;opacity:.7">(solo admin)</small></h2><div class="chart-summary"><div class="stat"><small>Saldo inicial</small><b id="chartInitial">0</b></div><div class="stat"><small>Saldo actual</small><b id="chartBalance">0</b></div><div class="stat"><small>Resultado neto</small><b id="chartNet">0</b></div><div class="stat"><small>Jugadas</small><b id="chartPlays">0</b></div></div><div class="chart-grid"><div class="chart-card"><h3>1) Curva de ganancia / pérdida acumulada</h3><div class="chart-legend"><span><i class="dot green"></i>ganancia</span><span><i class="dot red"></i>pérdida</span><span><i class="dot gold"></i>curva suave</span></div><canvas id="netChart" width="900" height="330"></canvas></div><div class="chart-card"><h3>2) Curva del saldo total</h3><canvas id="balanceChart" width="900" height="330"></canvas></div></div><div style="display:flex;gap:10px;margin-top:14px"><button class="btn secondary" id="closeChartsBtn" style="flex:1">Cerrar</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
-/* Conexión con Cosas de la uni: si el juego corre dentro de la red, se juega con créditos (1 ramita = 100 créditos) */
+/* Conexión con Itinor: si el juego corre dentro de la red, se juega con créditos (1 ramita = 100 créditos) */
 const CDU=(()=>{try{const w=window.parent;if(w!==window&&w.DB&&w.DB.yo())return w}catch(e){}return null})();
 const POR_RAMITA=CDU?CDU.REGLAS.creditosPorRamita:100;
 const MSG_RECARGA=CDU?'Toca + para cambiar ramitas por créditos.':'Toca + para recargar fichas de práctica.';

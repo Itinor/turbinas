@@ -139,7 +139,7 @@ function datosIniciales() {
     u_valeria: U('u_valeria', 'vale.a', 'Valeria Aguirre', 'Ing. Industrial', 2024, { reputacion: 6, privacidad: { escribir: 'todos', perfil: 'todos', venta: 'amigos' } }),
     u_sofia: U('u_sofia', 'sofia.l', 'Sofía Lara', 'Ing. Industrial', 2024, { reputacion: 4, playlists: [{ nombre: 'Para estudiar de noche', servicio: 'Spotify', url: 'https://open.spotify.com/' }] }),
     u_pedro: U('u_pedro', 'pedro.g', 'Pedro García', 'Ing. en Sistemas', 2023, { reputacion: 2 }),
-    u_equipo: U('u_equipo', 'equipo', 'Equipo Cosas de la uni', 'Ing. en Sistemas', 2022, { rol: 'admin', insignias: ['fundador'] })
+    u_equipo: U('u_equipo', 'equipo', 'Equipo Itinor', 'Ing. en Sistemas', 2022, { rol: 'admin', insignias: ['fundador'] })
   };
   const amistad = (a, b) => { usuarios[a].amigos.push(b); usuarios[b].amigos.push(a); };
   amistad('u_diego', 'u_pedro'); amistad('u_diego', 'u_valeria'); amistad('u_diego', 'u_sofia'); amistad('u_diego', 'u_mariana');
@@ -174,7 +174,7 @@ function datosIniciales() {
     { id: 'post1', autor: 'u_valeria', texto: '¿Alguien sabe si ya publicaron los horarios de verano?', fecha: haceMin(12), likes: ['u_sofia', 'u_pedro'], comentarios: [{ autor: 'u_sofia', texto: 'Dicen que salen el lunes', fecha: haceMin(8) }] },
     { id: 'post2', autor: 'u_mariana', texto: 'Hice un nivel de derivadas bien difícil en Retos. A ver quién lo pasa con 5/5', fecha: haceMin(55), likes: ['u_diego', 'u_luis', 'u_jorge'], comentarios: [] },
     { id: 'post3', autor: 'u_sofia', texto: 'Vendo apuntes de Física I muy completos, en Compraventa', fecha: haceMin(180), likes: [], comentarios: [] },
-    { id: 'post4', autor: 'u_equipo', texto: 'Bienvenidos a Cosas de la uni. Proyecto independiente, hecho por y para estudiantes. Si algo falla, repórtalo desde los tres puntitos.', fecha: haceMin(60 * 30), likes: ['u_diego', 'u_mariana', 'u_valeria', 'u_sofia'], comentarios: [] }
+    { id: 'post4', autor: 'u_equipo', texto: 'Bienvenidos a Itinor. Proyecto independiente, hecho por y para estudiantes. Si algo falla, repórtalo desde los tres puntitos.', fecha: haceMin(60 * 30), likes: ['u_diego', 'u_mariana', 'u_valeria', 'u_sofia'], comentarios: [] }
   ];
   const masTarde = d => sumarDias(hoy, d);
   const propuestas = [

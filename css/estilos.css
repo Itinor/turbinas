@@ -308,3 +308,26 @@ input:checked+.punto-color{border-color:#4B1F7A;box-shadow:0 0 0 2px #fff inset}
 .res-cab{font-size:11px;font-weight:700;color:var(--gris,#6B6680);text-transform:uppercase}
 .res-tot{border-bottom:0;font-weight:700}
 .res-mal{color:var(--malTxt);font-weight:700}
+.codigo-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font:700 20px/1.2 ui-monospace,Menlo,Consolas,monospace;text-align:center;letter-spacing:1px;margin:14px 0}
+.codigo-seg span{background:var(--suave);border-radius:10px;padding:8px 0}
+.punto-color.rueda{background:conic-gradient(red,#ff0,lime,cyan,blue,#f0f,red)}
+.perfil-raiz{position:relative}
+.capa-notitas{position:absolute;inset:0;pointer-events:none;z-index:6}
+.notita{pointer-events:auto;position:absolute;width:86px;height:86px;border:0;padding:6px;border-radius:2px;box-shadow:0 6px 14px rgba(27,21,48,.22);transform:rotate(var(--rot,0deg));cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden;font:600 11px/1.2 'Comic Sans MS','Segoe Print','Bradley Hand',cursive;color:#1B1530;transition:transform .15s}
+.notita:hover{transform:rotate(0) scale(1.08);z-index:2}
+.notita::before{content:'';position:absolute;top:-6px;left:50%;width:34px;height:14px;margin-left:-17px;background:rgba(255,255,255,.55);transform:rotate(-3deg)}
+.notita img{width:100%;height:100%;object-fit:contain}
+.notita span{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.notita-grande{width:min(280px,80vw);aspect-ratio:1;margin:0 auto 10px;border-radius:3px;box-shadow:0 10px 24px rgba(27,21,48,.2);display:flex;align-items:center;justify-content:center;padding:14px;font:600 20px/1.3 'Comic Sans MS','Segoe Print','Bradley Hand',cursive;color:#1B1530;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere}
+.notita-grande img{width:100%;height:100%;object-fit:contain}
+.lienzo-notita{width:100%;max-width:320px;aspect-ratio:1;display:block;margin:0 auto;border-radius:4px;box-shadow:0 4px 12px rgba(27,21,48,.15);cursor:crosshair}
+body.colocando-notita #perfilRaiz{cursor:crosshair;outline:3px dashed var(--morado);outline-offset:6px;border-radius:12px}
+.notitas-barra{gap:8px;justify-content:center}
+.punto-color.on{outline:3px solid var(--morado);outline-offset:2px}
+details.ayuda summary{cursor:pointer;list-style:none}
+details.ayuda summary::-webkit-details-marker{display:none}
+details.ayuda[open] summary{margin-bottom:8px}
+.ayuda-cuerpo{font-size:14px;line-height:1.5}
+.ayuda-cuerpo ul{padding-left:18px;margin:6px 0}
+.ayuda-cuerpo li{margin:4px 0}
+button.punto-color{padding:0;cursor:pointer;min-height:0}

@@ -20,6 +20,7 @@ const VISOR = {
     abrirHoja(`<div class="entre" style="gap:8px"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc(nombre || 'Archivo')}</b><button class="btn3" style="min-height:40px;padding:0 12px" data-a="visorBajar" data-c="${esc(clave)}" data-n="${esc(nombre || 'archivo')}">${icono('descargar', 16)}Descargar</button><button class="icono-btn" data-a="cerrarHoja" aria-label="Cerrar">${icono('cerrar', 20)}</button></div><div class="visor-cuerpo" id="visor" style="margin-top:8px"><p class="peq gris" style="text-align:center;padding:30px 0">Abriendo…</p></div>`);
     $('#velo .hoja')?.classList.add('grande');
     const caja = () => $('#visor');
+    if (t === 'office' && typeof CRIPTO !== 'undefined' && CRIPTO.esCifrado(clave)) { caja().innerHTML = '<p class="peq gris" style="text-align:center;padding:30px 0">Este archivo viene de un chat cifrado, así que no se manda a ningún visor externo. Descárgalo para abrirlo.</p>'; return; }
     if (t === 'office') {
       if (typeof SYNC !== 'undefined' && SYNC.activo) { const pub = `${CONFIG.supabase.url}/storage/v1/object/public/archivos/${clave.split('/').map(encodeURIComponent).join('/')}`; caja().innerHTML = `<iframe title="${esc(nombre)}" src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(pub)}"></iframe>`; }
       else caja().innerHTML = '<p class="peq gris" style="text-align:center;padding:30px 0">Este tipo de archivo se puede ver cuando está conectado el servidor. Descárgalo para abrirlo.</p>';

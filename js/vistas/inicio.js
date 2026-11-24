@@ -2,7 +2,7 @@
 'use strict';
 UI.comentarios = {};
 VISTAS.inicio = {
-  titulo: 'Cosas de la uni', nav: 'inicio',
+  titulo: 'Itinor', nav: 'inicio',
   render() {
     const yo = DB.yo(), prox = DB.miAgenda().filter(a => !(a.hechoPor || {})[yo.id] && diasHasta(a.fecha) >= 0)[0];
     const pred = DB.estado.propuestas.find(p => p.tipo === 'prediccion' && p.estado === 'abierta');

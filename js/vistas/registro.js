@@ -7,7 +7,7 @@ VISTAS.bienvenida = {
     const top = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:18px">${barras}</div>`;
     if (r.paso === 0 && r.entrada === 'entrar') return `<div class="pila">
       <div style="display:flex;justify-content:center">${castor(92)}</div>
-      <h1 style="text-align:center">Bienvenido a Cosas de la uni</h1>
+      <h1 style="text-align:center">Bienvenido a Itinor</h1>
       <div class="rejilla2" style="background:var(--suave);border-radius:14px;padding:4px"><button class="pastilla on" style="border:0">Iniciar sesión</button><button class="pastilla" style="border:0" data-a="regEntrada" data-e="crear">Crear cuenta</button></div>
       <form data-form="iniciarSesion" class="pila">
         <div><label class="campo" for="ic">Correo, número o @usuario</label><input id="ic" name="contacto" required autocomplete="username" autocapitalize="off" placeholder="tucorreo@ejemplo.com"></div>
@@ -19,7 +19,7 @@ VISTAS.bienvenida = {
     if (r.paso === 0) return top + `<div class="pila">
       <div class="rejilla2" style="background:var(--suave);border-radius:14px;padding:4px"><button class="pastilla" style="border:0" data-a="regEntrada" data-e="entrar">Iniciar sesión</button><button class="pastilla on" style="border:0">Crear cuenta</button></div>
       <div style="display:flex;justify-content:center">${castor(92)}</div>
-      <h1 style="text-align:center">Bienvenido a Cosas de la uni</h1>
+      <h1 style="text-align:center">Bienvenido a Itinor</h1>
       <p class="gris" style="text-align:center;margin:0">La vida universitaria, aquí.</p>
       <div class="rejilla2" style="background:var(--suave);border-radius:14px;padding:4px">
         ${['correo', 'numero'].map(m => `<button class="pastilla${r.modo === m ? ' on' : ''}" style="border:0" data-a="regModo" data-m="${m}">${m === 'correo' ? 'Correo' : 'Número'}</button>`).join('')}
@@ -71,14 +71,34 @@ ACC.regModo = b => { UI.reg.modo = b.dataset.m; pintar(); };
 ACC.regDemo = b => { DB.entrar(b.dataset.u); ir('#/inicio'); };
 ACC.regCarrera = b => { UI.reg.carrera = b.dataset.c; pintar(); };
 ACC.regVis = b => { UI.reg.vis = b.dataset.v; pintar(); };
-FORMS.regPaso0 = d => { const c = d.contacto.trim(); if (Object.values(DB.estado.usuarios).some(u => String(u.contacto || '').toLowerCase() === c.toLowerCase())) return aviso('Ya hay una cuenta con ese dato. Inicia sesión.'); UI.reg.contacto = c; UI.reg.clave = d.clave; UI.reg.paso = 1; pintar(); };
-FORMS.iniciarSesion = d => { const r = DB.iniciarSesion(d.contacto, d.clave); if (r.error) return aviso(r.error); ir('#/inicio'); };
+/* capa 8: contraseñas que se adivinan en segundos */
+const CLAVES_COMUNES = ['12345678', '123456789', '1234567890', 'password', 'contraseña', 'contrasena', 'qwertyuiop', 'qwerty123', '11111111', '00000000', 'iloveyou', 'abc12345', 'password1', '87654321', 'asdfghjk', 'uach2024', 'uach2025', 'uach2026', 'mexico123', 'teamo123', 'aaaaaaaa'];
+function revisarFuerza(p, u = {}) {
+  const s = String(p || ''), l = s.toLowerCase();
+  if (s.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+  if (CLAVES_COMUNES.includes(l) || /^(.)\1+$/.test(s) || /^\d+$/.test(s) && s.length < 12) return 'Esa contraseña es muy fácil de adivinar. Mezcla letras y números, o usa una frase.';
+  const datos = [u.usuario, u.contacto, String(u.contacto || '').split('@')[0]].filter(x => x && String(x).length >= 4).map(x => String(x).toLowerCase());
+  if (datos.some(x => l.includes(x))) return 'No uses tu usuario, correo o número dentro de la contraseña.';
+  return null;
+}
+FORMS.regPaso0 = d => { { const f = revisarFuerza(d.clave, { contacto: d.contacto }); if (f) return aviso(f); } const c = d.contacto.trim(); if (Object.values(DB.estado.usuarios).some(u => String(u.contacto || '').toLowerCase() === c.toLowerCase())) return aviso('Ya hay una cuenta con ese dato. Inicia sesión.'); UI.reg.contacto = c; UI.reg.clave = d.clave; UI.reg.paso = 1; pintar(); };
+FORMS.iniciarSesion = async (d, f) => {
+  const c = String(d.contacto || '').trim().toLowerCase().replace(/\s+/g, ''), u = Object.values(DB.estado.usuarios).find(x => String(x.contacto || '').toLowerCase().replace(/\s+/g, '') === c || ('@' + x.usuario) === c || x.usuario === c.replace(/^@/, ''));
+  const mal = () => aviso('Correo, número o contraseña incorrectos.');
+  if (!u) return mal(); if (u.equipo) return aviso('Las cuentas del equipo entran con "Soy admin".');
+  const b = f?.querySelector('button'); if (b) { b.disabled = true; b.textContent = 'Revisando…'; }
+  const ok = await CRIPTO.revisarClave(u, d.clave).catch(() => false);
+  if (b) { b.disabled = false; b.textContent = 'Entrar'; }
+  if (!ok) return mal();
+  DB.entrar(u.id); await CRIPTO.abrirConClave(u, d.clave).catch(e => console.warn(e)); ir('#/inicio');
+};
 ACC.regEntrada = b => { UI.reg.entrada = b.dataset.e; UI.reg.paso = 0; pintar(); };
 FORMS.regPaso1 = d => { UI.reg.carrera = d.carrera.trim().slice(0, 80); if (UI.reg.carrera.length < 3) return aviso('Escribe tu carrera'); UI.reg.gen = d.gen || null; UI.reg.semestre = d.semestre || null; UI.reg.paso = 2; pintar(); };
 FORMS.regPaso2 = d => {
   if (!DB.usuarioDisponible(d.usuario)) { aviso('Ese nombre de usuario no está disponible'); return; }
   const r = UI.reg;
-  DB.registrar({ usuario: d.usuario, nombre: d.nombre.trim(), nombreVis: r.vis, carrera: r.carrera, gen: r.gen ? Number(r.gen) : null, semestre: r.semestre ? Number(r.semestre) : null, documento: r.doc, contacto: r.contacto, clave: r.clave }); r.clave = '';
+  const pass = r.clave, nuevo = DB.registrar({ usuario: d.usuario, nombre: d.nombre.trim(), nombreVis: r.vis, carrera: r.carrera, gen: r.gen ? Number(r.gen) : null, semestre: r.semestre ? Number(r.semestre) : null, documento: r.doc, contacto: r.contacto, clave: pass }); r.clave = '';
+  if (pass) CRIPTO.abrirConClave(nuevo, pass).catch(e => console.warn(e));
   r.paso = 3; location.hash = '#/bienvenida'; pintar();
 };
 /* entradas en vivo */

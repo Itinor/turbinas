@@ -8,7 +8,7 @@ VISTAS.chat = {
     const chats = DB.misChats(), fila = c => { const ult = DB.visibles(c).at(-1), n = DB.sinLeer(c), otro = c.miembros.find(m => m !== DB.yo().id);
       return `<a href="#/chat/${c.id}" class="fila" style="flex-wrap:nowrap;padding:10px 4px;text-decoration:none;color:inherit;border-bottom:1px solid var(--linea)">
         ${c.tipo === 'grupo' ? `<span class="avatar" style="border-radius:14px;background:var(--suave);color:var(--moradoTxt)">${esc(c.nombre.slice(0, 2).toUpperCase())}</span>` : avatar(otro).replace('<a ', '<span ').replace('</a>', '</span>')}
-        <span style="flex:1"><b>${esc(tituloChat(c))}</b><br><span class="peq gris" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ult ? (ult.u === DB.yo().id ? 'Tú: ' : c.tipo === 'grupo' ? esc(nombreVisible(ult.u)) + ': ' : '') + (ult.borrado ? '<i>Mensaje eliminado</i>' : ult.sistema ? 'salió del grupo' : ult.adjunto && !ult.t ? (esImagenAdj(ult.adjunto) ? 'Foto' : 'Archivo: ' + esc(ult.adjunto.nombre)) : esc(ult.t)) : 'Sin mensajes'}</span></span>
+        <span style="flex:1"><b>${esc(tituloChat(c))}</b><br><span class="peq gris" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ult ? (ult.u === DB.yo().id ? 'Tú: ' : c.tipo === 'grupo' ? esc(nombreVisible(ult.u)) + ': ' : '') + (ult.borrado ? '<i>Mensaje eliminado</i>' : ult.sistema ? 'salió del grupo' : ult.e ? vistaPrevia(c, ult) : ult.adjunto && !ult.t ? (esImagenAdj(ult.adjunto) ? 'Foto' : 'Archivo: ' + esc(ult.adjunto.nombre)) : esc(ult.t)) : 'Sin mensajes'}</span></span>
         <span style="text-align:right"><span class="mini gris">${ult ? hace(ult.f) : ''}</span><br>${n ? `<span class="insignia" style="background:var(--g-accion);color:#1B1530">${n}</span>` : ''}</span></a>`; };
     const grupos = chats.filter(c => c.tipo === 'grupo'), dms = chats.filter(c => c.tipo === 'dm');
     return `<div class="pila"><form data-form="buscarPersona" class="fila" style="flex-wrap:nowrap"><label class="oculto" for="bpers">Escribir a alguien</label><input id="bpers" name="q" placeholder="Escribe a alguien: @usuario" autocomplete="off"><button class="btn2">Abrir</button></form>
@@ -23,16 +23,70 @@ function vistaConversacion(id) {
   if (!c || !c.miembros.includes(yo)) return '<p class="vacio">No encontramos esta conversación.</p>';
   const fijado = c.fijado && DB.estado.agenda.find(a => a.id === c.fijado);
   return `<div class="pila" style="gap:10px">
-    ${c.tipo === 'dm' ? (() => { const o = DB.usuario(c.miembros.find(m => m !== yo)); return o ? `<a href="#/perfil/${esc(o.usuario)}" class="tarjeta fila" style="flex-wrap:nowrap;padding:10px 12px;text-decoration:none;color:inherit">${avatar(o.id).replace('<a ', '<span ').replace('</a>', '</span>')}<span style="flex:1;min-width:0"><b>${esc(nombreVisible(o.id))}</b><br><span class="mini gris">@${esc(o.usuario)} · Ver perfil</span></span>${icono('atras', 18, 'style="transform:rotate(180deg)"')}</a>` : ''; })() : ''}
+    ${c.tipo === 'dm' ? (() => { const o = DB.usuario(c.miembros.find(m => m !== yo)); return o ? `<a href="#/perfil/${esc(o.usuario)}" class="tarjeta fila" style="flex-wrap:nowrap;padding:10px 12px;text-decoration:none;color:inherit">${avatar(o.id).replace('<a ', '<span ').replace('</a>', '</span>')}<span style="flex:1;min-width:0"><b>${esc(nombreVisible(o.id))}</b><br><span class="mini gris">@${esc(o.usuario)} · Ver perfil</span><br><span class="mini" style="color:${CRIPTO.estadoVerif(o.id) === 'cambio' ? 'var(--malTxt)' : 'var(--okTxt)'}">${icono('candado', 12)} Cifrado de punta a punta${CRIPTO.estadoVerif(o.id) === 'si' ? ' · verificado' : CRIPTO.estadoVerif(o.id) === 'cambio' ? ' · su llave cambió' : ''}</span></span>${icono('atras', 18, 'style="transform:rotate(180deg)"')}</a>` : ''; })() : ''}
     <div class="entre">${(() => { const o = c.tipo === 'dm' && DB.usuario(c.miembros.find(m => m !== yo)), can = o?.cancion; if (!can) return `<span class="mini gris">${c.tipo === 'grupo' ? `${c.miembros.length} integrantes` : ''}</span>`;
       return can.archivo ? `<button class="pastilla fila" style="gap:8px;padding:0 12px 0 6px;max-width:70%" data-a="playPerfil" data-src="${esc(can.archivo)}" data-u="${o.id}"><span class="vinilo chico${REPRO.sonando(can.archivo) ? ' girando' : ''}" style="width:30px;height:30px" data-vinilo="${esc(can.archivo)}" aria-hidden="true"><span class="etiqueta-disco" style="width:12px;height:12px;${can.portada && /^data:image\/(jpeg|png|webp);base64,/.test(can.portada) ? `background:#4B1F7A url('${can.portada}') center/cover` : ''}"></span></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(can.titulo)}</span></button>`
         : can.enlace ? `<a class="pastilla" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit" href="${esc(can.enlace)}" target="_blank" rel="noopener noreferrer">${icono('musica', 16)}<span>${esc(can.titulo)}</span></a>` : ''; })()}<button class="btn3" style="min-height:38px;padding:0 12px" data-a="menuChat" data-id="${c.id}">${icono('puntos', 18)}Opciones</button></div>
     ${fijado ? `<a href="#/agenda" class="insignia i-amarillo" style="align-self:center;text-decoration:none">Fijado: ${esc(fijado.titulo)} · ${fechaBonita(fijado.fecha)}</a>` : ''}
-    <div id="mensajes" class="tarjeta pila" style="gap:8px;max-height:60vh;overflow-y:auto">${DB.visibles(c).map(m => { const mio = m.u === yo; if (m.sistema) return `<p class="mini gris" style="align-self:center;margin:0">${esc(nombreVisible(m.u))} salió del grupo</p>`; return `<div style="align-self:${mio ? 'flex-end' : 'flex-start'};max-width:80%">${!mio && c.tipo === 'grupo' ? `<div class="mini gris" style="margin:0 0 2px 6px">${esc(nombreVisible(m.u))}</div>` : ''}${m.borrado ? `<div style="border:1px dashed var(--linea);padding:8px 13px;border-radius:18px" class="peq gris"><i>Mensaje eliminado</i></div>` : `<div ${mio || DB.esAdmin() ? `data-a="menuMsg" data-id="${c.id}" data-i="${m.i}" role="button" tabindex="0" title="Opciones del mensaje" ` : ''}style="cursor:${mio || DB.esAdmin() ? 'pointer' : 'auto'};background:${mio ? 'var(--g-marca)' : 'var(--suave)'};color:${mio ? '#fff' : 'inherit'};padding:9px 13px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere">${m.adjunto ? burbujaAdjunto(m.adjunto, mio) : ''}${m.t ? esc(m.t) : ''}</div>`}<div class="mini gris" style="text-align:${mio ? 'right' : 'left'};margin:2px 6px 0">${hace(m.f)}</div></div>`; }).join('') || '<p class="vacio">Escribe el primer mensaje.</p>'}</div>
-    <form class="fila" style="flex-wrap:nowrap" data-form="enviarMsg"><input type="hidden" name="id" value="${c.id}"><label class="icono-btn" style="cursor:pointer;flex:none" title="Enviar foto o archivo" aria-label="Enviar foto o archivo">${icono('clip', 22)}<input type="file" class="oculto" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip" multiple data-cambio="adjuntoChat" data-id="${c.id}"></label><label class="oculto" for="msg">Mensaje</label><input id="msg" name="t" maxlength="1000" placeholder="Escribe un mensaje…" autocomplete="off"><button class="btn2" aria-label="Enviar">${icono('enviar', 18)}</button></form>
+    <div id="mensajes" class="tarjeta pila" style="gap:8px;max-height:60vh;overflow-y:auto">${DB.visibles(c).map(m => { const mio = m.u === yo; if (m.sistema) return `<p class="mini gris" style="align-self:center;margin:0">${esc(nombreVisible(m.u))} salió del grupo</p>`; return `<div style="align-self:${mio ? 'flex-end' : 'flex-start'};max-width:80%">${!mio && c.tipo === 'grupo' ? `<div class="mini gris" style="margin:0 0 2px 6px">${esc(nombreVisible(m.u))}</div>` : ''}${m.borrado ? `<div style="border:1px dashed var(--linea);padding:8px 13px;border-radius:18px" class="peq gris"><i>Mensaje eliminado</i></div>` : (() => { const x = m.e ? CRIPTO.leer(c, m) : null; if (m.e && (!x || x.error)) return `<div style="border:1px dashed var(--linea);padding:8px 13px;border-radius:18px" class="peq gris">${icono('candado', 14)} <i>${x?.error ? esc(x.error) : CRIPTO.listo() ? 'Descifrando…' : 'Mensaje cifrado'}</i></div>`; if (x) m = { ...m, t: x.t, adjunto: x.adjunto, llaveDistinta: x.llaveDistinta }; return ''; })() || `<div ${mio || DB.esAdmin() ? `data-a="menuMsg" data-id="${c.id}" data-i="${m.i}" role="button" tabindex="0" title="Opciones del mensaje" ` : ''}style="cursor:${mio || DB.esAdmin() ? 'pointer' : 'auto'};background:${mio ? 'var(--g-marca)' : 'var(--suave)'};color:${mio ? '#fff' : 'inherit'};padding:9px 13px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere">${m.adjunto ? burbujaAdjunto(m.adjunto, mio) : ''}${m.t ? esc(m.t) : ''}</div>${m.llaveDistinta ? '<div class="mini" style="color:var(--malTxt);margin:2px 6px 0">Enviado con una llave que ya no es la de su cuenta</div>' : ''}`}<div class="mini gris" style="text-align:${mio ? 'right' : 'left'};margin:2px 6px 0">${hace(m.f)}</div></div>`; }).join('') || '<p class="vacio">Escribe el primer mensaje.</p>'}</div>
+    ${zonaEnvio(c)}
     ${c.tipo === 'dm' ? `<button class="btn3" style="align-self:flex-start;color:var(--malTxt)" data-a="abrirReporte" data-tipo="usuario" data-ref="${c.miembros.find(m => m !== yo)}" data-quien="${c.miembros.find(m => m !== yo)}">${icono('bandera', 16)}Reportar conversación</button>` : ''}</div>`;
 }
-FORMS.enviarMsg = d => { if (!d.t.trim()) return; DB.enviar(d.id, d.t); refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight; $('#msg')?.focus(); };
+/* ---------- cifrado de punta a punta ---------- */
+function vistaPrevia(c, m) { const x = CRIPTO.leer(c, m); if (!x || x.error) return '<i>Mensaje cifrado</i>'; return x.t ? esc(x.t) : x.adjunto ? (esImagenAdj(x.adjunto) ? 'Foto' : 'Archivo: ' + esc(x.adjunto.nombre)) : ''; }
+function zonaEnvio(c) {
+  const u = DB.yo();
+  if (!CRIPTO.listo()) return `<form class="tarjeta pila" style="gap:8px;background:var(--suave);box-shadow:none" data-form="desbloquearChats">
+      <b class="fila" style="gap:6px">${icono('candado', 18)}${u.cripto ? 'Abre tus chats en este dispositivo' : u.clave ? 'Activa el cifrado de tus chats' : 'Crea una contraseña para tus chats'}</b>
+      <p class="peq gris" style="margin:0">${u.cripto ? 'Tus mensajes van cifrados de punta a punta. Escribe tu contraseña para leerlos aquí.' : u.clave ? 'A partir de ahora tus mensajes van cifrados de punta a punta: solo tú y con quien hablas los pueden leer. Confirma tu contraseña para crear tus llaves.' : 'Tus mensajes van cifrados de punta a punta. Esta contraseña protege tu llave; la vas a necesitar para abrir tus chats en otro dispositivo. No se puede recuperar.'}</p>
+      <label class="oculto" for="dc1">Contraseña</label><input id="dc1" name="clave" type="password" required minlength="${u.cripto || u.clave ? 1 : 8}" autocomplete="${u.cripto || u.clave ? 'current-password' : 'new-password'}" placeholder="Contraseña">
+      ${u.cripto || u.clave ? '' : '<label class="oculto" for="dc2">Repite la contraseña</label><input id="dc2" name="clave2" type="password" required minlength="8" autocomplete="new-password" placeholder="Repite la contraseña">'}
+      <button class="btn">${u.cripto ? 'Abrir chats' : 'Activar'}</button></form>`;
+  const faltan = CRIPTO.sinLlave(c).filter(m => m !== u.id);
+  if (faltan.length && c.tipo === 'dm') return `<div class="tarjeta pila" style="gap:8px;background:var(--suave);box-shadow:none"><b class="fila" style="gap:6px">${icono('candado', 18)}Esperando a ${esc(nombreVisible(faltan[0]))}</b><p class="peq gris" style="margin:0">Todavía no activa sus chats cifrados. En cuanto entre a la app con su contraseña, ya pueden escribirse.</p><button class="btn3" data-a="avisarCifrado" data-id="${c.id}">Avisarle</button></div>`;
+  return `${faltan.length ? `<p class="mini gris" style="margin:0">${faltan.map(nombreVisible).map(esc).join(', ')} todavía no activa el cifrado y no verá los mensajes nuevos hasta que lo haga.</p>` : ''}
+    <form class="fila" style="flex-wrap:nowrap" data-form="enviarMsg"><input type="hidden" name="id" value="${c.id}"><label class="icono-btn" style="cursor:pointer;flex:none" title="Enviar foto o archivo" aria-label="Enviar foto o archivo">${icono('clip', 22)}<input type="file" class="oculto" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip" multiple data-cambio="adjuntoChat" data-id="${c.id}"></label><label class="oculto" for="msg">Mensaje</label><input id="msg" name="t" maxlength="1000" placeholder="Escribe un mensaje…" autocomplete="off"><button class="btn2" aria-label="Enviar">${icono('enviar', 18)}</button></form>`;
+}
+FORMS.desbloquearChats = async (d, f) => {
+  const u = DB.yo(), b = f.querySelector('button');
+  if (!u.cripto && !u.clave) { if (d.clave !== d.clave2) return aviso('Las contraseñas no coinciden.'); const r = revisarFuerza(d.clave, u); if (r) return aviso(r); }
+  else if (!await CRIPTO.revisarClave(u, d.clave)) return aviso('Contraseña incorrecta.');
+  b.disabled = true; b.textContent = 'Abriendo…';
+  try { await CRIPTO.abrirConClave(u, d.clave); aviso('Chats cifrados listos'); } catch (e) { console.warn(e); aviso('No se pudo abrir. Intenta otra vez.'); }
+  refrescar();
+};
+ACC.avisarCifrado = b => { const c = DB.estado.chats.find(x => x.id === b.dataset.id); CRIPTO.sinLlave(c).filter(m => m !== DB.yo().id).forEach(m => notificar(m, `@${DB.yo().usuario} quiere escribirte. Entra a Chat y activa tus mensajes cifrados.`, '#/chat/' + c.id)); DB.guardar(); aviso('Le avisamos'); };
+/* capa 8: antes de mandar algo que parece contraseña, NIP o tarjeta, se pregunta */
+function datoSensible(t) {
+  const s = String(t).toLowerCase(), dig = s.replace(/[\s-]/g, '');
+  if (/\b(contrase(ñ|n)a|password|passwd|clave de acceso|nip|cvv|cvc|c[oó]digo de verificaci[oó]n|c[oó]digo de seguridad|token)\b/.test(s)) return 'una contraseña o un código';
+  if (/\d{18}/.test(dig) && /clabe|\d{18}/.test(s.replace(/[\s-]/g, ''))) return 'una CLABE';
+  if (/(?:^|\D)\d{15,16}(?:\D|$)/.test(dig)) return 'un número de tarjeta';
+  if (/\b\d{6}\b/.test(s) && /c[oó]digo|whats|sms|verific/.test(s)) return 'un código de verificación';
+  return null;
+}
+FORMS.enviarMsg = async (d, f, forzar) => {
+  const t = String(d.t || '').trim(); if (!t) return;
+  const sens = !forzar && datoSensible(t);
+  if (sens) { UI.pendienteMsg = d; return abrirHoja(`<h2>¿Seguro que lo mandas?</h2><p class="gris">Parece que el mensaje lleva ${sens}. Aunque el chat va cifrado, nadie de Itinor ni de la uni te va a pedir contraseñas, NIP ni códigos por mensaje. Si alguien te los pide, es un engaño.</p><div class="pila"><button class="btn3 ancho" data-a="cerrarHoja">No mandarlo</button><button class="btn-peligro ancho" data-a="enviarIgual">Mandarlo de todos modos</button></div>`); }
+  const c = DB.estado.chats.find(x => x.id === d.id); if (!c) return;
+  try { const e = await CRIPTO.cifrarMensaje(c, { t: t.slice(0, 1000) }); DB.enviarCifrado(c.id, e); }
+  catch (err) { console.warn(err); return aviso('No se pudo cifrar el mensaje.'); }
+  if ($('#msg')) $('#msg').value = ''; refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight; $('#msg')?.focus();
+};
+ACC.enviarIgual = () => { const d = UI.pendienteMsg; UI.pendienteMsg = null; cerrarHoja(); if (d) FORMS.enviarMsg(d, null, true); };
+/* código de seguridad: se compara en persona; si coincide, nadie se metió en medio */
+ACC.codigoSeguridad = async b => {
+  const otro = b.dataset.u, cod = await CRIPTO.codigo(DB.yo().id, otro);
+  if (!cod) return aviso('Todavía no tiene llaves de cifrado.');
+  const est = CRIPTO.estadoVerif(otro);
+  abrirHoja(`<h2>Código de seguridad</h2><p class="peq gris">Junto con ${esc(nombreVisible(otro))}, abran esta pantalla en persona (o por videollamada) y comparen los números. Si son iguales, sus mensajes solo los pueden leer ustedes dos.</p>
+    <p class="codigo-seg">${cod.split(' ').map(x => `<span>${x}</span>`).join('')}</p>
+    ${est === 'cambio' ? '<p class="peq" style="color:var(--malTxt)"><b>Su llave cambió</b> desde que la verificaste. Puede que haya entrado desde una cuenta nueva o reiniciado su cuenta. Vuelvan a comparar el código.</p>' : ''}
+    <div class="pila">${est === 'si' ? `<p class="peq" style="color:var(--okTxt);margin:0"><b>Verificado</b></p><button class="btn3 ancho" data-a="verificarLlave" data-u="${otro}" data-no="1">Quitar verificación</button>` : `<button class="btn ancho" data-a="verificarLlave" data-u="${otro}">Coinciden: marcar como verificado</button>`}<button class="btn3 ancho" data-a="cerrarHoja">Cerrar</button></div>`);
+};
+ACC.verificarLlave = b => { CRIPTO.marcarVerificado(b.dataset.u, !b.dataset.no); cerrarHoja(); aviso(b.dataset.no ? 'Verificación quitada' : 'Verificado'); refrescar(); };
+ACC.bloquearChats = async () => { await CRIPTO.olvidar(); cerrarHoja(); aviso('Chats bloqueados en este dispositivo'); refrescar(); };
 FORMS.buscarPersona = d => { const u = DB.porUsuario(d.q.trim()); if (!u || u.id === DB.yo().id) return aviso('No encontramos a ese usuario'); abrirChatCon(u.id); };
 function abrirChatCon(id) { const c = DB.chatCon(id); if (!c) return aviso(`${nombreVisible(id)} solo recibe mensajes de ciertas personas`); ir('#/chat/' + c.id); }
 ACC.escribirA = b => abrirChatCon(b.dataset.u);
@@ -45,6 +99,8 @@ FORMS.crearGrupo = d => {
 ACC.menuChat = b => { const c = DB.estado.chats.find(x => x.id === b.dataset.id), otro = c.miembros.find(m => m !== DB.yo().id);
   abrirHoja(`<h2>${esc(tituloChat(c))}</h2><div class="pila">
     ${c.tipo === 'grupo' ? `<button class="btn2 ancho" data-a="chatAccion" data-que="tablon" data-id="${c.id}">${icono('tablon', 18)}Tablón del grupo</button>` : ''}
+    ${c.tipo === 'dm' ? `<button class="btn3 ancho" data-a="codigoSeguridad" data-u="${otro}">${icono('candado', 18)}Código de seguridad</button>` : ''}
+    <button class="btn3 ancho" data-a="bloquearChats">Bloquear chats en este dispositivo</button>
     <button class="btn3 ancho" data-a="chatAccion" data-que="vaciar" data-id="${c.id}">Vaciar chat</button>
     ${c.tipo === 'grupo' ? `<button class="btn-peligro ancho" data-a="chatAccion" data-que="salir" data-id="${c.id}">Salir del grupo</button>` : `<button class="btn-peligro ancho" data-a="chatAccion" data-que="quitar" data-id="${c.id}">Eliminar chat</button>`}
     <p class="mini gris" style="margin:0">${c.tipo === 'grupo' ? 'Vaciar solo borra los mensajes para ti. Al salir ya no recibes mensajes del grupo.' : 'Solo se borra para ti. Si te vuelve a escribir, la conversación reaparece desde cero.'}</p>
@@ -68,12 +124,13 @@ CAMBIOS.adjuntoChat = async el => {
   if (fs.length > 5) return aviso('Máximo 5 archivos a la vez.');
   if (fs.some(f => f.size > 10 * 1024 * 1024)) return aviso('Cada archivo puede pesar máximo 10 MB.');
   aviso(fs.length > 1 ? `Enviando ${fs.length} archivos…` : 'Enviando…');
-  let texto = $('#msg')?.value || '';
+  let texto = $('#msg')?.value || ''; if (datoSensible(texto)) { texto = ''; aviso('Mandamos el archivo sin el texto: parecía llevar un dato sensible.'); }
   for (const f of fs) {
     try { const img = /^image\//.test(f.type), blob = img && !/gif/.test(f.type) ? await reducirFoto(f, 1600) : f, clave = 'chat_' + uid('f');
-      await ARCHIVOS.guardar(clave, blob); DB.enviar(id, texto, { clave, nombre: f.name.slice(0, 120), peso: blob.size, mime: blob.type || f.type }); texto = ''; }
+      const c = DB.estado.chats.find(x => x.id === id), k = await CRIPTO.guardarArchivoCifrado(clave, blob);
+      DB.enviarCifrado(id, await CRIPTO.cifrarMensaje(c, { t: texto.trim().slice(0, 1000), adjunto: { clave, nombre: f.name.slice(0, 120), peso: blob.size, mime: blob.type || f.type, ...k } })); texto = ''; }
     catch { aviso('No se pudo enviar ' + f.name); }
   }
-  if ($('#msg')) $('#msg').value = ''; refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight;
+  if ($('#msg') && !datoSensible($('#msg').value)) $('#msg').value = ''; refrescar(); const m = $('#mensajes'); if (m) m.scrollTop = m.scrollHeight;
 };
-ACC.abrirAdjunto = b => VISOR.abrir({ clave: b.dataset.c, nombre: b.dataset.n, mime: b.dataset.img ? 'image/jpeg' : '' });
+ACC.abrirAdjunto = b => VISOR.abrir({ clave: b.dataset.c, nombre: b.dataset.n, mime: b.dataset.img ? 'image/jpeg' : (b.dataset.m || '') });

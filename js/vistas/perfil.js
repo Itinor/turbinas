@@ -15,7 +15,7 @@ VISTAS.perfil = {
     const [rango, grad] = rangoReputacion(u.reputacion), amigo = DB.sonAmigos(u.id, yo.id) && !mio;
     const ins = u.insignias.filter(i => !u.ocultas.includes(i));
     const stats = [[E_aportes(u), 'Aportes', ''], [u.amigos.length, 'Amigos', mio ? '#/amigos' : ''], [u.racha.dias || 0, 'Racha', '']];
-    return `<div class="pila">
+    return `<div class="pila perfil-raiz" id="perfilRaiz" data-u="${u.id}">${capaNotitas(u, mio)}
       <section class="tarjeta" style="text-align:center;padding:0;overflow:hidden">
         <div style="height:56px;background:var(--g-banda);position:relative">${mio ? `<a class="icono-btn" href="#/ajustes" aria-label="Ajustes" style="position:absolute;right:4px;top:4px;color:#fff;min-width:44px;min-height:44px">${icono('ajustes', 20)}</a>` : ''}</div>
         <div style="margin-top:-46px;position:relative;z-index:1"><span class="marco" style="background:${grad}">${avatar(u.id, true)}</span></div>
@@ -24,6 +24,8 @@ VISTAS.perfil = {
           <span class="insignia i-morado" style="margin-top:10px">Reputación ${rango} · ${u.reputacion} pts</span>
           <div class="fila" style="justify-content:center;margin-top:12px">${mio ? '<a class="btn3" href="#/editar-perfil">Editar perfil</a><a class="btn3" href="#/horario">Mi horario</a>' + (DB.esAdmin() ? '<a class="btn2" href="#/admin">Administración</a>' : '') : `${botonAmistad(u.id)}${DB.puedeEscribir(u.id) ? `<button class="btn3" data-a="escribirA" data-u="${u.id}">Escribir</button>` : ''}${DB.puedeVerHorario(u.id) ? `<a class="btn3" href="#/horario/${esc(u.usuario)}">Horario</a>` : ''}<button class="icono-btn" data-a="menuPerfil" data-u="${u.id}" aria-label="Más opciones">${icono('puntos')}</button>`}</div></div></section>
       ${ins.length ? `<div class="fila">${ins.map(i => `<span class="insignia ${INSIGNIAS[i].clase}">${INSIGNIAS[i].texto}</span>`).join('')}</div>` : ''}
+      ${barraNotitas(u, mio)}
+      ${seccionHorarioPerfil(u, mio)}
       ${seccionCanciones(u, mio)}
       ${seccionDestacados(u, mio)}
       ${(() => { const R = u.redes || {}, filas = [['instagram', 'Instagram', R.instagram], ['tiktok', 'TikTok', R.tiktok], ['youtube', 'YouTube', R.youtube && (R.youtube.match(/\/(@[\w.-]+)/)?.[1]?.slice(1) || 'canal')]].filter(x => x[2]); if (!filas.length) return '';
@@ -35,7 +37,10 @@ VISTAS.perfil = {
   },
   montar([n]) {
     const u = n ? DB.porUsuario(n) : DB.yo();
-    if (u && u.id !== DB.yo().id && u.cancion?.archivo && DB.yo().ajustes.musicaAuto) { if (!REPRO.sonando(u.cancion.archivo)) reproducir(u.cancion.archivo, true, u.id); }
+    if (u && u.id !== DB.yo().id) { const fondo = u.fondoMusica && DB.canciones(u).find(c => c.archivo === u.fondoMusica);
+      if (fondo && !DB.yo().ajustes.sinFondo) { if (!REPRO.sonando()) REPRO.alternar(fondo, u.id, true, true); }
+      else if (u.cancion?.archivo && DB.yo().ajustes.musicaAuto) { if (!REPRO.sonando(u.cancion.archivo)) reproducir(u.cancion.archivo, true, u.id); } }
+    cargarArchivosTablon(); montarNotitas();
   }
 };
 function E_aportes(u) { return DB.estado.posts.filter(p => p.autor === u.id).length + DB.estado.propuestas.filter(p => p.autor === u.id).length + DB.estado.rankings.filter(r => r.autor === u.id).length; }
@@ -105,15 +110,15 @@ FORMS.guardarPerfil = d => {
 VISTAS.ajustes = {
   titulo: 'Ajustes', nav: 'perfil', atras: '#/perfil',
   render() {
-    const u = DB.yo(), seg = (k, t, ops) => `<div style="padding:8px 0;border-bottom:1px solid var(--linea)"><div class="peq" style="margin-bottom:6px">${t}</div><div class="rejilla3" style="background:var(--suave);border-radius:12px;padding:3px">${ops.map(([v, n]) => `<button class="pastilla${u.privacidad[k] === v ? ' on' : ''}" style="border:0" data-a="privacidad" data-k="${k}" data-v="${v}">${n}</button>`).join('')}</div></div>`;
+    const u = DB.yo(), seg = (k, t, ops) => `<div style="padding:8px 0;border-bottom:1px solid var(--linea)"><div class="peq" style="margin-bottom:6px">${t}</div><div class="rejilla3" style="background:var(--suave);border-radius:12px;padding:3px">${ops.map(([v, n]) => `<button class="pastilla${(u.privacidad[k] || (k === 'notitas' ? 'todos' : '')) === v ? ' on' : ''}" style="border:0" data-a="privacidad" data-k="${k}" data-v="${v}">${n}</button>`).join('')}</div></div>`;
     const sw = (k, t) => `<button class="entre ancho" style="min-height:52px;border:0;background:transparent;border-bottom:1px solid var(--linea);padding:0;text-align:left" data-a="interruptor" data-k="${k}" role="switch" aria-checked="${!!u.ajustes[k]}"><span>${t}</span><span style="width:46px;height:28px;border-radius:999px;background:${u.ajustes[k] ? 'var(--g-marca)' : 'var(--linea)'};position:relative;flex:none"><span style="position:absolute;top:4px;left:${u.ajustes[k] ? '22px' : '4px'};width:20px;height:20px;border-radius:50%;background:#fff"></span></span></button>`;
     return `<div class="pila">
       <section class="tarjeta"><h2 style="margin-bottom:8px">Tu cuenta</h2>
         <form data-form="ajusteCarrera" class="pila" style="gap:8px"><div><label class="campo" for="ac">Carrera</label><input id="ac" name="carrera" list="listaCarreras" maxlength="80" placeholder="Escribe tu carrera" value="${esc(u.carrera === 'Sin carrera' ? '' : u.carrera)}">${datalistCarreras()}</div><div class="rejilla2"><div><label class="campo" for="as">Semestre <span class="mini gris">(opcional)</span></label><input id="as" name="semestre" type="number" min="1" max="16" inputmode="numeric" value="${u.semestre || ''}"></div><div><label class="campo" for="ag">Generación <span class="mini gris">(opcional)</span></label><input id="ag" name="gen" type="number" min="1990" max="2040" inputmode="numeric" placeholder="2024" value="${u.gen || ''}"></div></div><button class="btn3">Guardar</button></form>
         <div class="entre" style="margin-top:10px"><span>Verificación</span>${u.verificado === 'si' ? '<b style="color:var(--okTxt)">Verificado</b>' : `<a href="#/verificar">${u.verificado === 'pendiente' ? 'En revisión' : 'Verificarme'}</a>`}</div></section>
       <a class="tarjeta entre" href="#/horario" style="text-decoration:none;color:inherit"><span><h2>Mi horario</h2><span class="mini gris">${(u.horario || []).length} clases${u.horarioFoto ? " · con foto" : ""} · ${u.horarioVis === "elegidos" ? "compartido con " + (u.horarioCompartido || []).length : "solo tú lo ves"}</span></span>${icono("atras", 18, 'style="transform:rotate(180deg)"')}</a>
-      <section class="tarjeta"><h2>Privacidad</h2>${seg('escribir', 'Quién puede escribirme', [['todos', 'Todos'], ['amigos', 'Amigos'], ['nadie', 'Nadie']])}${seg('perfil', 'Quién ve mi perfil', [['todos', 'Todos'], ['amigos', 'Amigos'], ['nadie', 'Solo yo']])}${seg('venta', 'Mi compraventa por defecto', [['todos', 'Todos'], ['amigos', 'Amigos'], ['elegidos', 'Elegidos']])}</section>
-      <section class="tarjeta"><h2>Música y apariencia</h2>${sw('musicaAuto', 'Reproducir música al abrir perfiles')}${sw('oscuro', 'Modo oscuro')}</section>
+      <section class="tarjeta"><h2>Privacidad</h2>${seg('escribir', 'Quién puede escribirme', [['todos', 'Todos'], ['amigos', 'Amigos'], ['nadie', 'Nadie']])}${seg('perfil', 'Quién ve mi perfil', [['todos', 'Todos'], ['amigos', 'Amigos'], ['nadie', 'Solo yo']])}${seg('venta', 'Mi compraventa por defecto', [['todos', 'Todos'], ['amigos', 'Amigos'], ['elegidos', 'Elegidos']])}${seg('notitas', 'Quién te puede dejar notitas', [['todos', 'Todos'], ['amigos', 'Amigos'], ['nadie', 'Nadie']])}</section>
+      <section class="tarjeta"><h2>Música y apariencia</h2>${sw('musicaAuto', 'Reproducir música al abrir perfiles')}${sw('sinFondo', 'No reproducir la música de fondo de otros perfiles')}${sw('oscuro', 'Modo oscuro')}</section>
       <section class="tarjeta"><h2 style="margin-bottom:8px">Personas bloqueadas</h2>${u.bloqueados.map(i => `<div class="entre" style="padding:6px 0"><span>${esc(nombreVisible(i))}</span><button class="btn3" data-a="desbloquear" data-u="${i}">Desbloquear</button></div>`).join('') || '<p class="peq gris" style="margin:0">Nadie.</p>'}</section>
       <section class="tarjeta pila" style="gap:8px">${DB.esAdmin() ? '<a class="btn2" href="#/admin">Panel de administración</a>' : ''}${(CONFIG.cuentasEquipo || []).some(c => c.id === DB.yo().id) ? '<button class="btn2" data-a="cambiarCuenta">Cambiar de cuenta (equipo)</button>' : ''}<button class="btn3" data-a="cerrarSesion">Cerrar sesión</button>${SYNC.activo ? '' : `<button class="btn-peligro" data-a="reiniciarDatos">Borrar datos de prueba de este navegador</button>`}</section></div>`;
   }
@@ -257,7 +262,7 @@ VISTAS.redes = {
   render([n, red]) {
     const u = DB.porUsuario(n), h = u?.redes?.[red]; if (!u || !h || !['instagram', 'tiktok', 'youtube'].includes(red)) return '<p class="vacio">No encontramos esa red.</p>';
     const des = (u.redes.destacadas || []).map(embedRed).filter(e => e && e.red === red), perfil = red === 'instagram' ? `https://www.instagram.com/${encodeURIComponent(h)}/` : red === 'youtube' ? h : `https://www.tiktok.com/@${encodeURIComponent(h)}`;
-    return `<div class="pila"><div class="tarjeta entre" style="padding:12px 14px"><span class="fila" style="flex-wrap:nowrap"><span style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--suave);color:var(--moradoTxt)">${icono(red, 22)}</span><span><b>${red === 'youtube' ? esc(h.replace(/^https:\/\/(www\.)?/, '')) : '@' + esc(h)}</b><br><span class="mini gris">Sigues dentro de Cosas de la uni</span></span></span><a class="btn3" style="min-height:40px;padding:0 12px" href="${perfil}" target="_blank" rel="noopener noreferrer">Abrir app</a></div>
+    return `<div class="pila"><div class="tarjeta entre" style="padding:12px 14px"><span class="fila" style="flex-wrap:nowrap"><span style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--suave);color:var(--moradoTxt)">${icono(red, 22)}</span><span><b>${red === 'youtube' ? esc(h.replace(/^https:\/\/(www\.)?/, '')) : '@' + esc(h)}</b><br><span class="mini gris">Sigues dentro de Itinor</span></span></span><a class="btn3" style="min-height:40px;padding:0 12px" href="${perfil}" target="_blank" rel="noopener noreferrer">Abrir app</a></div>
       ${des.map(e => `<div class="tarjeta" style="padding:0;overflow:hidden;border:3px solid var(--amarillo)"><iframe title="Publicación de @${esc(h)}" src="${e.src}" loading="lazy" style="width:100%;height:${red === 'tiktok' ? 740 : red === 'youtube' ? 220 : 620}px;border:0;display:block" allow="encrypted-media; fullscreen" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"></iframe></div>`).join('')
         || `<p class="vacio">${DB.yo().usuario === u.usuario ? 'Agrega publicaciones destacadas desde Editar perfil para que se vean aquí.' : 'Todavía no tiene publicaciones destacadas.'}</p>`}</div>`;
   }
@@ -275,7 +280,7 @@ function seccionCanciones(u, mio) {
   const lista = DB.canciones(u); if (!lista.length) return '';
   return `<section class="tarjeta" style="background:#1B1530;color:#fff;border:0;display:flex;flex-direction:column;gap:12px"><span class="etiqueta" style="color:var(--amarillo)">${lista.length > 1 ? 'Canciones' : 'Canción'} del perfil</span>
     ${lista.map((c, i) => { const em = !c.archivo && embedMusica(c.enlace), abierto = UI.embedAbierto === u.id + ':' + i;
-      return `<div><div class="fila" style="flex-wrap:nowrap">${c.archivo ? vinilo(c) : `<span class="vinilo" style="width:60px;height:60px" aria-hidden="true"><span class="etiqueta-disco" style="background:${em?.servicio === 'Spotify' ? '#1DB954' : em?.servicio === 'YouTube' ? '#FF3B30' : '#FC3C44'}"></span></span>`}
+      return `<div ${mio && c.archivo ? `data-menu-cancion="${i}" title="Clic derecho o mantén presionado para más opciones"` : ''}>${c.archivo && u.fondoMusica === c.archivo ? `<span class="insignia" style="background:var(--amarillo);color:#1B1530;margin-bottom:6px">${icono('musica', 12)} Suena de fondo en tu perfil</span>`.replace('tu perfil', mio ? 'tu perfil' : 'su perfil') : ''}<div class="fila" style="flex-wrap:nowrap">${c.archivo ? vinilo(c) : `<span class="vinilo" style="width:60px;height:60px" aria-hidden="true"><span class="etiqueta-disco" style="background:${em?.servicio === 'Spotify' ? '#1DB954' : em?.servicio === 'YouTube' ? '#FF3B30' : '#FC3C44'}"></span></span>`}
         <span style="flex:1;min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.titulo)}</b><span class="mini" style="color:#C9C2DA">${esc(c.artista || (em ? em.servicio : 'Archivo'))}</span></span>
         ${c.archivo ? `<button class="icono-btn" style="background:#FFC93C;color:#1B1530;border-radius:50%;width:48px;height:48px" data-a="playPerfil" data-src="${esc(c.archivo)}" data-u="${u.id}" data-i="${i}" aria-label="Reproducir o pausar ${esc(c.titulo)}" data-repro="${esc(c.archivo)}">${icono(REPRO.sonando(c.archivo) ? 'pausa' : 'play', 20)}</button>`
           : em ? `<button class="icono-btn" style="background:#FFC93C;color:#1B1530;border-radius:50%;width:48px;height:48px" data-a="abrirEmbed" data-k="${u.id}:${i}" aria-label="${abierto ? 'Ocultar' : 'Escuchar'} ${esc(c.titulo)}">${icono(abierto ? 'cerrar' : 'play', 20)}</button>`

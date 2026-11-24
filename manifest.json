@@ -1,6 +1,6 @@
 {
-  "name": "Cosas de la uni",
-  "short_name": "Cosas de la uni",
+  "name": "Itinor",
+  "short_name": "Itinor",
   "start_url": "./index.html#/inicio",
   "display": "standalone",
   "background_color": "#F7F5FB",
