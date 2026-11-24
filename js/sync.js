@@ -18,7 +18,7 @@ const SYNC = (() => {
     salasVR: { aceptados: 'p', rechazados: 'p', propias: 'a', historial: 'a' },
     usuarios: { amigos: 'p', solicitudes: 'p', notitas: 'a' }
   };
-  let meta = { url: '', cursor: 0, hechos: {} }, listo = false, subiendo = false, otraVez = false, temporizador = null, sondeo = null, pendientes = {}, pintarLuego = false;
+  let meta = { url: '', cursor: 0, hechos: {}, campos: {} }, listo = false, subiendo = false, otraVez = false, temporizador = null, sondeo = null, pendientes = {}, pintarLuego = false;
 
   const estable = v => v === null || typeof v !== 'object' ? JSON.stringify(v) : Array.isArray(v) ? '[' + v.map(estable).join(',') + ']' : '{' + Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => JSON.stringify(k) + ':' + estable(v[k])).join(',') + '}';
   const hash = s => { let h1 = 0xdeadbeef, h2 = 0x41c6ce57; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); } h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909); return (h2 >>> 0).toString(36) + (h1 >>> 0).toString(36); };
@@ -47,6 +47,22 @@ const SYNC = (() => {
   }
 
   function buscar(col, id) { if (MAPAS.includes(col)) return E[col]?.[id]; return (E[col] || []).find(x => x.id === id); }
+  const esPerfil = k => k.startsWith('usuarios/') && k.split('/').length === 2;
+  const camposDe = d => { const o = {}; Object.keys(d || {}).forEach(f => { o[f] = hash(estable(d[f])); }); return o; };
+  const idDe = x => x && typeof x === 'object' ? (x.id || x.archivo || x.enlace || x.clave || estable(x)) : estable(x);
+  function fusionar(loc, rem, base) {
+    const M = { ...rem };
+    new Set([...Object.keys(loc || {}), ...Object.keys(rem || {})]).forEach(f => {
+      const hl = hash(estable(loc?.[f])), hr = hash(estable(rem?.[f])), hb = base?.[f];
+      if (hl === hr) return;
+      if (hb !== undefined && hl === hb) { M[f] = rem?.[f]; return; }
+      if (hb !== undefined && hr === hb) { M[f] = loc?.[f]; return; }
+      if (Array.isArray(loc?.[f]) && Array.isArray(rem?.[f]) && hb === undefined) { const vistos = new Set(rem[f].map(idDe)); M[f] = [...rem[f], ...loc[f].filter(x => !vistos.has(idDe(x)))]; return; }
+      if (rem?.[f] === undefined) M[f] = loc?.[f];
+    });
+    if (Array.isArray(M.canciones)) M.canciones = M.canciones.slice(0, 8);
+    return M;
+  }
   function aplicar(fila) {
     const seg = fila.k.split('/').map(dec), [col, id, f, el] = seg;
     if (col === 'meta') { if (fila.borrado) delete E[id]; else E[id] = fila.datos?.v; return true; }
@@ -100,7 +116,7 @@ const SYNC = (() => {
       const R = filas(), lote = [], nuevos = {};
       R.forEach((v, k) => { const h = hash(estable(v.datos)); if (meta.hechos[k] !== h) { lote.push({ k, col: v.col, datos: v.datos, borrado: false }); nuevos[k] = h; } });
       Object.keys(meta.hechos).forEach(k => { if (!R.has(k) && meta.hechos[k] !== 'X') { lote.push({ k, col: k.split('/')[0], datos: null, borrado: true }); nuevos[k] = 'X'; } });
-      if (lote.length) { await enviar(lote); Object.assign(meta.hechos, nuevos); guardarMeta(); }
+      if (lote.length) { await enviar(lote); Object.assign(meta.hechos, nuevos); lote.forEach(f => { if (esPerfil(f.k)) { if (f.borrado) delete meta.campos[f.k]; else meta.campos[f.k] = camposDe(f.datos); } }); guardarMeta(); }
       estado('ok');
     } catch (e) { console.warn('[sync]', e); estado('error'); }
     subiendo = false;
@@ -110,18 +126,23 @@ const SYNC = (() => {
   async function traer() {
     if (!activo || !listo || subiendo) return;
     try {
-      const l = await bajar(meta.cursor - 200); let cambio = false;
+      const l = await bajar(meta.cursor - 200); let cambio = false, fusiono = false;
       const locales = filas();
       l.sort((a, b) => a.k.split('/').length - b.k.split('/').length || a.seq - b.seq).forEach(f => {
         const h = f.borrado ? 'X' : hash(estable(f.datos));
         meta.cursor = Math.max(meta.cursor, f.seq);
         if (meta.hechos[f.k] === h) return;
         const loc = locales.get(f.k), hl = loc ? hash(estable(loc.datos)) : 'X';
-        if (hl !== (meta.hechos[f.k] ?? 'X') && hl !== h) return;
-        if (aplicar(f)) { meta.hechos[f.k] = h; cambio = true; }
+        if (hl !== (meta.hechos[f.k] ?? 'X') && hl !== h) {
+          if (!esPerfil(f.k) || f.borrado || !loc) return;
+          const M = fusionar(loc.datos, f.datos, meta.campos[f.k]);
+          if (aplicar({ ...f, datos: M })) { meta.hechos[f.k] = h; meta.campos[f.k] = camposDe(f.datos); cambio = true; fusiono = true; }
+          return;
+        }
+        if (aplicar(f)) { meta.hechos[f.k] = h; if (esPerfil(f.k)) meta.campos[f.k] = camposDe(f.datos); cambio = true; }
       });
       guardarMeta();
-      if (cambio) { DB.guardarSoloLocal(); repintar(); }
+      if (cambio) { DB.guardarSoloLocal(); repintar(); if (fusiono) programar(); }
       estado('ok');
     } catch (e) { console.warn('[sync]', e); estado('error'); }
   }
@@ -136,7 +157,8 @@ const SYNC = (() => {
   async function iniciar() {
     if (!activo) return;
     try { meta = JSON.parse(localStorage.getItem(CLAVE_META) || 'null') || meta; } catch {}
-    if (meta.url !== CFG.url) meta = { url: CFG.url, cursor: 0, hechos: {} };
+    if (meta.url !== CFG.url) meta = { url: CFG.url, cursor: 0, hechos: {}, campos: {} };
+    meta.campos = meta.campos || {};
     const tapa = document.createElement('div'); tapa.className = 'tapa-sync'; tapa.innerHTML = `<div>${castor(64)}<p>Conectando…</p></div>`; document.body.appendChild(tapa);
     const quitarTapa = () => tapa.remove();
     const limite = setTimeout(() => { quitarTapa(); aviso('Sin conexión: lo que hagas se sube cuando vuelva el internet.'); }, 9000);
@@ -146,7 +168,7 @@ const SYNC = (() => {
         if (l.length) {
           const sesion = E.sesion, vacio = datosIniciales(); COLS.forEach(c => vacio[c] = []); MAPAS.forEach(c => vacio[c] = {});
           E = vacio; E.version = DB.VERSION; E.sesion = sesion; meta.hechos = {};
-          l.sort((a, b) => a.k.split('/').length - b.k.split('/').length || a.seq - b.seq).forEach(f => { if (aplicar(f)) meta.hechos[f.k] = f.borrado ? 'X' : hash(estable(f.datos)); meta.cursor = Math.max(meta.cursor, f.seq); });
+          l.sort((a, b) => a.k.split('/').length - b.k.split('/').length || a.seq - b.seq).forEach(f => { if (aplicar(f)) { meta.hechos[f.k] = f.borrado ? 'X' : hash(estable(f.datos)); if (esPerfil(f.k) && !f.borrado) meta.campos[f.k] = camposDe(f.datos); } meta.cursor = Math.max(meta.cursor, f.seq); });
           if (E.sesion && !E.usuarios[E.sesion]) E.sesion = null;
           DB.completar();
         }
