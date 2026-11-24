@@ -37,7 +37,7 @@ DB.puedeDejarNotita = function (dueno, quien = DB.yo()?.id) {
 };
 function capaNotitas(u, mio) {
   const l = (u.notitas || []).filter(n => DB.usuario(n.de));
-  const notas = UI.ocultarNotitas ? '' : l.map(n => `<button class="notita" data-a="verNotita" data-u="${u.id}" data-id="${esc(n.id)}" style="left:${Math.max(0, Math.min(88, +n.x || 0))}%;top:${Math.max(0, +n.y || 0)}px;background:${PAPELES.includes(n.color) ? n.color : PAPELES[0]};--rot:${Math.max(-8, Math.min(8, +n.rot || 0))}deg" aria-label="Notita de @${esc(DB.usuario(n.de)?.usuario || '')}">${n.img && /^data:image\/png;base64,/.test(n.img) ? `<img src="${n.img}" alt="">` : `<span>${esc(n.t || '')}</span>`}</button>`).join('');
+  const notas = UI.ocultarNotitas ? '' : l.map(n => `<button class="notita" data-a="verNotita" data-u="${u.id}" data-id="${esc(n.id)}" style="left:${Math.max(0, Math.min(88, +n.x || 0))}%;top:${Math.max(0, +n.y || 0)}px;background:${PAPELES.includes(n.color) ? n.color : PAPELES[0]};--rot:${Math.max(-180, Math.min(180, +n.rot || 0))}deg" aria-label="Notita de @${esc(DB.usuario(n.de)?.usuario || '')}">${n.img && /^data:image\/png;base64,/.test(n.img) ? `<img src="${n.img}" alt="">` : `<span>${esc(n.t || '')}</span>`}</button>`).join('');
   return `<div class="capa-notitas" aria-label="Notitas">${notas}</div>`;
 }
 function barraNotitas(u, mio) {
@@ -61,14 +61,14 @@ document.addEventListener('click', e => {
   hojaNotita(dueno, x, y);
 }, true);
 function hojaNotita(dueno, x, y) {
-  UI.notita = { dueno, x, y, modo: 'dibujar', color: PAPELES[0], tinta: '#1B1530' };
+  UI.notita = { dueno, x, y, modo: 'dibujar', color: PAPELES[0], tinta: '#1B1530', rot: 0 };
   abrirHoja(`<form class="pila" data-form="pegarNotita"><h2>Tu notita para @${esc(DB.usuario(dueno).usuario)}</h2>
     <div class="pestanas"><button type="button" class="pastilla on" data-a="modoNotita" data-m="dibujar">Dibujar</button><button type="button" class="pastilla" data-a="modoNotita" data-m="escribir">Escribir</button></div>
     <div id="zonaNotita"><canvas id="lienzoNotita" width="480" height="480" class="lienzo-notita" style="background:${PAPELES[0]}"></canvas>
       <div class="entre" style="margin-top:6px"><span class="fila" style="gap:6px">${['#1B1530', '#C0262D', '#1D5FD0', '#14803C'].map((c, i) => `<button type="button" class="punto-color${i ? '' : ' on'}" style="background:${c}" data-a="tintaNotita" data-c="${c}" aria-label="Tinta"></button>`).join('')}</span><button type="button" class="btn3" style="min-height:36px" data-a="borrarLienzo">Borrar</button></div></div>
     <div id="zonaTexto" hidden><label class="oculto" for="ntx">Texto</label><textarea id="ntx" name="t" maxlength="140" rows="4" placeholder="Algo bonito… o algo estúpido"></textarea></div>
     <div><span class="campo">Papel</span><div class="fila" style="gap:6px">${PAPELES.map((c, i) => `<button type="button" class="punto-color${i ? '' : ' on'}" style="background:${c};border:1px solid var(--linea)" data-a="papelNotita" data-c="${c}" aria-label="Papel"></button>`).join('')}</div></div>
-    <p class="mini gris" style="margin:0">Funciona con el dedo, el mouse o un lápiz. La persona puede quitarla cuando quiera.</p>
+    <div><label class="campo fila" for="nrot" style="gap:10px">Orientación <span id="notaPrev" class="nota-prev" aria-hidden="true"></span><span class="mini gris" id="nrotv">0°</span></label><div class="fila" style="flex-wrap:nowrap;gap:8px"><input id="nrot" type="range" min="-180" max="180" step="5" value="0" data-entrada="rotNotita" style="flex:1"><button type="button" class="btn3" style="min-height:36px;padding:0 10px" data-a="rotNotita" data-v="-90">↺</button><button type="button" class="btn3" style="min-height:36px;padding:0 10px" data-a="rotNotita" data-v="90">↻</button><button type="button" class="btn3" style="min-height:36px;padding:0 10px" data-a="rotNotita" data-v="0">Derecha</button></div></div>
     <button class="btn ancho">Pegar notita</button></form>`);
   prepararLienzo();
 }
@@ -83,7 +83,10 @@ function prepararLienzo() {
 }
 ACC.modoNotita = b => { UI.notita.modo = b.dataset.m; $$('[data-a=modoNotita]').forEach(x => x.classList.toggle('on', x === b)); $('#zonaNotita').hidden = b.dataset.m !== 'dibujar'; $('#zonaTexto').hidden = b.dataset.m !== 'escribir'; if (b.dataset.m === 'escribir') $('#ntx')?.focus(); };
 ACC.tintaNotita = b => { UI.notita.tinta = b.dataset.c; $$('[data-a=tintaNotita]').forEach(x => x.classList.toggle('on', x === b)); };
-ACC.papelNotita = b => { UI.notita.color = b.dataset.c; $$('[data-a=papelNotita]').forEach(x => x.classList.toggle('on', x === b)); const cv = $('#lienzoNotita'); if (cv) cv.style.background = b.dataset.c; };
+ACC.papelNotita = b => { UI.notita.color = b.dataset.c; const np = $('#notaPrev'); if (np) np.style.background = b.dataset.c; $$('[data-a=papelNotita]').forEach(x => x.classList.toggle('on', x === b)); const cv = $('#lienzoNotita'); if (cv) cv.style.background = b.dataset.c; };
+function girarNotita(v) { v = Math.max(-180, Math.min(180, Math.round(v / 5) * 5)); UI.notita.rot = v; const r = $('#nrot'); if (r) r.value = v; const t = $('#nrotv'); if (t) t.textContent = v + '°'; const p = $('#notaPrev'); if (p) p.style.transform = `rotate(${v}deg)`; }
+ENTRADAS.rotNotita = el => girarNotita(+el.value);
+ACC.rotNotita = b => girarNotita(+b.dataset.v === 0 ? 0 : (((UI.notita.rot + +b.dataset.v + 180) % 360 + 360) % 360) - 180);
 ACC.borrarLienzo = () => { const cv = $('#lienzoNotita'); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); UI.notita.trazos = 0; };
 FORMS.pegarNotita = d => {
   const n = UI.notita, u = DB.usuario(n.dueno), yo = DB.yo().id; if (!u || !DB.puedeDejarNotita(u.id)) return;
@@ -95,7 +98,7 @@ FORMS.pegarNotita = d => {
   const mias = u.notitas.filter(x => x.de === yo);
   if (mias.length >= MAX_POR_PERSONA) u.notitas = u.notitas.filter(x => x !== mias[0]);
   if (u.notitas.length >= MAX_NOTITAS) u.notitas.shift();
-  u.notitas.push({ id: uid('nt'), de: yo, x: Math.round(n.x * 10) / 10, y: Math.round(n.y), color: n.color, rot: Math.round(Math.random() * 10 - 5), t, img, f: new Date().toISOString() });
+  u.notitas.push({ id: uid('nt'), de: yo, x: Math.round(n.x * 10) / 10, y: Math.round(n.y), color: n.color, rot: n.rot, t, img, f: new Date().toISOString() });
   notificar(u.id, `@${DB.yo().usuario} te dejó una notita en tu perfil`, '#/perfil');
   DB.guardar(); cerrarHoja(); aviso('Notita pegada'); refrescar();
 };
@@ -120,7 +123,7 @@ const AYUDA = [
     <p class="peq gris">Si intentas mandar algo que parece contraseña, NIP o tarjeta, la app te pregunta antes de enviarlo.</p>`],
   ['agenda', 'Horario', `<ul><li><b>Agregar clase:</b> materia, días y hora de inicio y fin. Puedes poner varios horarios por materia.</li><li><b>Color:</b> elige de la paleta o toca la rueda de colores para el que quieras.</li><li><b>Leer de PDF o foto:</b> intenta leer tu horario de la uni; revisa lo que leyó antes de guardar.</li><li><b>Tu semana en números:</b> horas de clase, horas muertas, hueco más largo… y "Marcar huecos" los pinta en el horario.</li><li><b>Quién lo ve:</b> solo tú o las personas que elijas. Si lo pueden ver, también aparece en tu perfil.</li></ul>`],
   ['musica', 'Música del perfil', `<ul><li>Sube hasta 8 canciones o enlaces de YouTube, Spotify o Apple Music desde Editar perfil.</li><li><b>Música de fondo:</b> en tu perfil, haz <b>clic derecho</b> sobre una canción (en el celular, <b>mantén presionado</b>) y elige "Poner de fondo". El volumen será moderado cuando ingresen a tu perfil.</li><li>Si no quieres oír la música de fondo de otros: Ajustes → "No reproducir la música de fondo de otros perfiles".</li><li>El reproductor de abajo tiene modos: aleatorio, en orden, por fecha de subida y repetir.</li></ul>`],
-  ['lapiz', 'Notitas', `<ul><li>En el perfil de alguien toca <b>Dejar notita</b> y luego toca el lugar exacto donde la quieres pegar.</li><li>Puedes <b>dibujarla</b> con el dedo, el mouse o un lápiz táctil (con lápiz, la presión cambia el grosor) o <b>escribirla</b>.</li><li>Máximo ${MAX_POR_PERSONA} notitas tuyas por perfil; si pegas otra, se quita tu más vieja.</li><li><b>En tu perfil:</b> toca una notita para verla, quitarla o reportarla. <b>Limpiar</b> (o <b>Alt + L</b> en la computadora) quita todas.</li><li>Decide quién te puede dejar notitas en Ajustes → Privacidad.</li></ul>`],
+  ['lapiz', 'Notitas', `<ul><li>En el perfil de alguien toca <b>Dejar notita</b> y luego toca el lugar exacto donde la quieres pegar.</li><li>Puedes <b>dibujarla</b> con el dedo, el mouse o un lápiz táctil (con lápiz, la presión cambia el grosor) o <b>escribirla</b>, y girarla a la orientación que quieras (de cabeza, de lado…).</li><li>Máximo ${MAX_POR_PERSONA} notitas tuyas por perfil; si pegas otra, se quita tu más vieja.</li><li><b>En tu perfil:</b> toca una notita para verla, quitarla o reportarla. <b>Limpiar</b> (o <b>Alt + L</b> en la computadora) quita todas.</li><li>Decide quién te puede dejar notitas en Ajustes → Privacidad.</li></ul>`],
   ['rayo', 'Ramitas y juegos', `<ul><li>Las ramitas son puntos de la app, no dinero.</li><li>Los juegos diarios dan ramitas y mantienen tu racha; los de "Para relajarse" son libres y sin ramitas.</li></ul>`]
 ];
 VISTAS.ayuda = {
