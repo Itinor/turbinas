@@ -61,7 +61,7 @@ VISTAS.bienvenida = {
     return `<div class="pila" style="align-items:center;text-align:center;padding-top:30px">${castor(120)}<h1>¡Ya eres parte de la madriguera!</h1>
       <p class="gris">Te regalamos <b>${REGLAS.regaloBienvenida} ramitas</b> para empezar.</p>
       ${DB.yo()?.verificado === 'pendiente' ? '<p class="peq gris">Estamos revisando tu documento. Mientras, puedes verificarte al instante con tu correo de la uni.</p>' : ''}
-      <a class="btn3 ancho" href="#/editar-perfil">Arreglar mi perfil</a><a class="btn ancho" href="#/inicio">Entrar</a></div>`;
+      <a class="tarjeta fila" href="#/verificar" style="flex-wrap:nowrap;text-decoration:none;color:inherit;border:1.5px solid var(--linea);box-shadow:none;text-align:left">${icono('ok', 22)}<span style="flex:1"><b>Verifícate como estudiante</b><br><span class="mini gris">Con tu correo de la uni, al instante. Así puedes votar, calificar profes y vender.</span></span></a><a class="btn3 ancho" href="#/editar-perfil">Arreglar mi perfil</a><a class="btn ancho" href="#/inicio">Entrar</a></div>`;
   },
   montar() { if (UI.reg.paso === 2) revisarUsuario(); }
 };

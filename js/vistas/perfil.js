@@ -79,7 +79,7 @@ VISTAS['editar-perfil'] = {
       ${bloque('Nombre real', `<label class="oculto" for="en">Nombre real</label><input id="en" name="nombre" required value="${esc(u.nombre)}" data-orig="${esc(u.nombre)}"><label class="campo" for="ev" style="margin-top:10px">Lo ven</label><select id="ev" name="nombreVis" data-orig="${u.nombreVis}">${[['todos', 'Todos'], ['amigos', 'Amigos'], ['elegidos', 'Quien yo elija'], ['yo', 'Solo yo']].map(([k, t]) => `<option value="${k}" ${u.nombreVis === k ? 'selected' : ''}>${t}</option>`).join('')}</select><label class="campo" for="ee" style="margin-top:10px">Si eliges "Quien yo elija"</label><input id="ee" name="nombreElegidos" placeholder="@vale.a, @pedro.g" value="${esc((u.nombreElegidos || []).map(i => '@' + DB.usuario(i)?.usuario).join(', '))}" data-orig="${esc((u.nombreElegidos || []).map(i => '@' + DB.usuario(i)?.usuario).join(', '))}">`)}
       ${bloque('Sobre mí', `<label class="oculto" for="eb">Sobre mí</label><textarea id="eb" name="bio" maxlength="160" data-orig="${esc(u.bio)}">${esc(u.bio)}</textarea>`)}
       ${bloque('Carrera y generación', `<p style="margin:0">${esc(u.carrera)}${u.gen ? ' · Gen ' + u.gen : ''}</p><p class="mini gris" style="margin:4px 0 0">Se cambia desde Ajustes o subiendo tu horario.</p>`)}
-      ${bloque('Canciones', `<div id="listaCanciones">${listaCancionesEdit()}</div><div class="rejilla2" style="margin-top:10px"><label class="btn3" style="cursor:pointer">${icono('musica', 18)}Subir archivo<input type="file" accept="audio/*,video/*" class="oculto" data-cambio="audioSubir"></label><button type="button" class="btn3" data-a="cancionEnlace">${icono('mas', 18)}Agregar enlace</button></div><p class="mini gris" style="margin:6px 0 0">Archivos tuyos (MP3, M4A, video…) o enlaces de YouTube, Spotify o Apple Music. Hasta 8. Con las flechas eliges el orden.</p>`)}
+      ${bloque('Canciones', `<div id="listaCanciones">${listaCancionesEdit()}</div><div class="rejilla2" style="margin-top:10px"><label class="btn3" style="cursor:pointer">${icono('musica', 18)}Subir archivo<input type="file" accept="audio/*,video/*" multiple class="oculto" data-cambio="audioSubir"></label><button type="button" class="btn3" data-a="cancionEnlace">${icono('mas', 18)}Agregar enlace</button></div><p class="mini gris" style="margin:6px 0 0">Archivos tuyos (MP3, M4A, video…) o enlaces de YouTube, Spotify o Apple Music. Hasta 8. Con las flechas eliges el orden.</p>`)}
       ${bloque('Mis redes', `<div class="pila" style="gap:8px"><div><label class="campo" for="rig">Instagram</label><div class="fila" style="flex-wrap:nowrap"><span class="pastilla" style="display:grid;place-items:center">@</span><input id="rig" name="redIg" maxlength="30" pattern="[A-Za-z0-9._]{1,30}" autocapitalize="off" value="${esc(u.redes?.instagram || '')}" data-orig="${esc(u.redes?.instagram || '')}"></div></div>
         <div><label class="campo" for="rtt">TikTok</label><div class="fila" style="flex-wrap:nowrap"><span class="pastilla" style="display:grid;place-items:center">@</span><input id="rtt" name="redTt" maxlength="30" pattern="[A-Za-z0-9._]{1,30}" autocapitalize="off" value="${esc(u.redes?.tiktok || '')}" data-orig="${esc(u.redes?.tiktok || '')}"></div></div>
         <div><label class="campo" for="ryt">YouTube <span class="mini gris">(tu canal o un video)</span></label><input id="ryt" name="redYt" type="url" placeholder="https://www.youtube.com/@tucanal" value="${esc(u.redes?.youtube || '')}" data-orig="${esc(u.redes?.youtube || '')}"></div>
@@ -195,14 +195,20 @@ CAMBIOS.fotoPerfil = async el => {
 };
 ACC.quitarFoto = () => { const h = $('#formPerfil input[name=foto]'); h.value = 'quitar'; h.dispatchEvent(new Event('input', { bubbles: true })); const av = $('#formPerfil .marco .avatar'); if (av) { av.style.background = '#DCE8FB'; av.textContent = DB.yo().usuario[0].toUpperCase(); } aviso('Se quitará al guardar.'); };
 CAMBIOS.audioSubir = async el => {
-  const f = el.files[0]; el.value = ''; if (!f) return; if (!/^(audio|video)\//.test(f.type)) return aviso('Elige un archivo de audio o video.'); if (f.size > 40 * 1024 * 1024) return aviso('Máximo 40 MB.');
-  const lista = DB.canciones(); if (lista.length >= 8) return aviso('Máximo 8 canciones.');
-  aviso('Subiendo…');
-  try { const clave = 'cancion_' + DB.yo().id + '_' + Date.now(); await ARCHIVOS.guardar(clave, f);
-    const portada = await extraerPortada(f).catch(() => null);
-    lista.push({ titulo: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'Mi canción', artista: '', enlace: '', archivo: 'idb:' + clave, portada, agregada: new Date().toISOString() });
-    DB.guardarCanciones(lista); pintarListaCanciones(); aviso(portada ? 'Canción agregada con su portada' : 'Canción agregada'); }
-  catch { aviso('No pudimos guardar el archivo en este celular.'); }
+  const fs = [...el.files]; el.value = ''; if (!fs.length) return;
+  const lista = DB.canciones(), cupo = 8 - lista.length; if (cupo <= 0) return aviso('Máximo 8 canciones.');
+  const validos = fs.filter(f => /^(audio|video)\//.test(f.type) && f.size <= 40 * 1024 * 1024), malos = fs.length - validos.length, toca = validos.slice(0, cupo);
+  let n = 0;
+  for (const f of toca) {
+    aviso(toca.length > 1 ? `Subiendo ${n + 1} de ${toca.length}…` : 'Subiendo…');
+    try { const clave = 'cancion_' + DB.yo().id + '_' + Date.now() + '_' + n; await ARCHIVOS.guardar(clave, f);
+      const portada = await extraerPortada(f).catch(() => null);
+      lista.push({ titulo: f.name.replace(/\.[^.]+$/, '').slice(0, 60) || 'Mi canción', artista: '', enlace: '', archivo: 'idb:' + clave, portada, agregada: new Date().toISOString() });
+      DB.guardarCanciones(lista); pintarListaCanciones(); n++; }
+    catch { aviso('No pudimos guardar ' + f.name); }
+  }
+  const notas = [n ? `${n} ${n === 1 ? 'canción agregada' : 'canciones agregadas'}` : '', malos ? `${malos} no ${malos === 1 ? 'era' : 'eran'} audio/video o pasaba${malos === 1 ? '' : 'n'} de 40 MB` : '', validos.length > cupo ? `${validos.length - cupo} no cupieron (máximo 8)` : ''].filter(Boolean);
+  if (notas.length) aviso(notas.join(' · '));
 };
 
 function vinilo(c) {
