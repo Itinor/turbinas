@@ -4,8 +4,8 @@ const CRIPTO = (() => {
   const b64 = buf => { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
   const deb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const azar = n => crypto.getRandomValues(new Uint8Array(n));
-  const ECDH = { name: 'ECDH', namedCurve: 'P-256' };
-  let priv = null, privDe = null, privPub = null;
+  const ECDH = { name: 'ECDH', namedCurve: 'P-256' }, ECDSA = { name: 'ECDSA', namedCurve: 'P-256' }, FIRMA = { name: 'ECDSA', hash: 'SHA-256' };
+  let priv = null, privDe = null, privPub = null, firma = null;
   const pares = new Map(), cache = new Map(), enCurso = new Set();
   const archivos = new Map();
 
@@ -27,33 +27,47 @@ const CRIPTO = (() => {
     return !!u.clave && u.clave === hashClave(pass);
   }
   const huella = jwk => jwk ? jwk.x + '.' + jwk.y : '';
+  const soloPub = j => ({ kty: j.kty, crv: j.crv, x: j.x, y: j.y });
+  async function nuevaFirma(u, envoltura) {
+    const par = await S.generateKey(ECDSA, true, ['sign', 'verify']), pub = await S.exportKey('jwk', par.publicKey), pk8 = await S.exportKey('pkcs8', par.privateKey), iv = azar(12);
+    const ct = await S.encrypt({ name: 'AES-GCM', iv, additionalData: enc.encode('itinor-firma:' + u.id) }, envoltura, pk8);
+    u.cripto.fpub = soloPub(pub); u.cripto.fpriv = { iv: b64(iv), ct: b64(ct) };
+    return S.importKey('pkcs8', pk8, ECDSA, false, ['sign']);
+  }
+  async function abrirFirma(u, envoltura) {
+    if (!u.cripto.fpriv) { const k = await nuevaFirma(u, envoltura); DB.guardar(); return k; }
+    const pk8 = await S.decrypt({ name: 'AES-GCM', iv: deb64(u.cripto.fpriv.iv), additionalData: enc.encode('itinor-firma:' + u.id) }, envoltura, deb64(u.cripto.fpriv.ct));
+    return S.importKey('pkcs8', pk8, ECDSA, false, ['sign']);
+  }
 
   async function crear(u, pass) {
     const sal = azar(16), d = await derivar(pass, sal), par = await S.generateKey(ECDH, true, ['deriveBits']);
     const pub = await S.exportKey('jwk', par.publicKey), pk8 = await S.exportKey('pkcs8', par.privateKey), iv = azar(12);
     const ct = await S.encrypt({ name: 'AES-GCM', iv, additionalData: enc.encode('itinor-llave:' + u.id) }, d.envoltura, pk8);
     u.cripto = { v: 1, s: b64(sal), i: ITER, h: d.verif, pub: { kty: pub.kty, crv: pub.crv, x: pub.x, y: pub.y }, priv: { iv: b64(iv), ct: b64(ct) }, f: new Date().toISOString() };
+    const fk = await nuevaFirma(u, d.envoltura);
     delete u.clave; DB.guardar();
-    await guardarLocal(u, await S.importKey('pkcs8', pk8, ECDH, false, ['deriveBits']));
+    await guardarLocal(u, await S.importKey('pkcs8', pk8, ECDH, false, ['deriveBits']), fk);
   }
   async function abrirConClave(u, pass) {
     if (!u.cripto?.priv) return crear(u, pass);
     const d = await derivar(pass, deb64(u.cripto.s), u.cripto.i || ITER);
     if (!iguales(d.verif, u.cripto.h)) throw new Error('clave');
     const pk8 = await S.decrypt({ name: 'AES-GCM', iv: deb64(u.cripto.priv.iv), additionalData: enc.encode('itinor-llave:' + u.id) }, d.envoltura, deb64(u.cripto.priv.ct));
-    await guardarLocal(u, await S.importKey('pkcs8', pk8, ECDH, false, ['deriveBits']));
+    const fk = await abrirFirma(u, d.envoltura);
+    await guardarLocal(u, await S.importKey('pkcs8', pk8, ECDH, false, ['deriveBits']), fk);
   }
-  async function guardarLocal(u, k) { priv = k; privDe = u.id; privPub = huella(u.cripto.pub); pares.clear(); cache.clear(); await idbPut(u.id, { k, pub: privPub }).catch(() => {}); }
+  async function guardarLocal(u, k, fk) { priv = k; firma = fk || null; privDe = u.id; privPub = huella(u.cripto.pub); pares.clear(); cache.clear(); await idbPut(u.id, { k, pub: privPub, fk: firma, fpub: huella(u.cripto.fpub) }).catch(() => {}); }
 
   async function iniciar() {
     const u = DB.yo(); if (!u) return; if (privDe === u.id && privPub === huella(u.cripto?.pub)) return;
-    priv = null; privDe = null; pares.clear(); cache.clear();
+    priv = null; firma = null; privDe = null; pares.clear(); cache.clear();
     const g = await idbGet(u.id).catch(() => null);
-    if (g && u.cripto && g.pub === huella(u.cripto.pub)) { priv = g.k; privDe = u.id; privPub = g.pub; }
+    if (g && u.cripto && g.pub === huella(u.cripto.pub)) { priv = g.k; privDe = u.id; privPub = g.pub; if (g.fk && u.cripto.fpub && g.fpub === huella(u.cripto.fpub)) firma = g.fk; }
     else if (g) await idbDel(u.id);
   }
   const listo = () => !!priv && privDe === DB.yo()?.id && privPub === huella(DB.yo()?.cripto?.pub);
-  async function olvidar(id = DB.yo()?.id) { priv = null; privDe = null; pares.clear(); cache.clear(); if (id) await idbDel(id).catch(() => {}); }
+  async function olvidar(id = DB.yo()?.id) { priv = null; firma = null; privDe = null; pares.clear(); cache.clear(); if (id) await idbDel(id).catch(() => {}); }
 
   async function llavePar(otroId, pubJwk) {
     const k = otroId + '|' + huella(pubJwk); if (pares.has(k)) return pares.get(k);
@@ -74,7 +88,15 @@ const CRIPTO = (() => {
     const k = {};
     for (const m of c.miembros) { const pub = DB.usuario(m)?.cripto?.pub; if (!pub) continue; const kiv = azar(12);
       k[m] = { iv: b64(kiv), ct: b64(await S.encrypt({ name: 'AES-GCM', iv: kiv, additionalData: aad }, await llavePar(m, pub), mk)) }; }
-    return { v: 1, iv: b64(iv), ct: b64(ct), k, pub: { x: DB.yo().cripto.pub.x, y: DB.yo().cripto.pub.y } };
+    const e = { v: 1, iv: b64(iv), ct: b64(ct), k, pub: { x: DB.yo().cripto.pub.x, y: DB.yo().cripto.pub.y } };
+    if (firma && DB.yo().cripto.fpub) { e.sig = b64(await S.sign(FIRMA, firma, textoFirma(c.id, privDe, e.iv, e.ct))); e.fpub = { x: DB.yo().cripto.fpub.x, y: DB.yo().cripto.fpub.y }; }
+    return e;
+  }
+  const textoFirma = (chat, u, iv, ct) => enc.encode('itinor-firma-v1|' + chat + '|' + u + '|' + iv + '|' + ct);
+  async function revisarFirma(chat, u, e) {
+    if (!e.sig || !e.fpub) return 'sin';
+    try { const pub = await S.importKey('jwk', { kty: 'EC', crv: 'P-256', x: e.fpub.x, y: e.fpub.y, ext: true }, ECDSA, false, ['verify']);
+      return await S.verify(FIRMA, pub, deb64(e.sig), textoFirma(chat, u, e.iv, e.ct)) ? 'ok' : 'mala'; } catch { return 'mala'; }
   }
   const claveCache = (c, m) => c.id + '|' + m.u + '|' + m.f;
   async function descifrarMensaje(c, m) {
@@ -84,8 +106,8 @@ const CRIPTO = (() => {
     const llave = await S.importKey('raw', mk, 'AES-GCM', false, ['decrypt']);
     const carga = JSON.parse(dec.decode(await S.decrypt({ name: 'AES-GCM', iv: deb64(e.iv), additionalData: aad }, llave, deb64(e.ct))));
     if (carga.adjunto?.fk) archivos.set(carga.adjunto.clave, { fk: carga.adjunto.fk, fiv: carga.adjunto.fiv, mime: carga.adjunto.mime });
-    const real = DB.usuario(m.u)?.cripto?.pub;
-    return { ...carga, llaveDistinta: !!real && (real.x !== e.pub.x || real.y !== e.pub.y) };
+    const real = DB.usuario(m.u)?.cripto?.pub, firmaEst = await revisarFirma(c.id, m.u, e);
+    return { ...carga, llaveDistinta: !!real && (real.x !== e.pub.x || real.y !== e.pub.y), firma: firmaEst, _mk: b64(mk) };
   }
 
   let repintar = null;
@@ -133,5 +155,36 @@ const CRIPTO = (() => {
 
   function estadoVerif(id) { const f = verificados()[DB.yo().id + '>' + id]; if (!f) return null; return f === huella(DB.usuario(id)?.cripto?.pub) ? 'si' : 'cambio'; }
 
-  return { revisarClave, abrirConClave, iniciar, listo, olvidar, sinLlave, cifrarMensaje, leer, guardarArchivoCifrado, esCifrado: k => archivos.has(k), codigo, marcarVerificado, estadoVerif, ITER };
+  function prueba(c, m) {
+    const x = cache.get(claveCache(c, m)); if (!x || x.error || !x._mk || !m.e) return null;
+    return { chat: c.id, u: m.u, f: m.f, iv: m.e.iv, ct: m.e.ct, sig: m.e.sig || null, fpub: m.e.fpub || null, mk: x._mk };
+  }
+  async function sellarPrueba(repId, paraId, items) {
+    if (!listo()) throw new Error('bloqueado');
+    if (!DB.usuario(paraId)?.cripto?.pub) throw new Error('sin-llave-admin');
+    return cifrarMensaje({ id: 'rep:' + repId, miembros: [privDe, paraId] }, { items });
+  }
+  async function abrirPrueba(r) {
+    if (!listo()) throw new Error('bloqueado');
+    const carga = await descifrarMensaje({ id: 'rep:' + r.id }, { u: r.por, e: r.prueba });
+    const out = [];
+    for (const it of carga.items || []) {
+      const v = { u: it.u, f: it.f, chat: it.chat };
+      try {
+        const llave = await S.importKey('raw', deb64(it.mk), 'AES-GCM', false, ['decrypt']);
+        const x = JSON.parse(dec.decode(await S.decrypt({ name: 'AES-GCM', iv: deb64(it.iv), additionalData: enc.encode('itinor-msg:' + it.chat + ':' + it.u) }, llave, deb64(it.ct))));
+        v.t = x.t || ''; v.adjunto = x.adjunto ? x.adjunto.nombre : null; v.descifra = true;
+      } catch { v.descifra = false; }
+      v.firma = await revisarFirma(it.chat, it.u, it);
+      const real = DB.usuario(it.u)?.cripto?.fpub; v.llaveCuenta = !!(real && it.fpub && real.x === it.fpub.x && real.y === it.fpub.y);
+      const ch = DB.estado.chats.find(c => c.id === it.chat), orig = ch?.mensajes.find(m => m.u === it.u && m.f === it.f);
+      v.enBase = !!(orig?.e && orig.e.ct === it.ct);
+      v.valido = v.descifra && ((v.firma === 'ok' && v.llaveCuenta) || (v.firma === 'sin' && v.enBase));
+      out.push(v);
+    }
+    return { items: out, falsas: carga.items?.length && out.some(v => !v.valido) };
+  }
+  const puedeFirmar = () => !!firma;
+
+  return { prueba, sellarPrueba, abrirPrueba, puedeFirmar, revisarClave, abrirConClave, iniciar, listo, olvidar, sinLlave, cifrarMensaje, leer, guardarArchivoCifrado, esCifrado: k => archivos.has(k), codigo, marcarVerificado, estadoVerif, ITER };
 })();

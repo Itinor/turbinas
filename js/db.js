@@ -67,10 +67,22 @@ const DB = {
     const d = E.usuarios[dueno]; if (!d || this.bloqueo(dueno, quien)) return false; if (dueno === quien) return true;
     return d.privacidad.perfil === 'todos' || (d.privacidad.perfil === 'amigos' && this.sonAmigos(dueno, quien));
   },
-  puedeEscribir(dueno, quien = E.sesion) {
-    const d = E.usuarios[dueno]; if (!d || dueno === quien || this.bloqueo(dueno, quien)) return false;
-    return d.privacidad.escribir === 'todos' || (d.privacidad.escribir === 'amigos' && this.sonAmigos(dueno, quien));
+  puedeEscribir(dueno, quien = E.sesion) { return !this.razonNoEscribir(dueno, quien); },
+  razonNoEscribir(dueno, quien = E.sesion) {
+    const d = E.usuarios[dueno], q = E.usuarios[quien]; if (!d || !q || dueno === quien || this.bloqueo(dueno, quien)) return 'no';
+    if (this.sonAmigos(dueno, quien)) return d.privacidad.escribir === 'nadie' ? 'privacidad' : null;
+    if (d.privacidad.escribir !== 'todos') return 'privacidad';
+    if (q.rol === 'admin') return null;
+    if (q.verificado !== 'si') return 'verificar';
+    if (q.pausaMsg && q.pausaMsg > new Date().toISOString()) return 'pausa';
+    return null;
   },
+  esSolicitud(c) { return !!(c && c.tipo === 'dm' && c.solicitud && !c.solicitud.ok && !this.sonAmigos(c.miembros[0], c.miembros[1])); },
+  solicitudesEnviadas(id, horas) { const desde = new Date(Date.now() - horas * 3600e3).toISOString(); return E.chats.filter(c => c.tipo === 'dm' && c.solicitud?.de === id && (c.solicitud.f || '') >= desde); },
+  aceptarSolicitud(id) { const c = E.chats.find(x => x.id === id); if (!c?.solicitud) return; c.solicitud.ok = new Date().toISOString(); notificar(c.solicitud.de, `@${this.yo().usuario} aceptó tu mensaje`, '#/chat/' + c.id); this.guardar(); },
+  rechazarSolicitud(id) { const c = E.chats.find(x => x.id === id); if (!c?.solicitud) return; c.solicitud.no = new Date().toISOString(); this.quitarChat(id); },
+  vecesBloqueado(id) { return Object.values(E.usuarios).filter(u => u.id !== id && (u.bloqueados || []).includes(id)).length; },
+  pausarMensajes(id, dias) { if (!this.esAdmin()) return; const u = E.usuarios[id]; if (!u) return; u.pausaMsg = dias ? new Date(Date.now() + dias * 864e5).toISOString() : null; if (dias) notificar(id, `Por reportes, no puedes escribir a gente que no es tu amiga durante ${dias} días`, '#/chat'); this.guardar(); },
 
   estadoAmistad(id) { const yo = this.yo(), o = E.usuarios[id]; if (!o || id === yo.id) return 'yo'; if (yo.amigos.includes(id)) return 'amigos'; if ((yo.solicitudes || []).includes(id)) return 'recibida'; if ((o.solicitudes || []).includes(yo.id)) return 'enviada'; return 'nada'; },
   pedirAmistad(id) { const yo = this.yo(), o = E.usuarios[id], e = this.estadoAmistad(id); if (e === 'recibida') return this.aceptarAmistad(id); if (e !== 'nada') return; o.solicitudes = o.solicitudes || []; o.solicitudes.push(yo.id); notificar(id, `@${yo.usuario} quiere ser tu amigo`, '#/amigos'); this.guardar(); },
@@ -96,7 +108,16 @@ const DB = {
   comentar(id, texto) { texto = texto.trim().slice(0, 500); if (!texto) return; const p = E.posts.find(x => x.id === id); p.comentarios.push({ autor: E.sesion, texto, fecha: new Date().toISOString() }); if (p.autor !== E.sesion) notificar(p.autor, `@${this.yo().usuario} comentó tu publicación`, '#/post/' + id); this.guardar(); },
   borrarPost(id) { const p = E.posts.find(x => x.id === id); if (p && (p.autor === E.sesion || this.esAdmin())) p.oculto = true; this.guardar(); },
 
-  reportar(tipo, ref, motivo) { E.reportes.push({ id: uid('rep'), por: E.sesion, tipo, ref, motivo, fecha: new Date().toISOString(), estado: 'abierto' }); avisarAdmins('Nuevo reporte: ' + motivo, '#/admin'); this.guardar(); },
+  reportar(tipo, ref, motivo, extra) {
+    const r = { id: (extra && extra.id) || uid('rep'), por: E.sesion, tipo, ref, motivo, fecha: new Date().toISOString(), estado: 'abierto', ...(extra || {}) };
+    E.reportes.push(r); avisarAdmins('Nuevo reporte: ' + motivo + (r.prueba ? ' (con prueba)' : ''), '#/admin');
+    if (tipo === 'usuario') {
+      const desde = new Date(Date.now() - 7 * 864e5).toISOString(), quien = new Set(E.reportes.filter(x => x.tipo === 'usuario' && x.ref === ref && x.fecha >= desde).map(x => x.por));
+      const u = E.usuarios[ref];
+      if (u && u.rol !== 'admin' && quien.size >= REGLAS_MSG.reportesPausa && !(u.pausaMsg > new Date().toISOString())) { u.pausaMsg = new Date(Date.now() + REGLAS_MSG.diasPausa * 864e5).toISOString(); avisarAdmins(`@${u.usuario} quedó en pausa de mensajes: ${quien.size} personas lo reportaron esta semana`, '#/admin'); }
+    }
+    this.guardar(); return r;
+  },
   resolverReporte(id, accion) {
     const r = E.reportes.find(x => x.id === id); r.estado = accion;
     if (accion === 'quitado') { if (r.tipo === 'post') { const p = E.posts.find(x => x.id === r.ref); if (p) p.oculto = true; } if (r.tipo === 'ranking') { const k = E.rankings.find(x => x.id === r.ref); if (k) k.estado = 'quitado'; } }
@@ -266,11 +287,34 @@ const DB = {
   misChats() { return E.chats.filter(c => c.miembros.includes(E.sesion) && !(c.tipo === 'dm' && this.bloqueo(...c.miembros)) && !(c.quitado?.[E.sesion] && (c.mensajes.at(-1)?.f || '') <= c.quitado[E.sesion])).sort((a, b) => (b.mensajes.at(-1)?.f || '').localeCompare(a.mensajes.at(-1)?.f || '')); },
   chatCon(id) {
     let c = E.chats.find(x => x.tipo === 'dm' && x.miembros.includes(id) && x.miembros.includes(E.sesion));
-    if (!c) { if (!this.puedeEscribir(id)) return null; c = { id: uid('ch'), tipo: 'dm', nombre: '', miembros: [E.sesion, id], mensajes: [], fijado: null }; E.chats.push(c); this.guardar(); }
+    if (!c) {
+      const r = this.razonNoEscribir(id); if (r) return { error: r };
+      const amigos = this.sonAmigos(E.sesion, id), yo = this.yo();
+      if (!amigos && yo.rol !== 'admin') {
+        const h = this.solicitudesEnviadas(E.sesion, 1).length, d = this.solicitudesEnviadas(E.sesion, 24).length;
+        if (h >= REGLAS_MSG.porHora || d >= REGLAS_MSG.porDia) {
+          const l = this.limites(); if (!l.alertaMsg) { l.alertaMsg = true; avisarAdmins(`@${yo.usuario} llegó al límite de mensajes a desconocidos (${d} en 24 h)`, '#/admin'); }
+          this.guardar(); return { error: 'limite' };
+        }
+      }
+      c = { id: uid('ch'), tipo: 'dm', nombre: '', miembros: [E.sesion, id], mensajes: [], fijado: null, creado: new Date().toISOString() };
+      if (!amigos) c.solicitud = { de: E.sesion, f: c.creado };
+      E.chats.push(c); this.guardar();
+    }
+    if (c.solicitud?.no && c.solicitud.de === E.sesion && !this.sonAmigos(...c.miembros)) return { error: 'rechazada' };
     return c;
   },
 
-  enviarCifrado(chatId, e) { const c = E.chats.find(x => x.id === chatId); if (!c) return; c.miembros.filter(m => m !== E.sesion && this.sinLeerDe(c, m) === 0).forEach(m => notificar(m, c.tipo === 'grupo' ? `Mensajes nuevos en ${c.nombre}` : `@${this.yo().usuario} te escribió`, '#/chat/' + c.id)); c.mensajes.push({ u: E.sesion, f: new Date().toISOString(), e }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
+  puedeMandar(c) {
+    if (!c || !c.miembros.includes(E.sesion)) return 'no';
+    if (c.tipo === 'dm' && this.bloqueo(...c.miembros)) return 'no';
+    if (!this.esSolicitud(c)) return null;
+    if (c.solicitud.de !== E.sesion) return 'aceptar';
+    if (c.solicitud.no) return 'rechazada';
+    if (c.mensajes.filter(m => m.u === E.sesion).length >= REGLAS_MSG.maxSolicitud) return 'espera';
+    return null;
+  },
+  enviarCifrado(chatId, e) { const c = E.chats.find(x => x.id === chatId); if (!c || this.puedeMandar(c)) return false; const sol = this.esSolicitud(c); c.miembros.filter(m => m !== E.sesion && this.sinLeerDe(c, m) === 0).forEach(m => notificar(m, c.tipo === 'grupo' ? `Mensajes nuevos en ${c.nombre}` : sol ? `@${this.yo().usuario} te mandó una solicitud de mensaje` : `@${this.yo().usuario} te escribió`, '#/chat/' + c.id)); c.mensajes.push({ u: E.sesion, f: new Date().toISOString(), e }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); return true; },
   enviar(chatId, texto, adjunto) { texto = String(texto || '').trim().slice(0, 1000); if (!texto && !adjunto) return; const c = E.chats.find(x => x.id === chatId); c.miembros.filter(m => m !== E.sesion && this.sinLeerDe(c, m) === 0).forEach(m => notificar(m, c.tipo === 'grupo' ? `Mensajes nuevos en ${c.nombre}` : `@${this.yo().usuario} te escribió`, '#/chat/' + c.id)); c.mensajes.push({ u: E.sesion, t: texto, f: new Date().toISOString(), ...(adjunto ? { adjunto } : {}) }); c.leido = c.leido || {}; c.leido[E.sesion] = c.mensajes.length; this.guardar(); },
   visibles(c) { const desde = c.vaciado?.[E.sesion] || 0; return c.mensajes.map((m, i) => ({ ...m, i })).slice(desde); },
   vaciarChat(id) { const c = E.chats.find(x => x.id === id); if (!c) return; c.vaciado = c.vaciado || {}; c.vaciado[E.sesion] = c.mensajes.length; this.marcarLeido(id); },
@@ -463,6 +507,7 @@ function mover(u, monto, tipo, ref, fecha, id) {
   if (id && E.libro.some(m => m.id === id)) return;
   E.libro.push({ id: id || uid('m'), f: fecha || new Date().toISOString(), u, monto, tipo, ref: ref || '', disp: E.usuarios[u]?.dispositivo || '' });
 }
+const REGLAS_MSG = { porHora: 8, porDia: 20, reportesPausa: 3, diasPausa: 3, maxSolicitud: 3 };
 function notificar(u, texto, link, extra) { if (!E.usuarios[u]) return; E.notifs.push({ id: uid('n'), u, texto, link, fecha: new Date().toISOString(), leida: false, ...extra }); }
 function avisarAdmins(texto, link) { Object.values(E.usuarios).filter(u => u.rol === 'admin').forEach(u => notificar(u.id, texto, link)); }
 function dispositivoActual() { let d; try { d = localStorage.getItem('cdu_disp'); if (!d) { d = 'disp-' + Math.random().toString(36).slice(2, 8); localStorage.setItem('cdu_disp', d); } } catch (e) { d = 'disp-local'; } return d; }
