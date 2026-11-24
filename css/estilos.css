@@ -394,3 +394,7 @@ button.punto-color{padding:0;cursor:pointer;min-height:0}
 .post-fotos.n1 .adj-foto{aspect-ratio:auto;max-height:520px}.post-fotos.n1 .adj-foto img{object-fit:contain;background:var(--suave);max-height:520px}
 .post-fotos.n2,.post-fotos.n4{grid-template-columns:1fr 1fr}.post-fotos.n3{grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr}.post-fotos.n3 .adj-foto:first-child{grid-row:span 2;aspect-ratio:auto}
 .mencion{color:var(--moradoTxt);font-weight:700;text-decoration:none}
+.alas-edif.una-fila{overflow-x:auto;padding-bottom:4px}
+.alas-edif.una-fila .ala{grid-template-columns:repeat(6,minmax(36px,1fr));gap:4px;min-width:228px}
+.alas-edif.una-fila .salon-cel{min-height:46px;border-radius:8px}
+.escalera{flex:none;width:22px;border-radius:6px;background:repeating-linear-gradient(0deg,var(--linea) 0 3px,transparent 3px 8px);border:1.5px solid var(--linea)}
