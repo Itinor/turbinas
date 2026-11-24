@@ -344,3 +344,9 @@ button.punto-color{padding:0;cursor:pointer;min-height:0}
 .alas-edif .pasillo{width:10px;border-radius:6px;background:repeating-linear-gradient(180deg,var(--linea) 0 6px,transparent 6px 10px)}
 .salon-cel{min-height:40px;border-radius:10px;border:1.5px solid var(--linea);background:var(--tarjeta,#fff);font:inherit;font-weight:800;cursor:pointer;color:inherit}
 .salon-cel.on{background:var(--amarillo,#FFC93C);border-color:#B45309;color:#1B1530}
+.edif-ing.on rect,.edif-ing.on polygon{stroke-width:6}
+.cuartos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.cuarto{display:flex;gap:8px;align-items:center;text-align:left;padding:8px 10px;border-radius:10px;border:1.5px solid var(--linea);background:var(--tarjeta,#fff);font:inherit;font-size:13px;cursor:pointer;color:inherit;line-height:1.2}
+.cuarto b{flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--suave);color:var(--moradoTxt);font-size:12px}
+.cuarto.serv{opacity:.7}
+.cuarto.on{background:var(--amarillo,#FFC93C);border-color:#B45309;color:#1B1530}.cuarto.on b{background:#1B1530;color:#fff}
