@@ -6,10 +6,13 @@ function seccionHorarioPerfil(u, mio) {
   if (!DB.puedeVerHorario(u.id)) return '';
   const clases = normalizarHorario(u), hay = clases.some(c => (c.sesiones || []).length);
   if (!hay) return mio ? `<a href="#/horario" class="tarjeta fila" style="flex-wrap:nowrap;text-decoration:none;color:inherit;border:1.5px dashed var(--linea);box-shadow:none">${icono('agenda', 22)}<span style="flex:1"><b>Arma tu horario</b><br><span class="mini gris">Aparece aquí en tu perfil. Tú decides quién lo ve.</span></span></a>` : '';
-  return `<section class="tarjeta"><div class="entre"><h2>${mio ? 'Mi horario' : 'Su horario'}</h2><a class="btn3" style="min-height:36px;padding:0 12px" href="#/horario${mio ? '' : '/' + esc(u.usuario)}">${mio ? 'Editar' : 'Ver completo'}</a></div>
-    ${mio ? `<p class="mini gris" style="margin:2px 0 0">${u.horarioVis === 'elegidos' && (u.horarioCompartido || []).length ? `Lo ven ${u.horarioCompartido.length} persona${u.horarioCompartido.length > 1 ? 's' : ''} que elegiste` : 'Solo tú lo ves'}</p>` : ''}
-    <div style="margin-top:10px">${tablaHorario(clases, false, false)}</div></section>`;
+  const plegado = horarioPlegado(), n = clases.filter(c => (c.sesiones || []).length).length, dias = new Set(clases.flatMap(c => (c.sesiones || []).map(x => x.d))).size;
+  return `<section class="tarjeta"><div class="entre"><button class="titulo-plegable" data-a="plegarHorarioPerfil" aria-expanded="${!plegado}"><h2>${mio ? 'Mi horario' : 'Su horario'}</h2>${icono('atras', 18, `class="flecha-plegar${plegado ? '' : ' abierta'}"`)}</button><a class="btn3" style="min-height:36px;padding:0 12px" href="#/horario${mio ? '' : '/' + esc(u.usuario)}">${mio ? 'Editar' : 'Ver completo'}</a></div>
+    <p class="mini gris" style="margin:2px 0 0">${n} materia${n === 1 ? '' : 's'} · ${dias} día${dias === 1 ? '' : 's'}${mio ? ` · ${u.horarioVis === 'elegidos' && (u.horarioCompartido || []).length ? `lo ven ${u.horarioCompartido.length} persona${u.horarioCompartido.length > 1 ? 's' : ''} que elegiste` : 'solo tú lo ves'}` : ''}</p>
+    ${plegado ? '' : `<div style="margin-top:10px">${tablaHorario(clases, false, false)}</div>`}</section>`;
 }
+const horarioPlegado = () => { try { return localStorage.getItem('itinor_horario_plegado') === '1'; } catch { return false; } };
+ACC.plegarHorarioPerfil = () => { try { localStorage.setItem('itinor_horario_plegado', horarioPlegado() ? '0' : '1'); } catch {} refrescar(); };
 
 /* ---------- música de fondo: clic derecho (o mantener presionado) sobre una canción de tu perfil ---------- */
 function menuCancion(i) {

@@ -17,7 +17,7 @@ VISTAS.perfil = {
     const stats = [[E_aportes(u), 'Aportes', ''], [u.amigos.length, 'Amigos', mio ? '#/amigos' : ''], [u.racha.dias || 0, 'Racha', '']];
     return `<div class="pila perfil-raiz" id="perfilRaiz" data-u="${u.id}">${capaNotitas(u, mio)}
       <section class="tarjeta" style="text-align:center;padding:0;overflow:hidden">
-        <div style="height:56px;background:var(--g-banda);position:relative">${mio ? `<a class="icono-btn" href="#/ajustes" aria-label="Ajustes" style="position:absolute;right:4px;top:4px;color:#fff;min-width:44px;min-height:44px">${icono('ajustes', 20)}</a>` : ''}</div>
+        <div style="height:56px;background:var(--g-banda);position:relative">${mio ? `<a class="btn-engrane" href="#/ajustes" aria-label="Ajustes" title="Ajustes">${icono('ajustes', 20)}</a>` : ''}</div>
         <div style="margin-top:-46px;position:relative;z-index:1"><span class="marco" style="background:${grad}">${avatar(u.id, true)}</span></div>
         <div style="padding:8px 16px 18px"><h2 style="font-size:22px">@${esc(u.usuario)}</h2><p class="peq gris" style="margin:4px 0 0">${esc(subNombre(u.id))}</p>
           ${u.bio ? `<p style="margin:10px 0 0">${esc(u.bio)}</p>` : ''}
