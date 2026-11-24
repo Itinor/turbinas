@@ -348,6 +348,12 @@ button.punto-color{padding:0;cursor:pointer;min-height:0}
 .btn-engrane:hover svg{transform:rotate(45deg)}
 .btn-engrane svg{transition:transform .3s;display:block}
 .btn-engrane:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.titulo-plegable{display:inline-flex;align-items:center;gap:8px;background:none;border:0;padding:4px 0;cursor:pointer;color:inherit;font:inherit}
-.flecha-plegar{transform:rotate(-90deg);transition:transform .2s;opacity:.7}
-.flecha-plegar.abierta{transform:rotate(90deg)}
+.titulo-plegable{cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+
+.cols-sel{display:inline-flex;align-items:center;gap:2px;background:var(--suave);border-radius:12px;padding:3px;flex:none}
+.cols-sel span{font-size:12px;font-weight:700;color:var(--gris,#6B6680);padding:0 6px}
+.cols-sel button{min-width:30px;height:30px;border:0;border-radius:9px;background:transparent;font:inherit;font-weight:800;font-size:13px;cursor:pointer;color:inherit}
+.cols-sel button.on{background:var(--tarjeta,#fff);box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--moradoTxt)}
+.rejilla-tablones{display:grid;gap:22px 16px;grid-template-columns:repeat(var(--n,1),minmax(0,1fr))}
+.rejilla-tablones[data-n="3"] .vista-corcho,.rejilla-tablones[data-n="4"] .vista-corcho{height:230px}
+.rejilla-tablones[data-n="4"] h2{font-size:16px!important}

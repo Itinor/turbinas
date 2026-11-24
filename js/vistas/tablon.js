@@ -15,7 +15,7 @@ VISTAS.tablon = {
     if (!DB.tablonVisible(t)) return '<p class="vacio">Este tablón no existe o es de un grupo en el que no estás. <a href="#/tablon">Volver</a></p>';
     const U = UI.tablon, todos = DB.itemsTablon(id), items = todos.filter(x => U.filtro === 'todo' || (U.filtro === 'foto' ? x.tipo === 'foto' || esImagen(x) : U.filtro === 'archivo' ? x.tipo === 'archivo' && !esImagen(x) : x.tipo === U.filtro));
     const barra = `<div class="entre"><div class="pestanas" style="flex:1">${[['todo', 'Todo'], ['evento', 'Eventos'], ['archivo', 'Archivos'], ['foto', 'Fotos'], ['nota', 'Notas']].map(([k, n]) => `<button class="pastilla${U.filtro === k ? ' on' : ''}" data-a="filtroTablon" data-f="${k}">${n}</button>`).join('')}</div>
-      <button class="btn3" style="min-height:40px;padding:0 12px;flex:none" data-a="vistaTablon">${U.vista === 'corcho' ? 'Ver ordenado' : 'Ver tablón'}</button></div>`;
+      <span class="fila" style="gap:6px;flex:none">${U.vista === 'corcho' ? selCols('corcho') : ''}<button class="btn3" style="min-height:40px;padding:0 12px;flex:none" data-a="vistaTablon">${U.vista === 'corcho' ? 'Ver ordenado' : 'Ver tablón'}</button></span></div>`;
     const vacio = `<p class="peq vacio-corcho">${DB.puedeFijar(t) ? 'Todavía no hay nada aquí.' : 'Aquí aparecerá lo que publique la universidad.'}</p>`;
     const cuerpo = U.vista === 'corcho' ? corcho(items, vacio) : `<div class="pila" style="gap:10px">${items.map(filaTablon).join('') || '<p class="vacio">Todavía no hay nada aquí.</p>'}</div>`;
     return `<div class="pila">${DB.puedeFijar(t) ? `<button class="btn ancho" data-a="nuevoEnTablon" data-t="${t.id}">${icono('mas', 18)}Fijar algo en este tablón</button>` : ''}${t.chat ? `<a class="insignia i-morado" style="align-self:flex-start;text-decoration:none" href="#/chat/${t.chat}">Tablón del grupo · solo lo ven sus integrantes</a>` : ''}${barra}${cuerpo}
@@ -23,19 +23,27 @@ VISTAS.tablon = {
   },
   montar() { cargarArchivosTablon(); }
 };
+/* columnas: cuántos caben a lo ancho (1 a 4); hacia abajo, los que haya */
+const colsTablon = k => { try { const v = +localStorage.getItem('itinor_cols_' + k); return v >= 1 && v <= 4 ? v : (k === 'lista' ? 1 : 2); } catch { return k === 'lista' ? 1 : 2; } };
+const selCols = k => `<span class="cols-sel" role="group" aria-label="Columnas"><span>Columnas</span>${[1, 2, 3, 4].map(n => `<button class="${colsTablon(k) === n ? 'on' : ''}" data-a="colsTablon" data-k="${k}" data-n="${n}" aria-label="${n} columna${n > 1 ? 's' : ''}">${n}</button>`).join('')}</span>`;
+ACC.colsTablon = b => { try { localStorage.setItem('itinor_cols_' + b.dataset.k, b.dataset.n); } catch {} refrescar(); };
 function listaTablones() {
   const ts = DB.misTablones(), fijos = ['tb_uni', 'tb_eventos', 'tb_general'];
-  return `<div class="pila" style="gap:22px">${ts.map(t => { const its = DB.itemsTablon(t.id), n = its.length;
+  const n_ = colsTablon('lista');
+  return `<div class="pila" style="gap:16px"><div class="entre"><span></span>${selCols('lista')}</div><div class="rejilla-tablones" data-n="${n_}" style="--n:${n_}">${ts.map(t => { const its = DB.itemsTablon(t.id), n = its.length;
     return `<section class="pila" style="gap:8px"><div class="entre"><span><h2 style="font-size:19px">${esc(t.nombre)}${t.oficial ? ' <span class="insignia i-morado" style="vertical-align:middle">Oficial</span>' : ''}</h2><span class="mini gris">${esc(t.desc || (t.chat ? 'Tablón de tu grupo' : ''))}${n ? ` · ${n} ${n === 1 ? 'cosa' : 'cosas'}` : ''}</span></span><span class="fila" style="flex-wrap:nowrap;gap:4px">${DB.puedeFijar(t) ? `<button class="btn" style="min-height:40px;padding:0 12px" data-a="nuevoEnTablon" data-t="${t.id}">${icono('mas', 16)}Fijar</button>` : ''}${fijos.includes(t.id) ? '' : botonEliminar('tablon', t.id)}</span></div>
-      <a href="#/tablon/${t.id}" class="vista-corcho" aria-label="Abrir el tablón ${esc(t.nombre)}">${collage(its, `<span class="peq vacio-corcho">${t.oficial && !DB.esAdmin() ? 'Aquí aparecerá lo que publique la universidad.' : 'Vacío. Sé el primero en fijar algo.'}</span>`, true)}${n > 9 ? `<span class="mas-corcho">Ver las ${n} →</span>` : ''}</a></section>`; }).join('')}
+      <a href="#/tablon/${t.id}" class="vista-corcho" aria-label="Abrir el tablón ${esc(t.nombre)}">${collage(its, `<span class="peq vacio-corcho">${t.oficial && !DB.esAdmin() ? 'Aquí aparecerá lo que publique la universidad.' : 'Vacío. Sé el primero en fijar algo.'}</span>`, true)}${n > 9 ? `<span class="mas-corcho">Ver las ${n} →</span>` : ''}</a></section>`; }).join('')}</div>
     <button class="btn3 ancho" data-a="nuevoTablon">${icono('mas', 18)}Nuevo tablón</button></div>`;
 }
 function corcho(items, vacio, preview) {
-  const alto = { nota: 150, archivo: 190, foto: 215, evento: 175 }, cols = [12, 12], tag = preview ? 'span' : 'button'; let html = '';
+  const N = preview ? 2 : colsTablon('corcho'), cols = Array(N).fill(12), tag = preview ? 'span' : 'button'; let html = '';
+  /* ancho aproximado de cada columna para calcular qué tan altas quedan las fotos */
+  const anchoCol = Math.min(420, ((Math.min(window.innerWidth || 800, 1100) - (window.innerWidth >= 900 ? 300 : 60)) / N) - 20);
+  const alto = { nota: 150, archivo: 190, foto: 215, evento: 175 };
   items.forEach(it => {
-    const g = giro(it.id), c = cols[0] <= cols[1] ? 0 : 1, top = cols[c];
-    cols[c] += ((it.tipo === 'foto' || esImagen(it)) && it.archivo?.w ? Math.min(330, Math.max(120, 70 + 180 * it.archivo.h / it.archivo.w)) : alto[it.tipo]) + 14;
-    html += `<${tag} class="pin-tablon tipo-${it.tipo}" style="left:calc(${c * 50}% + ${6 + g.dx}px);top:${top}px;transform:rotate(${g.r}deg);${it.tipo === 'nota' ? `background:${COLORES_NOTA[it.color] || COLORES_NOTA.amarillo}` : ''}" ${preview ? '' : `data-a="verTablonItem" data-id="${it.id}" aria-label="${esc(it.titulo || it.texto.slice(0, 40))}"`}>
+    const g = giro(it.id), c = cols.indexOf(Math.min(...cols)), top = cols[c];
+    cols[c] += ((it.tipo === 'foto' || esImagen(it)) && it.archivo?.w ? Math.min(anchoCol * 1.8, Math.max(120, 70 + (anchoCol - 20) * it.archivo.h / it.archivo.w)) : alto[it.tipo]) + 14;
+    html += `<${tag} class="pin-tablon tipo-${it.tipo}" style="--w:min(calc(${100 / N}% - 20px), 420px);width:var(--w);max-width:none;left:calc(${c * 100 / N}% + (${100 / N}% - var(--w)) / 2 + ${g.dx}px);top:${top}px;transform:rotate(${g.r}deg);${it.tipo === 'nota' ? `background:${COLORES_NOTA[it.color] || COLORES_NOTA.amarillo}` : ''}" ${preview ? '' : `data-a="verTablonItem" data-id="${it.id}" aria-label="${esc(it.titulo || it.texto.slice(0, 40))}"`}>
       <span class="chinche" style="background:${it.fijado ? '#E2453C' : g.c}"></span>${it.fijado ? '<span class="mini" style="position:absolute;right:6px;top:4px;font-weight:800;color:#B42318">FIJADO</span>' : ''}
       ${it.tipo === 'nota' ? `<span class="letra-nota">${esc(it.texto)}</span>`
         : it.tipo === 'evento' ? `<span class="evento-pin"><span class="fecha-pin"><b>${new Date(it.cuando).getDate()}</b><span>${new Date(it.cuando).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '')}</span></span><b class="peq" style="display:block;margin-top:6px;line-height:1.2">${esc(it.titulo)}</b><span class="mini" style="color:#6B6280">${new Date(it.cuando).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' })}${it.lugar ? ' · ' + esc(it.lugar) : ''}</span>${(it.apuntados || []).length ? `<span class="mini" style="display:block;font-weight:800;color:#14632F">${it.apuntados.length} ${it.apuntados.length === 1 ? 'va' : 'van'}</span>` : ''}</span>`
